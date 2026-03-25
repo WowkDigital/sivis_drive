@@ -87,11 +87,18 @@
             Foldery pracowników
         </h2>
         <ul class="space-y-1.5">
-            <?php foreach ($employees_folders as $f): ?>
+            <?php foreach ($employees_folders as $f): 
+                $has_new = has_recent_activity($db, $f['id']);
+            ?>
                 <li>
-                    <a href="javascript:void(0)" onclick="loadFolder(<?= $f['id'] ?>, 0, true)" id="folder-link-<?= $f['id'] ?>" class="folder-link flex items-center px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all text-sm <?= $f['id'] == $active_folder_id ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400 font-medium active-folder' : '' ?>">
-                        <i data-lucide="book-user" class="w-4 h-4 mr-3 shrink-0"></i>
-                        <span class="truncate"><?= htmlspecialchars($f['name']) ?></span>
+                    <a href="javascript:void(0)" onclick="loadFolder(<?= $f['id'] ?>, 0, true)" id="folder-link-<?= $f['id'] ?>" class="folder-link flex items-center justify-between px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all text-sm <?= $f['id'] == $active_folder_id ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400 font-medium active-folder' : '' ?>">
+                        <div class="flex items-center truncate">
+                            <i data-lucide="book-user" class="w-4 h-4 mr-3 shrink-0"></i>
+                            <span class="truncate"><?= htmlspecialchars($f['name']) ?></span>
+                        </div>
+                        <?php if ($has_new): ?>
+                            <span class="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] ml-2 shrink-0 animate-pulse" title="Nowe pliki w ciągu ost. 24h"></span>
+                        <?php endif; ?>
                     </a>
                 </li>
             <?php endforeach; ?>

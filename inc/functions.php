@@ -101,3 +101,29 @@ function get_private_usage($db, $user_id) {
     $stats = $db->query("SELECT COUNT(*) as count, SUM(size) as size FROM files WHERE folder_id IN ($ids_str)")->fetch(PDO::FETCH_ASSOC);
     return ['count' => (int)$stats['count'], 'size' => (int)$stats['size']];
 }
+
+/**
+ * Check if a folder tree has new files in the last 24 hours
+ */
+function has_recent_activity($db, $folder_id) {
+    if (!$folder_id) return false;
+    
+    // Get all subfolders recursively
+    $folder_ids = [$folder_id];
+    $to_check = [$folder_id];
+    while (!empty($to_check)) {
+        $curr = array_pop($to_check);
+        $stmt = $db->prepare("SELECT id FROM folders WHERE parent_id = ?");
+        $stmt->execute([$curr]);
+        $children = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($children as $cid) {
+            $folder_ids[] = $cid;
+            $to_check[] = $cid;
+        }
+    }
+    
+    $ids_str = implode(',', $folder_ids);
+    $stmt = $db->prepare("SELECT COUNT(*) FROM files WHERE folder_id IN ($ids_str) AND created_at > datetime('now', '-1 day')");
+    $stmt->execute();
+    return (int)$stmt->fetchColumn() > 0;
+}
