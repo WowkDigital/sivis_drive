@@ -66,7 +66,7 @@
                 $is_restricted = trim($f['access_groups']) === 'zarząd';
             ?>
                 <li>
-                    <a href="javascript:void(0)" onclick="loadFolder(<?= $f['id'] ?>, 0, true)" id="folder-link-<?= $f['id'] ?>" class="folder-link flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 <?= $f['id'] == $active_folder_id ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium active-folder' : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' ?>">
+                    <a href="javascript:void(0)" onclick="loadFolder(<?= $f['id'] ?>, 0, true)" id="folder-link-<?= $f['id'] ?>" class="folder-link flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 <?= $f['id'] == $active_folder_id ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium active-folder' : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' ?>">
                         <div class="flex items-center min-w-0">
                             <i data-lucide="folder" class="w-5 h-5 mr-3 shrink-0 opacity-70"></i>
                             <span class="truncate text-sm"><?= htmlspecialchars($f['name']) ?></span>

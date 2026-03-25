@@ -87,11 +87,11 @@
                         <div class="group/folder px-2 py-1">
                             <button onclick="confirmMove(${n.id})" 
                                     class="w-full text-left flex items-center px-4 py-3 rounded-2xl transition-all duration-200 
-                                    ${isCurrent ? 'bg-orange-500/5 border border-orange-500/20 text-orange-400 cursor-default opacity-50' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}" 
+                                    ${isCurrent ? 'bg-purple-500/5 border border-purple-500/20 text-purple-400 cursor-default opacity-50' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}" 
                                     ${isCurrent ? 'disabled' : ''}>
                                 <div class="flex items-center min-w-0" style="margin-left: ${depth * 1.5}rem">
-                                    <div class="p-1.5 rounded-lg mr-3 ${isCurrent ? 'bg-orange-500/10' : 'bg-slate-900 group-hover/folder:bg-slate-600'} transition-colors">
-                                        <i data-lucide="folder" class="w-4 h-4 ${isCurrent ? 'text-orange-400' : 'text-blue-400'}"></i>
+                                    <div class="p-1.5 rounded-lg mr-3 ${isCurrent ? 'bg-purple-500/10' : 'bg-slate-900 group-hover/folder:bg-slate-600'} transition-colors">
+                                        <i data-lucide="folder" class="w-4 h-4 ${isCurrent ? 'text-purple-400' : 'text-blue-400'}"></i>
                                     </div>
                                     <span class="truncate font-medium">${n.name}</span>
                                     ${isCurrent ? '<span class="ml-auto text-[10px] uppercase font-bold tracking-widest opacity-50">(Tu jest plik)</span>' : ''}
@@ -326,7 +326,7 @@
                                 <td class="px-3 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
                                         ${data.can_edit ? `
-                                            <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', '${item.name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-slate-700/50 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all" title="Zmień nazwę">
+                                            <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', '${item.name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all" title="Zmień nazwę">
                                                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                                             </button>
                                         ` : ''}
@@ -358,10 +358,10 @@
                                     ${previewBtn}
                                     <a href="download.php?id=${item.id}" class="p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 shadow-sm" title="Pobierz"><i data-lucide="download" class="w-4.5 h-4.5"></i></a>
                                     ${data.can_edit ? `
-                                        <button onclick="renameItem(${item.id}, 'file', '${item.original_name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-slate-700/50 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 border border-transparent hover:border-blue-500/30" title="Zmień nazwę">
+                                        <button onclick="renameItem(${item.id}, 'file', '${item.original_name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-yellow-500/30" title="Zmień nazwę">
                                             <i data-lucide="edit-3" class="w-4.5 h-4.5"></i>
                                         </button>
-                                        <button onclick="openMoveModal(${item.id}, '${item.original_name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-slate-700/50 hover:bg-orange-500/20 hover:text-orange-300 rounded-lg transition-all duration-200 border border-transparent hover:border-orange-500/30" title="Przenieś plik">
+                                        <button onclick="openMoveModal(${item.id}, '${item.original_name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-purple-500/30" title="Przenieś plik">
                                             <i data-lucide="folder-input" class="w-4.5 h-4.5"></i>
                                         </button>
                                         <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline m-0 shrink-0">
@@ -426,7 +426,7 @@
                 const activeLink = document.getElementById(`folder-link-${folderId}`);
                 if (activeLink) {
                     activeLink.classList.add('active-folder');
-                    activeLink.classList.add('bg-blue-500/10', 'text-blue-400', 'font-medium');
+                    activeLink.classList.add('bg-emerald-500/10', 'text-emerald-400', 'font-medium');
                 }
 
                 // Update URL without reload

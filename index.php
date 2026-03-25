@@ -229,8 +229,8 @@ require_once 'inc/header.php';
         <div class="bg-slate-800 w-full max-w-lg rounded-3xl border border-slate-700 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300">
             <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
                 <div class="flex items-center">
-                    <div class="p-2 bg-orange-500/10 rounded-xl mr-4">
-                        <i data-lucide="folder-input" class="w-6 h-6 text-orange-400"></i>
+                    <div class="p-2 bg-purple-500/10 rounded-xl mr-4">
+                        <i data-lucide="folder-input" class="w-6 h-6 text-purple-400"></i>
                     </div>
                     <div>
                         <h3 class="text-xl font-bold text-white leading-tight">Przenieś plik</h3>
