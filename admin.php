@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = $_POST['email'];
             $role = $_POST['role'];
             $group = $_POST['group'];
-            $password = bin2hex(random_bytes(4)); // generate random 8 chars password
+            $password = generate_random_password(16);
             $hash = password_hash($password, PASSWORD_DEFAULT);
             
             try {

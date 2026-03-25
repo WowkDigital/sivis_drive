@@ -73,6 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
 
+            <?php if (isset($_GET['installed'])): ?>
+                <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl relative mb-6 text-sm flex items-center">
+                    <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Instalacja zakończona pomyślnie! Możesz się zalogować.
+                </div>
+            <?php endif; ?>
+
             <form method="post" action="" class="space-y-5">
                 <div>
                     <label class="block text-slate-400 text-sm font-medium mb-2" for="email">Adres e-mail</label>
