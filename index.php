@@ -173,43 +173,42 @@ require_once 'inc/header.php';
                         </button>
                     </div>
 
-                    <?php if ($can_edit): ?>
-                        <div id="drop-zone" class="bg-slate-900/50 p-10 rounded-3xl mt-10 border-2 border-dashed border-slate-700 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all duration-300 group cursor-pointer text-center relative overflow-hidden">
-                            <!-- Uploading Overlay -->
-                            <div id="upload-progress-overlay" class="absolute inset-0 bg-slate-900/90 backdrop-blur-md z-20 flex flex-col items-center justify-center p-8 opacity-0 pointer-events-none transition-opacity duration-300">
-                                <div class="w-20 h-20 mb-6 relative">
-                                    <div class="absolute inset-0 rounded-full border-4 border-blue-500/20"></div>
-                                    <div id="progress-ring" class="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
-                                    <div class="absolute inset-0 flex items-center justify-center">
-                                        <i data-lucide="upload-cloud" class="w-8 h-8 text-blue-400"></i>
-                                    </div>
+                    <!-- Always present, visibility toggled via JS -->
+                    <div id="drop-zone" class="bg-slate-900/50 p-10 rounded-3xl mt-10 border-2 border-dashed border-slate-700 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all duration-300 group cursor-pointer text-center relative overflow-hidden hidden">
+                        <!-- Uploading Overlay -->
+                        <div id="upload-progress-overlay" class="absolute inset-0 bg-slate-900/90 backdrop-blur-md z-20 flex flex-col items-center justify-center p-8 opacity-0 pointer-events-none transition-opacity duration-300">
+                            <div class="w-20 h-20 mb-6 relative">
+                                <div class="absolute inset-0 rounded-full border-4 border-blue-500/20"></div>
+                                <div id="progress-ring" class="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <i data-lucide="upload-cloud" class="w-8 h-8 text-blue-400"></i>
                                 </div>
-                                <h4 id="upload-status-text" class="text-xl font-bold text-white mb-2">Przygotowanie...</h4>
-                                <div class="w-full max-w-xs bg-slate-700 h-2 rounded-full overflow-hidden mb-3">
-                                    <div id="upload-progress-bar" class="w-0 h-full bg-blue-500 transition-all duration-300 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                                </div>
-                                <p id="upload-percent-text" class="text-blue-400 font-mono text-sm font-bold">0%</p>
+                            </div>
+                            <h4 id="upload-status-text" class="text-xl font-bold text-white mb-2">Przygotowanie...</h4>
+                            <div class="w-full max-w-xs bg-slate-700 h-2 rounded-full overflow-hidden mb-3">
+                                <div id="upload-progress-bar" class="w-0 h-full bg-blue-500 transition-all duration-300 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                            </div>
+                            <p id="upload-percent-text" class="text-blue-400 font-mono text-sm font-bold">0%</p>
+                        </div>
+
+                        <form id="upload-form" method="post" enctype="multipart/form-data" class="flex flex-col items-center justify-center gap-5 w-full">
+                            <input type="hidden" name="action" value="upload">
+                            <input type="hidden" name="folder_id" id="upload-folder-id" value="<?= $active_folder['id'] ?>">
+                            
+                            <div class="p-6 bg-blue-500/10 rounded-2xl group-hover:scale-110 group-hover:bg-blue-500/20 transition-all duration-300">
+                                <i data-lucide="upload-cloud" class="w-16 h-16 text-blue-400"></i>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-2xl font-bold text-slate-100 mb-2">Przeciągnij pliki tutaj 🚀</h3>
+                                <p class="text-slate-400">lub <span class="text-blue-400 font-semibold group-hover:underline">kliknij</span>, aby wybrać dokumenty z komputera 📁</p>
                             </div>
 
-                            <form id="upload-form" method="post" enctype="multipart/form-data" class="flex flex-col items-center justify-center gap-5 w-full">
-                                <input type="hidden" name="action" value="upload">
-                                <input type="hidden" name="folder_id" id="upload-folder-id" value="<?= $active_folder['id'] ?>">
-                                
-                                <div class="p-6 bg-blue-500/10 rounded-2xl group-hover:scale-110 group-hover:bg-blue-500/20 transition-all duration-300">
-                                    <i data-lucide="upload-cloud" class="w-16 h-16 text-blue-400"></i>
-                                </div>
-                                
-                                <div>
-                                    <h3 class="text-2xl font-bold text-slate-100 mb-2">Przeciągnij pliki tutaj 🚀</h3>
-                                    <p class="text-slate-400">lub <span class="text-blue-400 font-semibold group-hover:underline">kliknij</span>, aby wybrać dokumenty z komputera 📁</p>
-                                </div>
-
-                                <input type="file" name="file" id="file-input" required class="hidden">
-                                
-                                <div class="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Max: 100MB • PDF, JPG, PNG, DOCX</div>
-                            </form>
-                        </div>
-                    <?php endif; ?>
+                            <input type="file" name="file" id="file-input" required class="hidden">
+                            
+                            <div class="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Max: 100MB • PDF, JPG, PNG, DOCX</div>
+                        </form>
+                    </div>
 
                 <?php else: ?>
                     <div class="text-center py-20 flex flex-col items-center">

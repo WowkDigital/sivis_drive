@@ -433,6 +433,16 @@
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?folder=' + folderId;
                 window.history.pushState({path:newUrl},'',newUrl);
 
+                // Toggle drop-zone visibility
+                const dropZone = document.getElementById('drop-zone');
+                if (dropZone) {
+                    if (data.can_edit) {
+                        dropZone.classList.remove('hidden');
+                    } else {
+                        dropZone.classList.add('hidden');
+                    }
+                }
+
                 initIcons();
                 setupDragAndDrop();
 
