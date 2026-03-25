@@ -181,19 +181,23 @@ if ($active_folder) {
 
                         <?php if (can_manage_files()): ?>
                             <!-- Upload form for admin and zarząd -->
-                            <div id="drop-zone" class="bg-slate-900/50 p-5 rounded-xl mb-6 border border-dashed border-slate-600 transition-all duration-300">
-                                <form id="upload-form" method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
+                            <div id="drop-zone" class="bg-slate-900/50 p-12 rounded-3xl mb-8 border-2 border-dashed border-slate-700 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all duration-300 group cursor-pointer text-center">
+                                <form id="upload-form" method="post" enctype="multipart/form-data" class="flex flex-col items-center justify-center gap-5 w-full">
                                     <input type="hidden" name="action" value="upload">
                                     <input type="hidden" name="folder_id" value="<?= $active_folder['id'] ?>">
-                                    <div class="hidden sm:block p-3 bg-slate-800 rounded-full">
-                                        <i data-lucide="upload-cloud" class="w-6 h-6 text-blue-400"></i>
+                                    
+                                    <div class="p-6 bg-blue-500/10 rounded-2xl group-hover:scale-110 group-hover:bg-blue-500/20 transition-all duration-300">
+                                        <i data-lucide="upload-cloud" class="w-16 h-16 text-blue-400"></i>
                                     </div>
-                                    <div class="flex-1 w-full relative">
-                                        <input type="file" name="file" required class="block w-full text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500/10 file:text-blue-400 hover:file:bg-blue-500/20 cursor-pointer focus:outline-none bg-slate-800 rounded-lg p-1.5 border border-slate-700 w-full">
+                                    
+                                    <div>
+                                        <h3 class="text-2xl font-bold text-slate-100 mb-2">Przeciągnij pliki tutaj 🚀</h3>
+                                        <p class="text-slate-400">lub <span class="text-blue-400 font-semibold group-hover:underline">kliknij</span>, aby wybrać dokumenty z komputera 📁</p>
                                     </div>
-                                    <button type="submit" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 sm:py-2.5 px-6 rounded-lg shadow-lg shadow-blue-500/20 flex items-center justify-center whitespace-nowrap transition-all duration-200">
-                                        <i data-lucide="upload" class="w-4 h-4 mr-2"></i> Wgraj Plik
-                                    </button>
+
+                                    <input type="file" name="file" id="file-input" required class="hidden">
+                                    
+                                    <div class="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Max: 100MB • PDF, DOCX, JPG, PNG</div>
                                 </form>
                             </div>
                         <?php endif; ?>
@@ -292,10 +296,20 @@ if ($active_folder) {
 
         // Drag and Drop Logic
         const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.querySelector('input[type="file"]');
+        const fileInput = document.getElementById('file-input');
         const uploadForm = document.getElementById('upload-form');
 
         if (dropZone && fileInput) {
+            // Click to upload
+            dropZone.addEventListener('click', () => fileInput.click());
+            
+            // Auto submit when file selected via dialog
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    uploadForm.submit();
+                }
+            });
+
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 dropZone.addEventListener(eventName, e => {
                     e.preventDefault();

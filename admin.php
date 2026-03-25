@@ -56,6 +56,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$fid]);
             
             $message = "Folder i jego zawartość zostały usunięte.";
+        } elseif ($_POST['action'] === 'update_folder') {
+            $fid = (int)$_POST['folder_id'];
+            $access = $_POST['access_groups'];
+            $stmt = $db->prepare('UPDATE folders SET access_groups = ? WHERE id = ?');
+            $stmt->execute([$access, $fid]);
+            $message = "Uprawnienia folderu zaktualizowane.";
         }
     }
 }
@@ -279,18 +285,31 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex flex-wrap gap-2">
-                                            <?php 
-                                            $ag = array_filter(array_map('trim', explode(',', $f['access_groups'])));
-                                            if (empty($ag)): ?>
-                                                <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-700 text-slate-300 border border-slate-600">Brak określonych (Wszyscy)</span>
-                                            <?php else: 
-                                                foreach($ag as $g): ?>
-                                                <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-900 border border-slate-700 text-slate-300">
-                                                    <?= htmlspecialchars($g) ?>
-                                                </span>
-                                            <?php endforeach; endif; ?>
-                                        </div>
+                                        <form method="post" class="flex items-center gap-2 group/edit">
+                                            <input type="hidden" name="action" value="update_folder">
+                                            <input type="hidden" name="folder_id" value="<?= $f['id'] ?>">
+                                            <div class="relative">
+                                                <select name="access_groups" class="appearance-none bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-8 py-1.5 text-xs text-slate-300 focus:border-blue-500 outline-none transition-all cursor-pointer">
+                                                    <option value="zarząd,pracownicy" <?= $f['access_groups'] == 'zarząd,pracownicy' ? 'selected' : '' ?>>Wszyscy</option>
+                                                    <option value="zarząd" <?= $f['access_groups'] == 'zarząd' ? 'selected' : '' ?>>Tylko Zarząd</option>
+                                                </select>
+                                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                                                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="p-1.5 text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition-all opacity-0 group-hover/edit:opacity-100" title="Zapisz zmiany">
+                                                <i data-lucide="save" class="w-4 h-4"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                                        <form method="post" onsubmit="return confirm('UWAGA: Usunięcie folderu spowoduje TRWAŁE usunięcie wszystkich zawartych w nim plików! Czy na pewno chcesz kontynuować?');" class="inline">
+                                            <input type="hidden" name="action" value="delete_folder">
+                                            <input type="hidden" name="folder_id" value="<?= $f['id'] ?>">
+                                            <button type="submit" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń folder z zawartością">
+                                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
