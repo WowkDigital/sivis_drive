@@ -80,8 +80,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$users = $db->query("SELECT id, email, role, user_group FROM users")->fetchAll(PDO::FETCH_ASSOC);
+$users = $db->query("SELECT id, email, role, user_group, last_login FROM users")->fetchAll(PDO::FETCH_ASSOC);
 $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(PDO::FETCH_ASSOC);
+
+// Stats
+$total_files = $db->query("SELECT COUNT(*) FROM files")->fetchColumn();
+$total_size = $db->query("SELECT SUM(size) FROM files")->fetchColumn() ?: 0;
+$last_admin = $db->query("SELECT MAX(last_login) FROM users WHERE role = 'admin'")->fetchColumn();
+
+$formatted_size = $total_size > 1024*1024*1024 
+    ? round($total_size/(1024*1024*1024), 2) . ' GB' 
+    : ($total_size > 1024*1024 
+        ? round($total_size/(1024*1024), 2) . ' MB' 
+        : round($total_size/1024) . ' KB');
 ?>
 <!DOCTYPE html>
 <html lang="pl" class="dark">
@@ -135,6 +146,37 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                 <span class="block sm:inline"><?= htmlspecialchars($message) ?></span>
             </div>
         <?php endif; ?>
+
+        <!-- Stats Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center">
+                <div class="p-4 bg-blue-500/10 rounded-2xl mr-4">
+                    <i data-lucide="files" class="w-8 h-8 text-blue-400"></i>
+                </div>
+                <div>
+                    <p class="text-slate-500 text-sm font-medium uppercase tracking-wider">Wszystkie pliki</p>
+                    <h4 class="text-3xl font-bold text-white"><?= $total_files ?></h4>
+                </div>
+            </div>
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center">
+                <div class="p-4 bg-emerald-500/10 rounded-2xl mr-4">
+                    <i data-lucide="hard-drive" class="w-8 h-8 text-emerald-400"></i>
+                </div>
+                <div>
+                    <p class="text-slate-500 text-sm font-medium uppercase tracking-wider">Zajęte miejsce</p>
+                    <h4 class="text-3xl font-bold text-white"><?= $formatted_size ?></h4>
+                </div>
+            </div>
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex items-center">
+                <div class="p-4 bg-purple-500/10 rounded-2xl mr-4">
+                    <i data-lucide="history" class="w-8 h-8 text-purple-400"></i>
+                </div>
+                <div>
+                    <p class="text-slate-500 text-sm font-medium uppercase tracking-wider">Ost. logowanie admina</p>
+                    <h4 class="text-lg font-bold text-white"><?= $last_admin ? date('d.m.y H:i', strtotime($last_admin)) : 'Brak danych' ?></h4>
+                </div>
+            </div>
+        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Add User -->

@@ -36,9 +36,18 @@ $filepath = __DIR__ . '/uploads/' . $file['name'];
 if (file_exists($filepath)) {
     $is_view = isset($_GET['action']) && $_GET['action'] === 'view';
     $ext = strtolower(pathinfo($file['original_name'], PATHINFO_EXTENSION));
+    
+    $viewable_types = [
+        'pdf' => 'application/pdf',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp'
+    ];
 
-    if ($is_view && $ext === 'pdf') {
-        header('Content-Type: application/pdf');
+    if ($is_view && isset($viewable_types[$ext])) {
+        header('Content-Type: ' . $viewable_types[$ext]);
         header('Content-Disposition: inline; filename="' . basename($file['original_name']) . '"');
     } else {
         header('Content-Description: File Transfer');

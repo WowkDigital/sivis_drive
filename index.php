@@ -159,11 +159,18 @@ if ($active_folder) {
                         <?php if (empty($folders)): ?>
                             <li class="text-slate-500 text-sm py-2 px-3 bg-slate-900/50 rounded-lg">Brak dostępu do folderów.</li>
                         <?php endif; ?>
-                        <?php foreach ($folders as $f): ?>
+                        <?php foreach ($folders as $f): 
+                            $is_restricted = trim($f['access_groups']) === 'zarząd';
+                        ?>
                             <li>
-                                <a href="?folder=<?= $f['id'] ?>" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 <?= $f['id'] == $active_folder_id ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium' : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' ?>">
-                                    <i data-lucide="<?= $f['id'] == $active_folder_id ? 'folder-open' : 'folder' ?>" class="w-5 h-5 mr-3 <?= $f['id'] == $active_folder_id ? 'text-blue-400' : 'text-slate-500' ?>"></i>
-                                    <span class="truncate"><?= htmlspecialchars($f['name']) ?></span>
+                                <a href="?folder=<?= $f['id'] ?>" class="flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 <?= $f['id'] == $active_folder_id ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium' : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' ?>">
+                                    <div class="flex items-center min-w-0">
+                                        <i data-lucide="<?= $f['id'] == $active_folder_id ? 'folder-open' : 'folder' ?>" class="w-5 h-5 mr-3 shrink-0 <?= $f['id'] == $active_folder_id ? 'text-blue-400' : 'text-slate-500' ?>"></i>
+                                        <span class="truncate"><?= htmlspecialchars($f['name']) ?></span>
+                                    </div>
+                                    <div class="ml-2 shrink-0 opacity-60 hover:opacity-100 transition-opacity" title="<?= $is_restricted ? 'Tylko Zarząd' : 'Wszyscy pracownicy' ?>">
+                                        <i data-lucide="<?= $is_restricted ? 'shield-check' : 'users' ?>" class="w-3.5 h-3.5 <?= $is_restricted ? 'text-orange-400' : 'text-slate-500' ?>"></i>
+                                    </div>
                                 </a>
                             </li>
                         <?php endforeach; ?>
@@ -256,7 +263,10 @@ if ($active_folder) {
                                                 <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell text-xs"><?= date('d.m.Y H:i', strtotime($file['created_at'])) ?></td>
                                                 <td class="px-3 py-4 whitespace-nowrap text-right text-sm shrink-0 w-px">
                                                     <div class="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
-                                                        <?php if ($ext === 'pdf'): ?>
+                                                        <?php 
+                                                            $viewable = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+                                                            if (in_array($ext, $viewable)): 
+                                                        ?>
                                                             <a href="download.php?id=<?= $file['id'] ?>&action=view" target="_blank" class="p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Podgląd">
                                                                 <i data-lucide="eye" class="w-4.5 h-4.5"></i>
                                                             </a>

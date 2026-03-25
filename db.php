@@ -13,8 +13,12 @@ $db->exec("CREATE TABLE IF NOT EXISTS users (
     email TEXT UNIQUE,
     password_hash TEXT,
     role TEXT,
-    user_group TEXT
+    user_group TEXT,
+    last_login DATETIME
 )");
+
+// Migrate: Add last_login to users if missing
+try { @$db->exec("ALTER TABLE users ADD COLUMN last_login DATETIME"); } catch (Exception $e) {}
 
 $db->exec("CREATE TABLE IF NOT EXISTS folders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
