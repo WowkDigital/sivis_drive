@@ -34,9 +34,18 @@ if (!$has_access) {
 $filepath = __DIR__ . '/uploads/' . $file['name'];
 
 if (file_exists($filepath)) {
-    header('Content-Description: File Transfer');
-    header('Content-Type: application/octet-stream');
-    header('Content-Disposition: attachment; filename="' . basename($file['original_name']) . '"');
+    $is_view = isset($_GET['action']) && $_GET['action'] === 'view';
+    $ext = strtolower(pathinfo($file['original_name'], PATHINFO_EXTENSION));
+
+    if ($is_view && $ext === 'pdf') {
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . basename($file['original_name']) . '"');
+    } else {
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . basename($file['original_name']) . '"');
+    }
+
     header('Expires: 0');
     header('Cache-Control: must-revalidate');
     header('Pragma: public');

@@ -62,6 +62,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $db->prepare('UPDATE folders SET access_groups = ? WHERE id = ?');
             $stmt->execute([$access, $fid]);
             $message = "Uprawnienia folderu zaktualizowane.";
+        } elseif ($_POST['action'] === 'rename_folder') {
+            $fid = (int)$_POST['folder_id'];
+            $new_name = $_POST['new_name'];
+            $stmt = $db->prepare('UPDATE folders SET name = ? WHERE id = ?');
+            $stmt->execute([$new_name, $fid]);
+            $message = "Nazwa folderu zaktualizowana.";
         } elseif ($_POST['action'] === 'update_user_role') {
             $uid = (int)$_POST['user_id'];
             $role = $_POST['role'];
@@ -289,12 +295,21 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                                 <?php foreach ($folders as $f): ?>
                                 <tr class="hover:bg-slate-700/30 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center font-medium text-slate-200">
-                                            <div class="p-2 bg-slate-900 rounded-lg mr-3">
-                                                <i data-lucide="folder" class="w-4 h-4 text-blue-400"></i>
+                                        <form method="post" class="flex items-center">
+                                            <input type="hidden" name="action" value="rename_folder">
+                                            <input type="hidden" name="folder_id" value="<?= $f['id'] ?>">
+                                            <div class="flex items-center font-medium text-slate-200 w-full max-w-xs">
+                                                <div class="p-2 bg-slate-900 rounded-lg mr-3 shrink-0">
+                                                    <i data-lucide="folder" class="w-4 h-4 text-blue-400"></i>
+                                                </div>
+                                                <div class="relative flex items-center w-full">
+                                                    <input type="text" name="new_name" value="<?= htmlspecialchars($f['name']) ?>" required class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-8 py-1.5 text-sm text-slate-200 outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500 transition-all">
+                                                    <button type="submit" title="Zapisz nazwę" class="absolute right-1 p-1 text-slate-400 hover:text-emerald-400 transition-colors">
+                                                        <i data-lucide="save" class="w-4 h-4"></i>
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <?= htmlspecialchars($f['name']) ?>
-                                        </div>
+                                        </form>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <form method="post" class="flex items-center gap-2">

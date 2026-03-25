@@ -1,40 +1,51 @@
-# Sivis Drive - Minimalistyczny System Wymiany Plików
+# Sivis Drive - Inteligentny System Wymiany Dokumentów 🚀
 
-Prosty, bezpieczny i wydajny system udostępniania plików dla firm, zbudowany w PHP 8 z użyciem bazy SQLite i Tailwind CSS.
+Nowoczesny, bezpieczny i wydajny system udostępniania plików dla firm, zbudowany w **PHP 8.x** z wykorzystaniem bazy **SQLite**, **Tailwind CSS** oraz ikon **Lucide**. System został zaprojektowany z myślą o prostocie wdrożenia i wysokiej kulturze pracy z dokumentami.
 
-## 🚀 Funkcje
-- **Trzy poziomy uprawnień**:
-    - `Admin`: Pełne zarządzanie plikami i użytkownikami (dodawanie/usuwanie).
-    - `Zarząd`: Zarządzanie plikami (wgrywanie, usuwanie, pobieranie).
-    - `Pracownik`: Tylko wgląd i pobieranie plików.
-- **Zasady dostępu**: Grupowanie plików (`zarząd`, `pracownicy`) zapewnia, że wrażliwe dokumenty trafiają tylko do uprawnionych osób.
-- **Obsługa dużych plików**: System przygotowany pod wgrane pliki do **100MB**.
-- **Nowoczesny design**: Responsywny interfejs zbudowany na Tailwind CSS z ikonami Lucide.
-- **Bezpieczeństwo**: Hasła są hashowane (`password_hash`), a bezpośredni dostęp do folderu plików jest zablokowany.
+## 🌟 Kluczowe Funkcje
 
-## 🛠️ Instalacja
-1. Skopiuj pliki na serwer obsługujący PHP 8.
-2. Upewnij się, że serwer ma uprawnienia do zapisu w folderze projektu (potrzebne do utworzenia bazy SQLite i folderu `uploads`).
-3. Otwórz stronę w przeglądarce.
+- **Intuicyjny Interfejs Plików**:
+    - **Wygodny Drag & Drop**: Przeciągnij pliki bezpośrednio do przeglądarki, aby błyskawicznie je wgrać.
+    - **Nowoczesny Dark Mode**: W pełni responsywny interfejs zoptymalizowany pod urządzenia mobilne i tablety.
+    - **Obsługa dużych plików**: Standardowa obsługa dokumentów do **100MB** (konfigurowalne w PHP).
+- **Zautomatyzowany Panel Administratora**:
+    - **Zarządzanie Użytkownikami**: Dodawanie kont z automatycznym przypisywaniem do grup Zarządu lub Pracowników.
+    - **Aktywne Uprawnienia**: Możliwość błyskawicznej zmiany roli użytkownika bezpośrednio w tabeli administracyjnej (auto-zapis).
+    - **Zarządzanie Folderami**: Tworzenie logicznych grup dokumentów z predefiniowanymi uprawnieniami (Zarząd i Pracownicy / Tylko Zarząd).
+- **Bezpieczeństwo i Technologia**:
+    - **Podpisywanie Pobierania**: Pliki są serwowane przez specjalny handler, uniemożliwiając bezpośredni dostęp do katalogu `uploads`.
+    - **Bezpieczne Hasłowanie**: Używamy algorytmu `PASSWORD_BCRYPT`.
+    - **Baza SQLite**: Brak konieczności konfiguracji MySQL – system działa "out of the box".
 
-### Dane domyślne (zmień po pierwszym zalogowaniu!):
-- **Login**: `admin@admin.com`
+## 🛡️ Bezpieczna Aktualizacja Produkcji
+
+System Sivis Drive zawiera dedykowany skrypt `update.sh` przeznaczony dla środowisk Linux, który zapewnia:
+1. **Kopię zapasową**: Automatycznie pakuje bazę danych i pliki do archiwum `.zip` przed zmianą.
+2. **Synchronizację**: Pobiera najnowsze zmiany z repozytorium GitHub.
+3. **Utrzymanie ARCHIWUM**: Skrypt przechowuje backupy przez ostatnie **7 dni**, automatycznie usuwając stare paczki.
+4. **Log zmian**: Informuje administratora w terminalu o treści ostatniej aktualizacji.
+
+*Użycie:* `./update.sh` (Pamiętaj o `chmod +x update.sh` przy pierwszej instalacji).
+
+## 🛠️ Instalacja i Konfiguracja
+
+1. Prześlij pliki na serwer (PHP 8.1+).
+2. Nadaj uprawnienia zapisu dla serwera WWW (`www-data`) do katalogu projektu.
+3. System automatycznie wygeneruje bazę danych `database.sqlite` przy pierwszym uruchomieniu.
+4. Przejdź proces instalacji przez `install.php` (automatyczne wykrywanie pierwszego uruchomienia).
+
+### Dane domyślne (zmień po zalogowaniu!):
+- **Admin**: `admin@admin.com`
 - **Hasło**: `admin123`
 
-## 💻 Testowanie lokalne (Windows)
-W celu przetestowania systemu lokalnie, jeśli masz zainstalowane PHP w zmiennych środowiskowych, po prostu uruchom plik:
-`run.bat`
-
-Skrypt ten automatycznie skonfiguruje limity uploadu i otworzy adres `http://localhost:8000`.
-
 ## 📁 Struktura projektu
-- `/uploads` – folder na wgrane pliki (ignorowany przez git).
-- `database.sqlite` – plik bazy danych (generowany automatycznie).
-- `db.php` – konfiguracja bazy danych.
-- `auth.php` – system logowania i uprawnień.
-- `index.php` – główna przeglądarka plików.
-- `admin.php` – panel administracyjny.
-- `download.php` – bezpieczny menedżer pobierania.
+
+- `index.php` – Przeglądarka dokumentów (Drag & Drop UI).
+- `admin.php` – Zarządzanie użytkownikami i uprawnieniami folderów.
+- `update.sh` – Skrypt bezpiecznej aktualizacji produkcyjnej.
+- `auth.php` – Logika autoryzacji i predefiniowane role.
+- `download.php` – Bezpieczny mechanizm pobierania plików.
+- `uploads/` – Katalog z wgranymi dokumentami (zabezpieczony).
 
 ---
-*Projekt stworzony jako lekki system do wewnętrznego użytku w firmie.*
+*Created with ❤️ by WowkDigital*

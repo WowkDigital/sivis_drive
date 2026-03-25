@@ -53,6 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $stmt->execute([$fid]);
             $message = "Plik został usunięty.";
         }
+    } elseif ($_POST['action'] === 'move_file' && isset($_POST['file_id']) && isset($_POST['new_folder_id']) && can_manage_files()) {
+        $fid = (int)$_POST['file_id'];
+        $new_folder_id = (int)$_POST['new_folder_id'];
+        $stmt = $db->prepare("UPDATE files SET folder_id = ? WHERE id = ?");
+        $stmt->execute([$new_folder_id, $fid]);
+        $message = "Plik został przeniesiony.";
     }
 }
 
@@ -250,14 +256,29 @@ if ($active_folder) {
                                                 <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell text-xs"><?= date('d.m.Y H:i', strtotime($file['created_at'])) ?></td>
                                                 <td class="px-5 py-4 whitespace-nowrap text-right text-sm shrink-0 w-px">
                                                     <div class="flex items-center justify-end gap-2 shrink-0">
+                                                        <?php if ($ext === 'pdf'): ?>
+                                                            <a href="download.php?id=<?= $file['id'] ?>&action=view" target="_blank" class="p-2 sm:px-4 sm:py-2 flex items-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg font-medium transition-all duration-200 shadow-sm" title="Podgląd">
+                                                                <i data-lucide="eye" class="w-4 h-4 sm:mr-1.5 shrink-0"></i> <span class="hidden sm:inline whitespace-nowrap shrink-0">Podgląd</span>
+                                                            </a>
+                                                        <?php endif; ?>
                                                         <a href="download.php?id=<?= $file['id'] ?>" class="p-2 sm:px-4 sm:py-2 flex items-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg font-medium transition-all duration-200 shadow-sm">
                                                             <i data-lucide="download" class="w-4 h-4 sm:mr-1.5 shrink-0"></i> <span class="hidden sm:inline whitespace-nowrap shrink-0">Pobierz</span>
                                                         </a>
                                                         <?php if (can_manage_files()): ?>
+                                                        <form method="post" class="inline shrink-0 mr-1">
+                                                            <input type="hidden" name="action" value="move_file">
+                                                            <input type="hidden" name="file_id" value="<?= $file['id'] ?>">
+                                                            <select name="new_folder_id" onchange="this.form.submit()" class="bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 focus:border-blue-500 outline-none transition-all cursor-pointer h-9 px-2" title="Przenieś plik">
+                                                                <option value="" disabled selected>Przenieś do...</option>
+                                                                <?php foreach ($folders as $fold): if ($fold['id'] != $active_folder_id): ?>
+                                                                <option value="<?= $fold['id'] ?>"><?= htmlspecialchars($fold['name']) ?></option>
+                                                                <?php endif; endforeach; ?>
+                                                            </select>
+                                                        </form>
                                                         <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline shrink-0">
                                                             <input type="hidden" name="action" value="delete_file">
                                                             <input type="hidden" name="file_id" value="<?= $file['id'] ?>">
-                                                            <button type="submit" title="Usuń" class="p-2 sm:px-3 sm:py-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all duration-200 flex items-center shrink-0">
+                                                            <button type="submit" title="Usuń" class="p-2 sm:px-3 sm:py-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all duration-200 flex items-center shrink-0 h-9">
                                                                 <i data-lucide="trash-2" class="w-4 h-4 shrink-0"></i>
                                                             </button>
                                                         </form>
