@@ -1,0 +1,19 @@
+# Systemowy
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Baza danych ( SQLite )
+database.sqlite
+
+# Pliki uzytkownikow
+uploads/
+!uploads/.gitkeep
+
+# Tymczasowe / Debugowanie
+debug.php
+*.log
+
+# Dane przegladarki lub inne IDE (np. VS Code)
+.vscode/
+.idea/
