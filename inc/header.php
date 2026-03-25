@@ -35,7 +35,7 @@
                 <div class="flex flex-wrap justify-center gap-3 items-center">
                     <span class="text-sm text-slate-400 hidden sm:flex items-center gap-2">
                         Zalogowano: 
-                        <span class="font-semibold text-slate-200"><?= htmlspecialchars($_SESSION['display_name'] ?: $_SESSION['email']) ?></span>
+                        <span class="font-semibold text-slate-200"><?= htmlspecialchars(($_SESSION['display_name'] ?? '') ?: $_SESSION['email']) ?></span>
                         <button onclick="const n=prompt('Zmień wyświetlaną nazwę:', '<?= htmlspecialchars($_SESSION['display_name'] ?? '') ?>'); if(n){document.getElementById('update_my_name_val').value=n; document.getElementById('update_my_name_form').submit();}" class="p-1 hover:text-blue-400 transition-colors" title="Edytuj profil">
                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                         </button>
