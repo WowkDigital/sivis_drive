@@ -63,46 +63,36 @@
                 }
 
                 // Render items
-                const tbody = document.getElementById('files-tbody');
-                if (tbody) {
-                    // Remove empty state if items exist
-                    const container = document.getElementById('items-container');
-                    if (data.items.length > 0 || offset > 0) {
-                        const emptyState = document.getElementById('empty-state');
-                        if (emptyState) emptyState.remove();
-                        
-                        // If it's the first load and we don't have a table yet, we need to create it
-                        if (!tbody.closest('table')) {
-                             container.innerHTML = `
-                                <div class="overflow-x-auto -mx-5 sm:mx-0">
-                                    <div class="inline-block min-w-full align-middle">
-                                        <table class="w-full">
-                                            <thead>
-                                                <tr class="border-b border-slate-700 text-left">
-                                                    <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
-                                                    <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell w-32 text-center">Rozmiar / Typ</th>
-                                                    <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell w-40 text-center">Data</th>
-                                                    <th class="px-5 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider w-px whitespace-nowrap">Akcje</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="files-tbody" class="divide-y divide-slate-700/50"></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                             `;
-                             return loadFolder(folderId, offset, false); // Re-run to fill the newly created tbody
-                        }
-                    } else {
+                const container = document.getElementById('items-container');
+                if (!container) return;
+
+                if (data.items.length > 0 || offset > 0) {
+                    let tbody = document.getElementById('files-tbody');
+                    
+                    // If table doesn't exist, create it
+                    if (!tbody) {
                         container.innerHTML = `
-                            <div id="empty-state" class="text-center py-16 flex flex-col items-center">
-                                <div class="bg-slate-900 p-4 rounded-full mb-4 ring-1 ring-slate-700">
-                                    <i data-lucide="file-question" class="w-10 h-10 text-slate-500"></i>
+                            <div class="overflow-x-auto -mx-5 sm:mx-0">
+                                <div class="inline-block min-w-full align-middle">
+                                    <table class="w-full">
+                                        <thead>
+                                            <tr class="border-b border-slate-700 text-left">
+                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
+                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell w-32 text-center text-center">Rozmiar / Typ</th>
+                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell w-40 text-center text-center">Data</th>
+                                                <th class="px-5 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider w-px whitespace-nowrap">Akcje</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="files-tbody" class="divide-y divide-slate-700/50"></tbody>
+                                    </table>
                                 </div>
-                                <h3 class="text-lg font-medium text-slate-300">Folder jest pusty</h3>
-                                <p class="text-slate-500 mt-2">Brak plików i podfolderów w tej lokalizacji.</p>
                             </div>
                         `;
+                        tbody = document.getElementById('files-tbody');
                     }
+
+                    const emptyState = document.getElementById('empty-state');
+                    if (emptyState) emptyState.remove();
 
                     data.items.forEach(item => {
                         const tr = document.createElement('tr');
@@ -203,6 +193,16 @@
                         }
                         tbody.appendChild(tr);
                     });
+                } else {
+                    container.innerHTML = `
+                        <div id="empty-state" class="text-center py-16 flex flex-col items-center">
+                            <div class="bg-slate-900 p-4 rounded-full mb-4 ring-1 ring-slate-700">
+                                <i data-lucide="file-question" class="w-10 h-10 text-slate-500"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-slate-300">Folder jest pusty</h3>
+                            <p class="text-slate-500 mt-2">Brak plików i podfolderów w tej lokalizacji.</p>
+                        </div>
+                    `;
                 }
 
                 // Update pagination
