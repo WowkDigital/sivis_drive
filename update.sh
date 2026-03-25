@@ -79,6 +79,9 @@ git pull origin "$GIT_BRANCH"
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}[OK] Synchronizacja repozytorium powiodła się.${NC}"
+    echo -e "${YELLOW}Co się zmieniło w tej aktualizacji:${NC}"
+    git log -1 --pretty=format:"%C(blue)%h%C(reset) - %C(green)%s%C(reset) (%cr) <%an>"
+    echo -e "\n"
 else
     echo -e "${RED}[BŁĄD KRYTYCZNY] Wystąpił błąd synchronizacji Git! Opcjonalnie wczytaj kopię ${BACKUP_FILE}${NC}"
     exit 1

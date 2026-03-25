@@ -145,20 +145,17 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                         <label class="block text-sm font-medium text-slate-400 mb-1.5">Adres E-mail</label>
                         <input type="email" name="email" required placeholder="jan@firma.pl" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder-slate-600">
                     </div>
-                    <div class="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-400 mb-1.5">Rola</label>
-                            <div class="relative">
-                                <select name="role" class="w-full appearance-none bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all cursor-pointer">
-                                    <option value="pracownik">Pracownik</option>
-                                    <option value="zarząd">Zarząd</option>
-                                    <option value="admin">Administrator</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
-                                </div>
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-slate-400 mb-1.5">Rola</label>
+                        <div class="relative">
+                            <select name="role" class="w-full appearance-none bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all cursor-pointer">
+                                <option value="pracownik">Pracownik</option>
+                                <option value="zarząd">Zarząd</option>
+                                <option value="admin">Administrator</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
                             </div>
-                        </div>
                         </div>
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 w-full flex items-center justify-center font-medium transition-all duration-200">
