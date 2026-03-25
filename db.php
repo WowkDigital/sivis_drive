@@ -23,8 +23,16 @@ try { @$db->exec("ALTER TABLE users ADD COLUMN last_login DATETIME"); } catch (E
 $db->exec("CREATE TABLE IF NOT EXISTS folders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT,
-    access_groups TEXT
+    access_groups TEXT,
+    parent_id INTEGER DEFAULT NULL,
+    owner_id INTEGER DEFAULT NULL,
+    FOREIGN KEY(parent_id) REFERENCES folders(id),
+    FOREIGN KEY(owner_id) REFERENCES users(id)
 )");
+
+// Migrate: Add parent_id and owner_id if missing
+try { @$db->exec("ALTER TABLE folders ADD COLUMN parent_id INTEGER DEFAULT NULL"); } catch (Exception $e) {}
+try { @$db->exec("ALTER TABLE folders ADD COLUMN owner_id INTEGER DEFAULT NULL"); } catch (Exception $e) {}
 
 $db->exec("CREATE TABLE IF NOT EXISTS files (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

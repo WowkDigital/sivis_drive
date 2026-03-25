@@ -39,23 +39,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fid = (int)$_POST['folder_id'];
             $upload_dir = __DIR__ . '/uploads';
             
-            // Delete all files in this folder from disk
-            $stmt = $db->prepare("SELECT name FROM files WHERE folder_id = ?");
-            $stmt->execute([$fid]);
+            function get_all_child_folders($db, $parent_id) {
+                $ids = [$parent_id];
+                $stmt = $db->prepare("SELECT id FROM folders WHERE parent_id = ?");
+                $stmt->execute([$parent_id]);
+                $children = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                foreach ($children as $child_id) {
+                    $ids = array_merge($ids, get_all_child_folders($db, $child_id));
+                }
+                return $ids;
+            }
+
+            $all_ids = get_all_child_folders($db, $fid);
+            $ids_placeholder = implode(',', array_fill(0, count($all_ids), '?'));
+
+            // Delete all files in these folders from disk
+            $stmt = $db->prepare("SELECT name FROM files WHERE folder_id IN ($ids_placeholder)");
+            $stmt->execute($all_ids);
             $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
             foreach ($files as $f) {
                 @unlink($upload_dir . '/' . $f['name']);
             }
             
             // Delete files from DB
-            $stmt = $db->prepare("DELETE FROM files WHERE folder_id = ?");
-            $stmt->execute([$fid]);
+            $db->prepare("DELETE FROM files WHERE folder_id IN ($ids_placeholder)")->execute($all_ids);
             
-            // Delete folder from DB
-            $stmt = $db->prepare("DELETE FROM folders WHERE id = ?");
-            $stmt->execute([$fid]);
+            // Delete folders from DB (reverse to avoid FK issues if they were enforced)
+            $all_ids_rev = array_reverse($all_ids);
+            foreach ($all_ids_rev as $id) {
+                $db->prepare("DELETE FROM folders WHERE id = ?")->execute([$id]);
+            }
             
-            $message = "Folder i jego zawartość zostały usunięte.";
+            $message = "Folder i cała jego struktura zostały usunięte.";
         } elseif ($_POST['action'] === 'update_folder') {
             $fid = (int)$_POST['folder_id'];
             $access = $_POST['access_groups'];
