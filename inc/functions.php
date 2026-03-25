@@ -49,16 +49,49 @@ function can_user_access_folder($db, $folder_id, $user_id, $user_role, $user_gro
 }
 
 /**
+ * Recursively delete a folder and its contents
+ */
+function delete_folder_recursive($db, $folder_id, $upload_dir) {
+    // Get all children
+    $stmt = $db->prepare("SELECT id FROM folders WHERE parent_id = ?");
+    $stmt->execute([$folder_id]);
+    $children = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    foreach ($children as $child_id) {
+        delete_folder_recursive($db, $child_id, $upload_dir);
+    }
+    
+    // Delete files in this folder from disk
+    $stmt = $db->prepare("SELECT name FROM files WHERE folder_id = ?");
+    $stmt->execute([$folder_id]);
+    $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($files as $f) {
+        @unlink($upload_dir . '/' . $f['name']);
+    }
+    
+    // Delete files from DB
+    $db->prepare("DELETE FROM files WHERE folder_id = ?")->execute([$folder_id]);
+    
+    // Delete folder from DB
+    $db->prepare("DELETE FROM folders WHERE id = ?")->execute([$folder_id]);
+}
+
+/**
  * Get total stats for user's private tree
  */
 function get_private_usage($db, $user_id) {
     // Get all folders in user's tree
     $folder_ids = [];
-    $to_check = $db->query("SELECT id FROM folders WHERE owner_id = $user_id AND parent_id IS NULL")->fetchAll(PDO::FETCH_COLUMN);
+    $stmt = $db->prepare("SELECT id FROM folders WHERE owner_id = ? AND parent_id IS NULL");
+    $stmt->execute([$user_id]);
+    $to_check = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
     while (!empty($to_check)) {
         $curr = array_pop($to_check);
         $folder_ids[] = $curr;
-        $children = $db->query("SELECT id FROM folders WHERE parent_id = $curr")->fetchAll(PDO::FETCH_COLUMN);
+        $stmt = $db->prepare("SELECT id FROM folders WHERE parent_id = ?");
+        $stmt->execute([$curr]);
+        $children = $stmt->fetchAll(PDO::FETCH_COLUMN);
         $to_check = array_merge($to_check, $children);
     }
     

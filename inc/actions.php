@@ -41,13 +41,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } elseif ($_POST['action'] === 'create_folder' && isset($_POST['name']) && isset($_POST['parent_id'])) {
         $name = $_POST['name'];
         $parent_id = (int)$_POST['parent_id'];
-        // Check if user owns the parent tree or is admin
-        if (is_admin() || is_private_tree($db, $parent_id, $_SESSION['user_id'])) {
-             $stmt = $db->prepare("INSERT INTO folders (name, parent_id) VALUES (?, ?)");
-             $stmt->execute([$name, $parent_id]);
+        
+        // Check if user owns the parent tree or is admin/zarząd (for shared folders)
+        $is_private = is_private_tree($db, $parent_id, $_SESSION['user_id']);
+        $can_edit_parent = is_admin() || is_zarzad() || $is_private;
+
+        if ($can_edit_parent) {
+             // Inherit owner_id from parent
+             $stmt = $db->prepare("SELECT owner_id FROM folders WHERE id = ?");
+             $stmt->execute([$parent_id]);
+             $owner_id = $stmt->fetchColumn();
+
+             $stmt = $db->prepare("INSERT INTO folders (name, parent_id, owner_id) VALUES (?, ?, ?)");
+             $stmt->execute([$name, $parent_id, $owner_id]);
              $message = "Podfolder został utworzony.";
              header("Location: index.php?folder=" . $parent_id);
              exit;
+        }
+    } elseif ($_POST['action'] === 'create_shared_folder' && isset($_POST['name'])) {
+        if (is_admin() || is_zarzad()) {
+            $name = $_POST['name'];
+            $stmt = $db->prepare("INSERT INTO folders (name, owner_id, access_groups) VALUES (?, NULL, 'zarząd,pracownicy')");
+            $stmt->execute([$name]);
+            $message = "Nowy folder udostępniony został utworzony.";
+            header("Location: index.php");
+            exit;
         }
     } elseif ($_POST['action'] === 'delete_file' && isset($_POST['file_id'])) {
         $fid = (int)$_POST['file_id'];

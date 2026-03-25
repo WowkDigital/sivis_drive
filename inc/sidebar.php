@@ -46,8 +46,17 @@
 
     <!-- Section: Udostępnione Foldery -->
     <div class="bg-slate-800 shadow-xl rounded-2xl p-5 border border-slate-700">
-        <h2 class="text-xs font-bold mb-4 flex items-center text-slate-500 uppercase tracking-widest leading-none">
-            Udostępnione foldery
+        <h2 class="text-xs font-bold mb-4 flex items-center justify-between text-slate-500 uppercase tracking-widest leading-none">
+            <span>Udostępnione foldery</span>
+            <?php if (is_admin() || is_zarzad()): ?>
+                <button onclick="const n=prompt('Nazwa nowego folderu udostępnionego:'); if(n){document.getElementById('new_shared_folder_name').value=n; document.getElementById('new_shared_folder_form').submit();}" class="p-1 hover:text-emerald-400 transition-colors" title="Dodaj folder udostępniony">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                </button>
+                <form id="new_shared_folder_form" method="post" class="hidden">
+                    <input type="hidden" name="action" value="create_shared_folder">
+                    <input type="hidden" name="name" id="new_shared_folder_name">
+                </form>
+            <?php endif; ?>
         </h2>
         <ul class="space-y-1.5">
             <?php if (empty($shared_folders)): ?>
