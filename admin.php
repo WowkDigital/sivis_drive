@@ -62,6 +62,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $db->prepare('UPDATE folders SET access_groups = ? WHERE id = ?');
             $stmt->execute([$access, $fid]);
             $message = "Uprawnienia folderu zaktualizowane.";
+        } elseif ($_POST['action'] === 'update_user_role') {
+            $uid = (int)$_POST['user_id'];
+            $role = $_POST['role'];
+            $group = ($role === 'zarząd') ? 'zarząd' : 'pracownicy';
+            
+            $stmt = $db->prepare('UPDATE users SET role = ?, user_group = ? WHERE id = ?');
+            $stmt->execute([$role, $group, $uid]);
+            $message = "Rola użytkownika zaktualizowana.";
         }
     }
 }
@@ -151,13 +159,6 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-400 mb-1.5">Uprawnienia</label>
-                            <div class="relative">
-                                <span class="block w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-4 py-2.5 text-slate-500 text-sm italic">
-                                    Automatycznie wg. wybranej roli
-                                </span>
-                            </div>
                         </div>
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 w-full flex items-center justify-center font-medium transition-all duration-200">
@@ -229,10 +230,24 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                                        <div class="flex flex-col">
-                                            <span class="font-bold text-xs uppercase tracking-wider text-slate-300"><?= htmlspecialchars($u['role']) ?></span>
-                                            <span class="text-xs italic text-slate-500 mt-1"><i data-lucide="users" class="w-3 h-3 inline pb-0.5"></i> <?= htmlspecialchars($u['user_group']) ?></span>
-                                        </div>
+                                        <?php if ($u['id'] != $_SESSION['user_id']): ?>
+                                        <form method="post" class="flex items-center gap-2">
+                                            <input type="hidden" name="action" value="update_user_role">
+                                            <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                            <div class="relative">
+                                                <select name="role" onchange="this.form.submit()" class="appearance-none bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 focus:border-blue-500 outline-none transition-all cursor-pointer">
+                                                    <option value="pracownik" <?= $u['role'] == 'pracownik' ? 'selected' : '' ?>>Pracownik</option>
+                                                    <option value="zarząd" <?= $u['role'] == 'zarząd' ? 'selected' : '' ?>>Zarząd</option>
+                                                    <option value="admin" <?= $u['role'] == 'admin' ? 'selected' : '' ?>>Administrator</option>
+                                                </select>
+                                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                                                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                                                </div>
+                                            </div>
+                                        </form>
+                                        <?php else: ?>
+                                            <span class="font-bold text-xs uppercase tracking-wider text-slate-500 italic">Administrator (To Ty)</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
                                         <?php if ($u['id'] != $_SESSION['user_id']): ?>
@@ -285,11 +300,11 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <form method="post" class="flex items-center gap-2 group/edit">
+                                        <form method="post" class="flex items-center gap-2">
                                             <input type="hidden" name="action" value="update_folder">
                                             <input type="hidden" name="folder_id" value="<?= $f['id'] ?>">
                                             <div class="relative">
-                                                <select name="access_groups" class="appearance-none bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-8 py-1.5 text-xs text-slate-300 focus:border-blue-500 outline-none transition-all cursor-pointer">
+                                                <select name="access_groups" onchange="this.form.submit()" class="appearance-none bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-8 py-1.5 text-xs text-slate-300 focus:border-blue-500 outline-none transition-all cursor-pointer">
                                                     <option value="zarząd,pracownicy" <?= $f['access_groups'] == 'zarząd,pracownicy' ? 'selected' : '' ?>>Wszyscy</option>
                                                     <option value="zarząd" <?= $f['access_groups'] == 'zarząd' ? 'selected' : '' ?>>Tylko Zarząd</option>
                                                 </select>
@@ -297,9 +312,6 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                                                     <i data-lucide="chevron-down" class="w-3 h-3"></i>
                                                 </div>
                                             </div>
-                                            <button type="submit" class="p-1.5 text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition-all opacity-0 group-hover/edit:opacity-100" title="Zapisz zmiany">
-                                                <i data-lucide="save" class="w-4 h-4"></i>
-                                            </button>
                                         </form>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
