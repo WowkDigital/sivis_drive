@@ -4,6 +4,12 @@ Nowoczesny, bezpieczny i wydajny system udostępniania plików dla firm, zbudowa
 
 ## 🌟 Kluczowe Funkcje
 
+Pełna dokumentacja techniczna dostępna w pliku: [DOKUMENTACJA.md](DOKUMENTACJA.md)
+
+- **Hierarchia i Prywatność**: 
+    - **Podfoldery**: Tworzenie wielopoziomowych struktur w każdym folderze.
+    - **Prywatne Przestrzenie**: Każdy pracownik ma swój folder z limitem **500 plików / 500MB**.
+    - **Wgląd Zarządu**: Członkowie Zarządu widzą i mogą zarządzać folderami wszystkich pracowników.
 - **Intuicyjny Interfejs Plików**:
     - **Wygodny Drag & Drop**: Przeciągnij pliki bezpośrednio do przeglądarki, aby błyskawicznie je wgrać.
     - **Nowoczesny Dark Mode**: W pełni responsywny interfejs zoptymalizowany pod urządzenia mobilne i tablety.
@@ -38,14 +44,14 @@ System Sivis Drive zawiera dedykowany skrypt `update.sh` przeznaczony dla środo
 - **Admin**: `admin@admin.com`
 - **Hasło**: `admin123`
 
-## 📁 Struktura projektu
+## 📁 Struktura projektu (Modułowa)
 
-- `index.php` – Przeglądarka dokumentów (Drag & Drop UI).
-- `admin.php` – Zarządzanie użytkownikami i uprawnieniami folderów.
-- `update.sh` – Skrypt bezpiecznej aktualizacji produkcyjnej.
-- `auth.php` – Logika autoryzacji i predefiniowane role.
-- `download.php` – Bezpieczny mechanizm pobierania plików.
-- `uploads/` – Katalog z wgranymi dokumentami (zabezpieczony).
+- `index.php` – Główny punkt wejściowy (złożony z modułów `/inc`).
+- `inc/` – Katalog z komponentami (Sidebar, Header, Actions, AJAX).
+- `admin.php` – Statystyki zbiorcze i zarządzanie rolami.
+- `auth.php` – Silnik autoryzacji i predefiniowane role.
+- `download.php` – Bezpieczne serwowanie plików (handler).
+- `uploads/` – Katalog chroniony z dokumentami.
 
 ---
 *Created with ❤️ by WowkDigital*
