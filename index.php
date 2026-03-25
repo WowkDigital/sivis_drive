@@ -181,8 +181,8 @@ if ($active_folder) {
 
                         <?php if (can_manage_files()): ?>
                             <!-- Upload form for admin and zarząd -->
-                            <div class="bg-slate-900/50 p-5 rounded-xl mb-6 border border-dashed border-slate-600">
-                                <form method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
+                            <div id="drop-zone" class="bg-slate-900/50 p-5 rounded-xl mb-6 border border-dashed border-slate-600 transition-all duration-300">
+                                <form id="upload-form" method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
                                     <input type="hidden" name="action" value="upload">
                                     <input type="hidden" name="folder_id" value="<?= $active_folder['id'] ?>">
                                     <div class="hidden sm:block p-3 bg-slate-800 rounded-full">
@@ -281,8 +281,51 @@ if ($active_folder) {
             </div>
         </div>
     </div>
+    <footer class="max-w-7xl mx-auto py-8 px-4 text-center">
+        <p class="text-slate-500 text-sm flex items-center justify-center gap-1.5">
+            Made with <i data-lucide="heart" class="w-4 h-4 text-red-500 fill-red-500"></i> by <span class="font-bold text-slate-400">WowkDigital</span>
+        </p>
+    </footer>
+
     <script>
         lucide.createIcons();
+
+        // Drag and Drop Logic
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.querySelector('input[type="file"]');
+        const uploadForm = document.getElementById('upload-form');
+
+        if (dropZone && fileInput) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.add('border-blue-500', 'bg-blue-500/5');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.remove('border-blue-500', 'bg-blue-500/5');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', e => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                fileInput.files = files;
+                
+                // Optional: Auto-submit on drop
+                if (files.length > 0) {
+                    uploadForm.submit();
+                }
+            }, false);
+        }
     </script>
 </body>
 </html>
