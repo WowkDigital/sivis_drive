@@ -18,9 +18,9 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
         exit;
     }
 
-    // Check permissions
-    $can_access = is_admin() || is_zarzad() || is_private_tree($db, $fid, $_SESSION['user_id']);
-    if (!$can_access) {
+    $role = $_SESSION['role'] ?? 'pracownik';
+    $group = get_user_group();
+    if (!can_user_access_folder($db, $fid, $_SESSION['user_id'], $role, $group)) {
          echo json_encode(['error' => 'Brak uprawnień']);
          exit;
     }
@@ -75,30 +75,13 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
 }
 
 if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_move_targets') {
-    // Get all folders based on roles
+    $role = $_SESSION['role'] ?? 'pracownik';
+    $group = get_user_group();
     $all = $db->query("SELECT * FROM folders ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
     $accessible = [];
     
     foreach ($all as $f) {
-        $can_see = false;
-        if (is_admin()) {
-            $can_see = true;
-        } elseif (is_zarzad()) {
-            $can_see = true; // Zarząd sees everything
-        } else {
-            // Private check
-            if ($f['owner_id'] == $_SESSION['user_id'] || is_private_tree($db, $f['id'], $_SESSION['user_id'])) {
-                $can_see = true;
-            } elseif ($f['owner_id'] === null) {
-                // Shared check
-                $groups = array_map('trim', explode(',', $f['access_groups'] ?? ''));
-                if (empty($f['access_groups']) || in_array(get_user_group(), $groups)) {
-                    $can_see = true;
-                }
-            }
-        }
-        
-        if ($can_see) {
+        if (can_user_access_folder($db, $f['id'], $_SESSION['user_id'], $role, $group)) {
             $accessible[] = [
                 'id' => $f['id'],
                 'name' => $f['name'],

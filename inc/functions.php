@@ -1,9 +1,5 @@
 <?php
 /**
- * Helper functions for Sivis Drive
- */
-
-/**
  * Check if a folder belongs to a user's private tree
  */
 function is_private_tree($db, $folder_id, $user_id) {
@@ -15,9 +11,41 @@ function is_private_tree($db, $folder_id, $user_id) {
         $folder = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$folder) return false;
         if ($folder['owner_id'] == $user_id) return true;
+        if (!$folder['parent_id']) break;
         $curr = $folder['parent_id'];
     }
     return false;
+}
+
+/**
+ * Check if a user can access a folder (recursive)
+ */
+function can_user_access_folder($db, $folder_id, $user_id, $user_role, $user_group) {
+    if (!$folder_id) return false;
+    if ($user_role === 'admin' || $user_role === 'zarząd') return true;
+
+    $curr = $folder_id;
+    while ($curr) {
+        $stmt = $db->prepare("SELECT parent_id, owner_id, access_groups FROM folders WHERE id = ?");
+        $stmt->execute([$curr]);
+        $folder = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$folder) return false;
+
+        // Private folder check
+        if ($folder['owner_id'] !== null) {
+            return ($folder['owner_id'] == $user_id);
+        }
+
+        // Shared folder check (if restricted)
+        if ($folder['access_groups'] && trim($folder['access_groups']) !== '') {
+            $allowed = array_map('trim', explode(',', $folder['access_groups']));
+            if (!in_array($user_group, $allowed)) return false;
+        }
+
+        if (!$folder['parent_id']) break;
+        $curr = $folder['parent_id'];
+    }
+    return true; // Default allowed for public root folders
 }
 
 /**

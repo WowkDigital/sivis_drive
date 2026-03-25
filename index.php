@@ -48,6 +48,13 @@ foreach ($all_root_folders as $f) {
 $active_folder_id = isset($_GET['folder']) ? (int)$_GET['folder'] : ($shared_folders[0]['id'] ?? $my_folders[0]['id'] ?? 0);
 $active_folder = null;
 if ($active_folder_id) {
+    $role = $_SESSION['role'] ?? 'pracownik';
+    $group = get_user_group();
+    if (!can_user_access_folder($db, $active_folder_id, $_SESSION['user_id'], $role, $group)) {
+        header("Location: index.php");
+        exit;
+    }
+
     $stmt = $db->prepare("SELECT * FROM folders WHERE id = ?");
     $stmt->execute([$active_folder_id]);
     $active_folder = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -181,6 +188,40 @@ require_once 'inc/header.php';
                         <p class="text-slate-400 max-w-sm mx-auto">Wybierz folder z nawigacji obok, aby zobaczyć jego zawartość lub wgrać nowe pliki dokumentów.</p>
                     </div>
                 <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Move File Modal -->
+    <div id="move-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-800 w-full max-w-lg rounded-3xl border border-slate-700 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
+                <div class="flex items-center">
+                    <div class="p-2 bg-orange-500/10 rounded-xl mr-4">
+                        <i data-lucide="folder-input" class="w-6 h-6 text-orange-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white leading-tight">Przenieś plik</h3>
+                        <p id="move-modal-filename" class="text-xs text-slate-500 truncate max-w-[200px]"></p>
+                    </div>
+                </div>
+                <button onclick="closeMoveModal()" class="p-2 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-all">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="p-2 max-h-[400px] overflow-y-auto" id="modal-folder-list">
+                <!-- Sorted Tree via JS -->
+            </div>
+            
+            <form id="modal-move-form" method="post" class="hidden">
+                <input type="hidden" name="action" value="move_file">
+                <input type="hidden" name="file_id" id="modal-move-file-id">
+                <input type="hidden" name="new_folder_id" id="modal-move-new-folder-id">
+            </form>
+
+            <div class="p-4 bg-slate-900/30 border-t border-slate-700 flex justify-end gap-3">
+                <button onclick="closeMoveModal()" class="px-5 py-2.5 text-sm font-bold text-slate-400 hover:text-slate-200 transition-colors">Anuluj</button>
             </div>
         </div>
     </div>

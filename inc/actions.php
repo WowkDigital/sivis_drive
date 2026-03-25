@@ -73,7 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt->execute([$fid]);
         $old_folder_id = $stmt->fetchColumn();
         
-        $can_move = (is_admin() || is_zarzad() || (is_private_tree($db, $old_folder_id, $_SESSION['user_id']) && is_private_tree($db, $new_folder_id, $_SESSION['user_id'])));
+        $role = $_SESSION['role'] ?? 'pracownik';
+        $group = get_user_group();
+
+        $can_move = can_user_access_folder($db, $old_folder_id, $_SESSION['user_id'], $role, $group) 
+                 && can_user_access_folder($db, $new_folder_id, $_SESSION['user_id'], $role, $group);
         
         if ($can_move) {
             $db->prepare("UPDATE files SET folder_id = ? WHERE id = ?")->execute([$new_folder_id, $fid]);

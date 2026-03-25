@@ -19,32 +19,77 @@
         async function fetchMoveTargets() {
             try {
                 const res = await fetch('index.php?ajax_action=get_move_targets');
-                const data = await res.json();
-                
-                // Build a simple tree with indentation
-                const tree = [];
-                const map = {};
-                data.forEach(f => map[f.id] = {...f, children: []});
-                data.forEach(f => {
-                    if (f.parent_id && map[f.parent_id]) {
-                        map[f.parent_id].children.push(map[f.id]);
-                    } else {
-                        tree.push(map[f.id]);
-                    }
-                });
-
-                const flatted = [];
-                const flatten = (nodes, depth = 0) => {
-                    nodes.forEach(n => {
-                        flatted.push({id: n.id, name: "  ".repeat(depth) + (depth > 0 ? "┕ " : "") + n.name});
-                        flatten(n.children, depth + 1);
-                    });
-                };
-                flatten(tree);
-                moveTargets = flatted;
+                moveTargets = await res.json();
             } catch (e) {
                 console.error('Error fetching targets:', e);
             }
+        }
+
+        function openMoveModal(fileId, filename) {
+            const modal = document.getElementById('move-modal');
+            const list = document.getElementById('modal-folder-list');
+            document.getElementById('modal-move-file-id').value = fileId;
+            document.getElementById('move-modal-filename').innerText = filename;
+
+            // Render Tree nicely
+            const tree = [];
+            const map = {};
+            moveTargets.forEach(f => map[f.id] = {...f, children: []});
+            moveTargets.forEach(f => {
+                if (f.parent_id && map[f.parent_id]) {
+                    map[f.parent_id].children.push(map[f.id]);
+                } else {
+                    tree.push(map[f.id]);
+                }
+            });
+
+            const renderNodes = (nodes, depth = 0) => {
+                let html = '';
+                nodes.forEach(n => {
+                    const isCurrent = n.id == currentFolderId;
+                    html += `
+                        <div class="group/folder px-2 py-1">
+                            <button onclick="confirmMove(${n.id})" 
+                                    class="w-full text-left flex items-center px-4 py-3 rounded-2xl transition-all duration-200 
+                                    ${isCurrent ? 'bg-orange-500/5 border border-orange-500/20 text-orange-400 cursor-default opacity-50' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}" 
+                                    ${isCurrent ? 'disabled' : ''}>
+                                <div class="flex items-center min-w-0" style="margin-left: ${depth * 1.5}rem">
+                                    <div class="p-1.5 rounded-lg mr-3 ${isCurrent ? 'bg-orange-500/10' : 'bg-slate-900 group-hover/folder:bg-slate-600'} transition-colors">
+                                        <i data-lucide="folder" class="w-4 h-4 ${isCurrent ? 'text-orange-400' : 'text-blue-400'}"></i>
+                                    </div>
+                                    <span class="truncate font-medium">${n.name}</span>
+                                    ${isCurrent ? '<span class="ml-auto text-[10px] uppercase font-bold tracking-widest opacity-50">(Tu jest plik)</span>' : ''}
+                                </div>
+                            </button>
+                            ${n.children.length > 0 ? renderNodes(n.children, depth + 1) : ''}
+                        </div>
+                    `;
+                });
+                return html;
+            };
+
+            list.innerHTML = renderNodes(tree);
+            lucide.createIcons();
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeMoveModal() {
+            const modal = document.getElementById('move-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function confirmMove(folderId) {
+            document.getElementById('modal-move-new-folder-id').value = folderId;
+            document.getElementById('modal-move-form').submit();
         }
 
         function copyFolderLink(btn) {
@@ -125,8 +170,8 @@
                                         <thead>
                                             <tr class="border-b border-slate-700 text-left">
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
-                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell w-32 text-center text-center">Rozmiar / Typ</th>
-                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell w-40 text-center text-center">Data</th>
+                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell w-32 text-center text-center text-center">Rozmiar / Typ</th>
+                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell w-40 text-center text-center text-center">Data</th>
                                                 <th class="px-5 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider w-px whitespace-nowrap">Akcje</th>
                                             </tr>
                                         </thead>
@@ -185,30 +230,14 @@
                                 previewBtn = `<a href="download.php?id=${item.id}&action=view" target="_blank" class="p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Podgląd"><i data-lucide="eye" class="w-4.5 h-4.5"></i></a>`;
                             }
 
-                            let moveOptions = '<option value="" disabled selected>Przenieś do...</option>';
-                            moveTargets.forEach(t => {
-                                if (t.id != currentFolderId) {
-                                    moveOptions += `<option value="${t.id}">${t.name}</option>`;
-                                }
-                            });
-
                             let actions = `
                                 <div class="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
                                     ${previewBtn}
                                     <a href="download.php?id=${item.id}" class="p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 shadow-sm" title="Pobierz"><i data-lucide="download" class="w-4.5 h-4.5"></i></a>
                                     ${data.can_edit ? `
-                                        <div class="relative group/move shrink-0">
-                                            <form method="post" class="m-0">
-                                                <input type="hidden" name="action" value="move_file">
-                                                <input type="hidden" name="file_id" value="${item.id}">
-                                                <div class="p-2 flex items-center justify-center bg-slate-700/50 group-hover/move:bg-orange-500/20 group-hover/move:text-orange-300 rounded-lg transition-all duration-200 border border-transparent group-hover/move:border-orange-500/30">
-                                                    <i data-lucide="folder-input" class="w-4.5 h-4.5"></i>
-                                                </div>
-                                                <select name="new_folder_id" onchange="this.form.submit()" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="Przenieś plik">
-                                                    ${moveOptions}
-                                                </select>
-                                            </form>
-                                        </div>
+                                        <button onclick="openMoveModal(${item.id}, '${item.original_name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-slate-700/50 hover:bg-orange-500/20 hover:text-orange-300 rounded-lg transition-all duration-200 border border-transparent hover:border-orange-500/30" title="Przenieś plik">
+                                            <i data-lucide="folder-input" class="w-4.5 h-4.5"></i>
+                                        </button>
                                         <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline m-0 shrink-0">
                                             <input type="hidden" name="action" value="delete_file">
                                             <input type="hidden" name="file_id" value="${item.id}">
@@ -232,8 +261,8 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden sm:table-cell text-xs text-center">${sizeVal}</td>
-                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell text-xs text-center">${dateTimeStr}</td>
+                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden sm:table-cell text-xs text-center text-center text-center">${sizeVal}</td>
+                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell text-xs text-center text-center text-center">${dateTimeStr}</td>
                                 <td class="px-3 py-4 whitespace-nowrap text-right text-sm shrink-0 w-px">${actions}</td>
                             `;
                         }
