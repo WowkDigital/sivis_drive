@@ -5,8 +5,8 @@
 # ==============================================================================
 
 # Ustawienia
-APP_DIR="/var/www/sivis_drive"          # Pełna ścieżka do aplikacji na serwerze
-BACKUP_DIR="/var/backups/sivis_drive"   # Ścieżka, gdzie przechowywane będą kopie
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKUP_DIR="$(dirname "$APP_DIR")/sivis_drive_backups" # Kopie będą wyżej niż folder aplikacji
 GIT_BRANCH="main"                       # Gałąź na GitHubie do synchronizacji
 DB_FILE="database.sqlite"               # Nazwa bazy SQLite
 
