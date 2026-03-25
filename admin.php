@@ -1,5 +1,6 @@
 <?php
 require_once 'auth.php';
+require_once 'inc/functions.php';
 require_admin();
 
 $message = '';
