@@ -113,12 +113,17 @@ require_once 'inc/header.php';
                     </div>
 
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-slate-700">
-                        <h2 id="current-folder-name" class="text-2xl font-bold text-slate-100 flex items-center">
-                            <div class="p-2 bg-blue-500/10 rounded-lg mr-3">
-                                <i data-lucide="folder-open" class="w-6 h-6 text-blue-400"></i>
-                            </div>
-                            <?= htmlspecialchars($active_folder['name']) ?>
-                        </h2>
+                        <div class="flex items-center group">
+                            <h2 id="current-folder-name" class="text-2xl font-bold text-slate-100 flex items-center">
+                                <div class="p-2 bg-blue-500/10 rounded-lg mr-3">
+                                    <i data-lucide="folder-open" class="w-6 h-6 text-blue-400"></i>
+                                </div>
+                                <?= htmlspecialchars($active_folder['name']) ?>
+                            </h2>
+                            <button onclick="copyFolderLink(this)" class="ml-4 p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-blue-400 border border-slate-700 transition-all group-hover:scale-105 active:scale-95" title="Kopiuj link do folderu">
+                                <i data-lucide="share-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                         <div class="flex items-center gap-3">
                             <?php if ($can_edit): ?>
                             <button onclick="const n=prompt('Nazwa podfolderu:'); if(n){document.getElementById('new_folder_name').value=n; document.getElementById('new_folder_form').submit();}" class="text-xs font-bold px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 border border-slate-600 transition-all flex items-center">

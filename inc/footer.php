@@ -16,6 +16,22 @@
             }
         }
 
+        function copyFolderLink(btn) {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                const icon = btn.querySelector('i');
+                const originalIcon = icon.getAttribute('data-lucide');
+                icon.setAttribute('data-lucide', 'check');
+                btn.classList.add('text-emerald-400', 'border-emerald-500/50', 'bg-emerald-500/5');
+                initIcons();
+                setTimeout(() => {
+                    icon.setAttribute('data-lucide', originalIcon);
+                    btn.classList.remove('text-emerald-400', 'border-emerald-500/50', 'bg-emerald-500/5');
+                    initIcons();
+                }, 2000);
+            });
+        }
+
         async function loadFolder(folderId, offset = 0, clear = false) {
             if (clear) {
                 currentOffset = 0;
