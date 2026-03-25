@@ -128,6 +128,23 @@
             document.getElementById('modal-move-form').submit();
         }
 
+        function renameItem(id, type, currentName) {
+            const newName = prompt('Zmień nazwę:', currentName);
+            if (!newName || newName === currentName) return;
+            
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'index.php';
+            form.innerHTML = `
+                <input type="hidden" name="action" value="rename_item">
+                <input type="hidden" name="item_id" value="${id}">
+                <input type="hidden" name="new_name" value="${newName}">
+                <input type="hidden" name="type" value="${type}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+
         function copyFolderLink(btn) {
             const url = window.location.href;
             navigator.clipboard.writeText(url).then(() => {
@@ -307,9 +324,16 @@
                                 <td class="px-5 py-4 text-center text-[10px] text-slate-500 hidden sm:table-cell uppercase font-bold tracking-tight">${item.file_count} plików</td>
                                 <td class="px-5 py-4 text-center text-sm text-slate-400 hidden md:table-cell">-</td>
                                 <td class="px-3 py-4 text-right">
-                                    <a href="javascript:void(0)" class="p-2 inline-flex items-center justify-center bg-slate-700/50 text-slate-400 hover:text-white rounded-lg transition-all">
-                                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                                    </a>
+                                    <div class="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
+                                        ${data.can_edit ? `
+                                            <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', '${item.name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-slate-700/50 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all" title="Zmień nazwę">
+                                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                            </button>
+                                        ` : ''}
+                                        <a href="javascript:void(0)" class="p-2 inline-flex items-center justify-center bg-slate-700/50 text-slate-400 hover:text-white rounded-lg transition-all">
+                                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             `;
                         } else {
@@ -334,6 +358,9 @@
                                     ${previewBtn}
                                     <a href="download.php?id=${item.id}" class="p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 shadow-sm" title="Pobierz"><i data-lucide="download" class="w-4.5 h-4.5"></i></a>
                                     ${data.can_edit ? `
+                                        <button onclick="renameItem(${item.id}, 'file', '${item.original_name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-slate-700/50 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 border border-transparent hover:border-blue-500/30" title="Zmień nazwę">
+                                            <i data-lucide="edit-3" class="w-4.5 h-4.5"></i>
+                                        </button>
                                         <button onclick="openMoveModal(${item.id}, '${item.original_name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-slate-700/50 hover:bg-orange-500/20 hover:text-orange-300 rounded-lg transition-all duration-200 border border-transparent hover:border-orange-500/30" title="Przenieś plik">
                                             <i data-lucide="folder-input" class="w-4.5 h-4.5"></i>
                                         </button>

@@ -81,6 +81,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt->execute(['Pliki ' . $name, $uid]);
 
         $message = "Twoja nazwa została zaktualizowana.";
+    } elseif ($_POST['action'] === 'rename_item' && isset($_POST['item_id']) && isset($_POST['new_name']) && isset($_POST['type'])) {
+        $id = (int)$_POST['item_id'];
+        $new_name = $_POST['new_name'];
+        $type = $_POST['type']; // 'file' or 'folder'
+        
+        if ($type === 'folder') {
+             if (is_admin() || is_zarzad() || is_private_tree($db, $id, $_SESSION['user_id'])) {
+                 $stmt = $db->prepare("UPDATE folders SET name = ? WHERE id = ?");
+                 $stmt->execute([$new_name, $id]);
+                 $message = "Folder został zmieniony.";
+                 header("Location: " . $_SERVER['HTTP_REFERER']);
+                 exit;
+             }
+        } else {
+             $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
+             $stmt->execute([$id]);
+             $folder_id = $stmt->fetchColumn();
+             if (is_admin() || is_zarzad() || is_private_tree($db, $folder_id, $_SESSION['user_id'])) {
+                 $stmt = $db->prepare("UPDATE files SET original_name = ? WHERE id = ?");
+                 $stmt->execute([$new_name, $id]);
+                 $message = "Plik został zmieniony.";
+                 header("Location: " . $_SERVER['HTTP_REFERER']);
+                 exit;
+             }
+        }
     } elseif ($_POST['action'] === 'delete_file' && isset($_POST['file_id'])) {
         $fid = (int)$_POST['file_id'];
         $stmt = $db->prepare("SELECT folder_id, name FROM files WHERE id = ?");
