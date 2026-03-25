@@ -16,10 +16,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $stmt = $db->prepare('INSERT INTO users (email, password_hash, role, user_group) VALUES (?, ?, ?, ?)');
                 $stmt->execute([$email, $hash, $role, $group]);
-                $message = "Użytkownik dodany. Wygenerowane hasło: $password (Wyślij to pracownikowi)";
+                $new_user_password = $password;
+                $message = "Użytkownik został pomyślnie utworzony.";
             } catch (Exception $e) {
                 $message = "Błąd: " . $e->getMessage();
             }
+        } elseif ($_POST['action'] === 'reset_password' && isset($_POST['user_id'])) {
+            $uid = (int)$_POST['user_id'];
+            $password = generate_random_password(16);
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $db->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([$hash, $uid]);
+            $new_user_password = $password;
+            $message = "Hasło użytkownika zostało zresetowane.";
         } elseif ($_POST['action'] === 'add_folder') {
             $name = $_POST['name'];
             $access = $_POST['access_groups'];
@@ -157,8 +165,33 @@ $formatted_size = $total_size > 1024*1024*1024
 
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <?php if ($message): ?>
-            <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl relative mb-6 backdrop-blur-sm shadow-lg">
-                <span class="block sm:inline"><?= htmlspecialchars($message) ?></span>
+            <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-6 py-4 rounded-2xl relative mb-6 backdrop-blur-sm shadow-xl flex items-center justify-between">
+                <div class="flex items-center">
+                    <i data-lucide="check-circle" class="w-5 h-5 mr-3"></i>
+                    <span class="font-medium"><?= htmlspecialchars($message) ?></span>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($new_user_password)): ?>
+            <div class="bg-blue-500/10 border border-blue-500/30 text-blue-100 px-6 py-6 rounded-2xl relative mb-8 backdrop-blur-md shadow-2xl ring-1 ring-blue-500/20">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div class="flex items-start">
+                        <div class="p-3 bg-blue-500/20 rounded-xl mr-4 shrink-0">
+                            <i data-lucide="key" class="w-8 h-8 text-blue-400"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-white mb-1">Wygenerowane Hasło</h4>
+                            <p class="text-blue-300/80 text-sm">Przekaż to hasło użytkownikowi. Po zamknięciu tego komunikatu nie będzie ono widoczne.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-blue-500/30 animate-pulse-subtle">
+                        <code class="px-3 py-1.5 text-xl font-mono text-blue-400 tracking-wider" id="generated-password"><?= htmlspecialchars($new_user_password) ?></code>
+                        <button onclick="copyPasswordToClipboard(this)" class="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all shadow-lg active:scale-95 group" title="Kopiuj hasło">
+                            <i data-lucide="copy" class="w-5 h-5 group-active:scale-90 transition-transform"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         <?php endif; ?>
 
@@ -311,13 +344,22 @@ $formatted_size = $total_size > 1024*1024*1024
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
                                         <?php if ($u['id'] != $_SESSION['user_id']): ?>
-                                        <form method="post" onsubmit="return confirm('Trwale usunąć tego użytkownika?');" class="inline">
-                                            <input type="hidden" name="action" value="delete_user">
-                                            <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                            <button type="submit" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń użytkownika">
-                                                <i data-lucide="user-minus" class="w-5 h-5"></i>
-                                            </button>
-                                        </form>
+                                        <div class="flex items-center justify-end gap-2">
+                                            <form method="post" onsubmit="return confirm('Czy na pewno chcesz zresetować hasło dla <?= htmlspecialchars($u['email']) ?>?');" class="inline">
+                                                <input type="hidden" name="action" value="reset_password">
+                                                <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                                <button type="submit" class="p-2 text-orange-400 hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg transition-all" title="Resetuj hasło">
+                                                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                                                </button>
+                                            </form>
+                                            <form method="post" onsubmit="return confirm('Trwale usunąć tego użytkownika?');" class="inline">
+                                                <input type="hidden" name="action" value="delete_user">
+                                                <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                                <button type="submit" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń użytkownika">
+                                                    <i data-lucide="user-minus" class="w-5 h-5"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                         <?php else: ?>
                                             <span class="text-xs text-slate-500 px-2 py-1 bg-slate-900 rounded border border-slate-700">To Ty</span>
                                         <?php endif; ?>
@@ -408,6 +450,23 @@ $formatted_size = $total_size > 1024*1024*1024
     </footer>
 
     <script>
+        function copyPasswordToClipboard(btn) {
+            const password = document.getElementById('generated-password').innerText;
+            navigator.clipboard.writeText(password).then(() => {
+                const icon = btn.querySelector('i');
+                const originalIcon = icon.getAttribute('data-lucide');
+                icon.setAttribute('data-lucide', 'check');
+                btn.classList.add('bg-emerald-600');
+                btn.classList.remove('bg-blue-600');
+                lucide.createIcons();
+                setTimeout(() => {
+                    icon.setAttribute('data-lucide', originalIcon);
+                    btn.classList.remove('bg-emerald-600');
+                    btn.classList.add('bg-blue-600');
+                    lucide.createIcons();
+                }, 2000);
+            });
+        }
         lucide.createIcons();
     </script>
 </body>
