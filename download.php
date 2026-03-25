@@ -1,5 +1,6 @@
 <?php
 require_once 'auth.php';
+require_once 'inc/functions.php';
 require_login();
 
 if (!isset($_GET['id'])) {
@@ -7,7 +8,7 @@ if (!isset($_GET['id'])) {
 }
 
 $file_id = (int)$_GET['id'];
-$stmt = $db->prepare("SELECT f.*, fol.access_groups FROM files f JOIN folders fol ON f.folder_id = fol.id WHERE f.id = ?");
+$stmt = $db->prepare("SELECT f.*, fol.access_groups, fol.owner_id FROM files f JOIN folders fol ON f.folder_id = fol.id WHERE f.id = ?");
 $stmt->execute([$file_id]);
 $file = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -16,18 +17,9 @@ if (!$file) {
 }
 
 // Check access
-$has_access = false;
-if (is_admin()) {
-    $has_access = true;
-} else {
-    $group = get_user_group();
-    $access = array_map('trim', explode(',', $file['access_groups']));
-    if (in_array(trim($group), $access) || empty($file['access_groups'])) {
-        $has_access = true;
-    }
-}
-
-if (!$has_access) {
+$role = $_SESSION['role'] ?? 'pracownik';
+$group = get_user_group();
+if (!can_user_access_folder($db, $file['folder_id'], $_SESSION['user_id'], $role, $group)) {
     die("Brak dostępu do tego pliku.");
 }
 
