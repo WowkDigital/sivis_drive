@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $users = $db->query("SELECT id, email, role, user_group, display_name, last_login FROM users")->fetchAll(PDO::FETCH_ASSOC);
-$folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(PDO::FETCH_ASSOC);
+$folders = $db->query("SELECT id, name, access_groups FROM folders WHERE owner_id IS NULL AND parent_id IS NULL")->fetchAll(PDO::FETCH_ASSOC);
 
 // Stats
 $total_files = $db->query("SELECT COUNT(*) FROM files")->fetchColumn();
@@ -383,18 +383,17 @@ $formatted_size = $total_size > 1024*1024*1024
             <!-- List Folders -->
             <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
                 <h3 class="text-lg font-bold mb-5 flex items-center border-b border-slate-700 pb-3 text-slate-100">
-                    <div class="p-1.5 bg-orange-500/10 rounded-lg mr-3">
-                        <i data-lucide="folders" class="w-5 h-5 text-orange-400"></i>
+                    <div class="p-1.5 bg-blue-500/10 rounded-lg mr-3">
+                        <i data-lucide="share-2" class="w-5 h-5 text-blue-400"></i>
                     </div>
-                    Lista Folderów
+                    Udostępnione foldery
                 </h3>
                 <div class="overflow-x-auto -mx-6 sm:mx-0">
                     <div class="inline-block min-w-full align-middle">
                         <table class="min-w-full">
                             <thead>
                                 <tr class="border-b border-slate-700 text-left">
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
-                                    <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Dostęp</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa folderu udostępnionego</th>
                                     <th class="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Akcja</th>
                                 </tr>
                             </thead>
@@ -418,23 +417,8 @@ $formatted_size = $total_size > 1024*1024*1024
                                             </div>
                                         </form>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <form method="post" class="flex items-center gap-2">
-                                            <input type="hidden" name="action" value="update_folder">
-                                            <input type="hidden" name="folder_id" value="<?= $f['id'] ?>">
-                                            <div class="relative">
-                                                <select name="access_groups" onchange="this.form.submit()" class="appearance-none bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-8 py-1.5 text-xs text-slate-300 focus:border-blue-500 outline-none transition-all cursor-pointer">
-                                                    <option value="zarząd,pracownicy" <?= $f['access_groups'] == 'zarząd,pracownicy' ? 'selected' : '' ?>>Wszyscy</option>
-                                                    <option value="zarząd" <?= $f['access_groups'] == 'zarząd' ? 'selected' : '' ?>>Tylko Zarząd</option>
-                                                </select>
-                                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                                                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                                                </div>
-                                            </div>
-                                        </form>
-                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                                        <form method="post" onsubmit="return confirm('UWAGA: Usunięcie folderu spowoduje TRWAŁE usunięcie wszystkich zawartych w nim plików! Czy na pewno chcesz kontynuować?');" class="inline">
+                                        <form method="post" class="inline-flex gap-2" onsubmit="return confirm('UWAGA: Usunięcie folderu spowoduje TRWAŁE usunięcie wszystkich zawartych w nim plików! Czy na pewno chcesz kontynuować?');">
                                             <input type="hidden" name="action" value="delete_folder">
                                             <input type="hidden" name="folder_id" value="<?= $f['id'] ?>">
                                             <button type="submit" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń folder z zawartością">
