@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($_POST['action'] === 'add_user') {
             $email = $_POST['email'];
             $role = $_POST['role'];
-            $group = $_POST['group'];
+            $group = ($role === 'zarząd') ? 'zarząd' : 'pracownicy';
             $password = generate_random_password(16);
             $hash = password_hash($password, PASSWORD_DEFAULT);
             
@@ -35,6 +35,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $message = "Błąd: Nie możesz usunąć sam siebie!";
             }
+        } elseif ($_POST['action'] === 'delete_folder') {
+            $fid = (int)$_POST['folder_id'];
+            $upload_dir = __DIR__ . '/uploads';
+            
+            // Delete all files in this folder from disk
+            $stmt = $db->prepare("SELECT name FROM files WHERE folder_id = ?");
+            $stmt->execute([$fid]);
+            $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($files as $f) {
+                @unlink($upload_dir . '/' . $f['name']);
+            }
+            
+            // Delete files from DB
+            $stmt = $db->prepare("DELETE FROM files WHERE folder_id = ?");
+            $stmt->execute([$fid]);
+            
+            // Delete folder from DB
+            $stmt = $db->prepare("DELETE FROM folders WHERE id = ?");
+            $stmt->execute([$fid]);
+            
+            $message = "Folder i jego zawartość zostały usunięte.";
         }
     }
 }
@@ -125,15 +146,11 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-400 mb-1.5">Grupa Domyślna</label>
+                            <label class="block text-sm font-medium text-slate-400 mb-1.5">Uprawnienia</label>
                             <div class="relative">
-                                <select name="group" class="w-full appearance-none bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all cursor-pointer">
-                                    <option value="pracownicy">Pracownicy</option>
-                                    <option value="zarząd">Zarząd</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
-                                </div>
+                                <span class="block w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-4 py-2.5 text-slate-500 text-sm italic">
+                                    Automatycznie wg. wybranej roli
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -161,9 +178,8 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                         <label class="block text-sm font-medium text-slate-400 mb-1.5">Dostęp dla grup</label>
                         <div class="relative">
                             <select name="access_groups" class="w-full appearance-none bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all cursor-pointer">
-                                 <option value="pracownicy">Tylko Pracownicy</option>
+                                 <option value="zarząd,pracownicy">Zarząd i Pracownicy (Wszyscy)</option>
                                  <option value="zarząd">Tylko Zarząd</option>
-                                 <option value="zarząd,pracownicy">Cała firma (Zarząd + Pracownicy)</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
                                 <i data-lucide="chevron-down" class="w-4 h-4"></i>
@@ -248,6 +264,7 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(P
                                 <tr class="border-b border-slate-700 text-left">
                                     <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
                                     <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Dostęp</th>
+                                    <th class="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Akcja</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-700/50">
