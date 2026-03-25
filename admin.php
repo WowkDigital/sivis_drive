@@ -43,149 +43,243 @@ $users = $db->query("SELECT id, email, role, user_group FROM users")->fetchAll(P
 $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administratora</title>
+    <title>Panel Administratora - Sivis Drive</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-blue-600 text-white shadow-md">
+<body class="bg-slate-900 text-slate-200 min-h-screen">
+    <nav class="bg-slate-800 shadow-lg border-b border-slate-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-4">
-                    <i data-lucide="settings" class="w-6 h-6"></i>
-                    <span class="font-bold text-xl">Panel Administratora</span>
+            <div class="flex flex-col md:flex-row justify-between md:h-16 py-4 md:py-0 items-center gap-4 md:gap-0">
+                <div class="flex items-center space-x-3 text-emerald-400">
+                    <div class="p-2 bg-emerald-500/10 rounded-xl">
+                        <i data-lucide="settings" class="w-8 h-8"></i>
+                    </div>
+                    <span class="font-bold text-2xl tracking-tight text-white">Panel Administratora</span>
                 </div>
-                <div class="flex space-x-4 items-center">
-                    <a href="index.php" class="hover:text-gray-200">Powrót do plików</a>
-                    <a href="logout.php" class="hover:text-gray-200 flex items-center"><i data-lucide="log-out" class="w-4 h-4 mr-1"></i> Wyloguj</a>
+                <div class="flex flex-wrap justify-center gap-3 items-center">
+                    <a href="index.php" class="text-blue-400 hover:text-blue-300 hover:bg-slate-700 px-4 py-2 rounded-lg font-medium flex items-center transition-colors">
+                        <i data-lucide="folder-open" class="w-4 h-4 mr-1.5"></i> Powrót do plików
+                    </a>
+                    <a href="logout.php" class="text-red-400 hover:text-red-300 flex items-center bg-red-500/10 hover:bg-red-500/20 px-4 py-2 rounded-lg font-medium transition-colors">
+                        <i data-lucide="log-out" class="w-4 h-4 mr-1.5"></i> Wyloguj
+                    </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <?php if ($message): ?>
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 shadow-sm">
-                <?= htmlspecialchars($message) ?>
+            <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl relative mb-6 backdrop-blur-sm shadow-lg">
+                <span class="block sm:inline"><?= htmlspecialchars($message) ?></span>
             </div>
         <?php endif; ?>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Add User -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 flex items-center border-b pb-2 text-gray-800"><i data-lucide="user-plus" class="w-5 h-5 mr-2 text-blue-500"></i> Dodaj Użytkownika</h3>
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+                <h3 class="text-lg font-bold mb-5 flex items-center border-b border-slate-700 pb-3 text-slate-100">
+                    <div class="p-1.5 bg-blue-500/10 rounded-lg mr-3">
+                        <i data-lucide="user-plus" class="w-5 h-5 text-blue-400"></i>
+                    </div>
+                    Dodaj Użytkownika
+                </h3>
                 <form method="post">
                     <input type="hidden" name="action" value="add_user">
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                        <input type="email" name="email" required class="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-slate-400 mb-1.5">Adres E-mail</label>
+                        <input type="email" name="email" required placeholder="jan@firma.pl" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder-slate-600">
                     </div>
-                    <div class="mb-4 grid grid-cols-2 gap-4">
+                    <div class="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Rola</label>
-                            <select name="role" class="w-full border border-gray-300 rounded px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                                <option value="pracownik">Pracownik</option>
-                                <option value="zarząd">Zarząd</option>
-                                <option value="admin">Admin</option>
-                            </select>
+                            <label class="block text-sm font-medium text-slate-400 mb-1.5">Rola</label>
+                            <div class="relative">
+                                <select name="role" class="w-full appearance-none bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all cursor-pointer">
+                                    <option value="pracownik">Pracownik</option>
+                                    <option value="zarząd">Zarząd</option>
+                                    <option value="admin">Administrator</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Grupa Domyślna</label>
-                            <select name="group" class="w-full border border-gray-300 rounded px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                                <option value="pracownicy">Pracownicy</option>
-                                <option value="zarząd">Zarząd</option>
-                            </select>
+                            <label class="block text-sm font-medium text-slate-400 mb-1.5">Grupa Domyślna</label>
+                            <div class="relative">
+                                <select name="group" class="w-full appearance-none bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all cursor-pointer">
+                                    <option value="pracownicy">Pracownicy</option>
+                                    <option value="zarząd">Zarząd</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 w-full flex items-center justify-center font-medium"><i data-lucide="plus" class="w-4 h-4 mr-1"></i> Utwórz Konto</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 w-full flex items-center justify-center font-medium transition-all duration-200">
+                        <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i> Utwórz Konto
+                    </button>
                 </form>
             </div>
 
             <!-- Add Folder -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 flex items-center border-b pb-2 text-gray-800"><i data-lucide="folder-plus" class="w-5 h-5 mr-2 text-blue-500"></i> Dodaj Folder</h3>
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+                <h3 class="text-lg font-bold mb-5 flex items-center border-b border-slate-700 pb-3 text-slate-100">
+                    <div class="p-1.5 bg-emerald-500/10 rounded-lg mr-3">
+                        <i data-lucide="folder-plus" class="w-5 h-5 text-emerald-400"></i>
+                    </div>
+                    Dodaj Folder
+                </h3>
                 <form method="post">
                     <input type="hidden" name="action" value="add_folder">
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nazwa</label>
-                        <input type="text" name="name" required class="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-slate-400 mb-1.5">Nazwa folderu</label>
+                        <input type="text" name="name" required placeholder="Np. Dokumenty HR" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all placeholder-slate-600">
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Dostęp dla grup</label>
-                        <select name="access_groups" class="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-                             <option value="pracownicy">Pracownicy</option>
-                             <option value="zarząd">Zarząd</option>
-                             <option value="zarząd,pracownicy">Obie grupy</option>
-                        </select>
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-slate-400 mb-1.5">Dostęp dla grup</label>
+                        <div class="relative">
+                            <select name="access_groups" class="w-full appearance-none bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all cursor-pointer">
+                                 <option value="pracownicy">Tylko Pracownicy</option>
+                                 <option value="zarząd">Tylko Zarząd</option>
+                                 <option value="zarząd,pracownicy">Cała firma (Zarząd + Pracownicy)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 w-full flex items-center justify-center font-medium"><i data-lucide="plus" class="w-4 h-4 mr-1"></i> Utwórz</button>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 w-full flex items-center justify-center font-medium transition-all duration-200">
+                        <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i> Utwórz Folder
+                    </button>
                 </form>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <!-- List Users -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 flex items-center border-b pb-2 text-gray-800"><i data-lucide="users" class="w-5 h-5 mr-2 text-blue-500"></i> Zarządzaj Użytkownikami</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b">
-                            <tr>
-                                <th class="px-4 py-2">E-mail</th>
-                                <th class="px-4 py-2">Rola / Grupa</th>
-                                <th class="px-4 py-2 text-right">Akcja</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($users as $u): ?>
-                            <tr class="bg-white border-b hover:bg-gray-50 border-gray-50">
-                                <td class="px-4 py-3 font-medium text-gray-900"><?= htmlspecialchars($u['email']) ?></td>
-                                <td class="px-4 py-3 text-gray-500">
-                                    <div class="flex flex-col">
-                                        <span class="font-bold text-xs uppercase"><?= htmlspecialchars($u['role']) ?></span>
-                                        <span class="text-xs italic"><?= htmlspecialchars($u['user_group']) ?></span>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <?php if ($u['id'] != $_SESSION['user_id']): ?>
-                                    <form method="post" onsubmit="return confirm('Pewny?');" style="display:inline;">
-                                        <input type="hidden" name="action" value="delete_user">
-                                        <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                        <button class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                    </form>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+                <h3 class="text-lg font-bold mb-5 flex items-center border-b border-slate-700 pb-3 text-slate-100">
+                    <div class="p-1.5 bg-purple-500/10 rounded-lg mr-3">
+                        <i data-lucide="users" class="w-5 h-5 text-purple-400"></i>
+                    </div>
+                    Zarządzaj Użytkownikami
+                </h3>
+                <div class="overflow-x-auto -mx-6 sm:mx-0">
+                    <div class="inline-block min-w-full align-middle">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="border-b border-slate-700 text-left">
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">E-mail</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Rola / Grupa</th>
+                                    <th class="px-6 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Akcja</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-700/50">
+                                <?php foreach ($users as $u): ?>
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-slate-200"><?= htmlspecialchars($u['email']) ?></div>
+                                        <div class="text-xs text-slate-500 sm:hidden mt-1">
+                                            Role: <span class="font-semibold text-slate-400"><?= htmlspecialchars($u['role']) ?></span> 
+                                            (<span class="italic"><?= htmlspecialchars($u['user_group']) ?></span>)
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-xs uppercase tracking-wider text-slate-300"><?= htmlspecialchars($u['role']) ?></span>
+                                            <span class="text-xs italic text-slate-500 mt-1"><i data-lucide="users" class="w-3 h-3 inline pb-0.5"></i> <?= htmlspecialchars($u['user_group']) ?></span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                                        <?php if ($u['id'] != $_SESSION['user_id']): ?>
+                                        <form method="post" onsubmit="return confirm('Trwale usunąć tego użytkownika?');" class="inline">
+                                            <input type="hidden" name="action" value="delete_user">
+                                            <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                            <button type="submit" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń użytkownika">
+                                                <i data-lucide="user-minus" class="w-5 h-5"></i>
+                                            </button>
+                                        </form>
+                                        <?php else: ?>
+                                            <span class="text-xs text-slate-500 px-2 py-1 bg-slate-900 rounded border border-slate-700">To Ty</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <!-- List Folders -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 flex items-center border-b pb-2 text-gray-800"><i data-lucide="folders" class="w-5 h-5 mr-2 text-blue-500"></i> Lista Folderów</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b">
-                            <tr>
-                                <th class="px-4 py-2">Nazwa</th>
-                                <th class="px-4 py-2">Grupy dostępu</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($folders as $f): ?>
-                            <tr class="bg-white border-b hover:bg-gray-50">
-                                <td class="px-4 py-2 font-medium text-gray-900 flex items-center"><i data-lucide="folder" class="w-4 h-4 mr-2 text-blue-400"></i> <?= htmlspecialchars($f['name']) ?></td>
-                                <td class="px-4 py-2"><?= htmlspecialchars($f['access_groups']) ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+            <div class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+                <h3 class="text-lg font-bold mb-5 flex items-center border-b border-slate-700 pb-3 text-slate-100">
+                    <div class="p-1.5 bg-orange-500/10 rounded-lg mr-3">
+                        <i data-lucide="folders" class="w-5 h-5 text-orange-400"></i>
+                    </div>
+                    Lista Folderów
+                </h3>
+                <div class="overflow-x-auto -mx-6 sm:mx-0">
+                    <div class="inline-block min-w-full align-middle">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="border-b border-slate-700 text-left">
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
+                                    <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Dostęp</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-700/50">
+                                <?php foreach ($folders as $f): ?>
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center font-medium text-slate-200">
+                                            <div class="p-2 bg-slate-900 rounded-lg mr-3">
+                                                <i data-lucide="folder" class="w-4 h-4 text-blue-400"></i>
+                                            </div>
+                                            <?= htmlspecialchars($f['name']) ?>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex flex-wrap gap-2">
+                                            <?php 
+                                            $ag = array_filter(array_map('trim', explode(',', $f['access_groups'])));
+                                            if (empty($ag)): ?>
+                                                <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-700 text-slate-300 border border-slate-600">Brak określonych (Wszyscy)</span>
+                                            <?php else: 
+                                                foreach($ag as $g): ?>
+                                                <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-900 border border-slate-700 text-slate-300">
+                                                    <?= htmlspecialchars($g) ?>
+                                                </span>
+                                            <?php endforeach; endif; ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

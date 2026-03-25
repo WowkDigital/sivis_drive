@@ -89,58 +89,75 @@ if ($active_folder) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sivis Drive</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-white shadow">
+<body class="bg-slate-900 text-slate-200 min-h-screen">
+    <nav class="bg-slate-800 shadow-lg border-b border-slate-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-2 text-blue-600">
-                    <i data-lucide="cloud" class="w-8 h-8"></i>
-                    <span class="font-bold text-xl text-gray-800">Sivis Drive</span>
+            <div class="flex flex-col md:flex-row justify-between md:h-16 py-4 md:py-0 items-center gap-4 md:gap-0">
+                <div class="flex items-center space-x-3 text-blue-400">
+                    <div class="p-2 bg-blue-500/10 rounded-xl">
+                        <i data-lucide="cloud" class="w-8 h-8"></i>
+                    </div>
+                    <span class="font-bold text-2xl tracking-tight text-white">Sivis Drive</span>
                 </div>
-                <div class="flex space-x-4 items-center">
-                    <span class="text-sm text-gray-500 mr-4">Zalogowany jako: <span class="font-semibold text-gray-700"><?= htmlspecialchars($_SESSION['email']) ?></span></span>
+                <div class="flex flex-wrap justify-center gap-3 items-center">
+                    <span class="text-sm text-slate-400 hidden sm:inline">Zalogowano: <span class="font-semibold text-slate-200"><?= htmlspecialchars($_SESSION['email']) ?></span></span>
                     <?php if (is_admin()): ?>
-                        <a href="admin.php" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
-                            <i data-lucide="shield-check" class="w-4 h-4 mr-1"></i> Admin
+                        <a href="admin.php" class="text-blue-400 hover:text-blue-300 hover:bg-slate-700 px-3 py-2 rounded-lg font-medium flex items-center transition-colors">
+                            <i data-lucide="shield-check" class="w-4 h-4 mr-1.5"></i> Admin
                         </a>
                     <?php endif; ?>
-                    <a href="logout.php" class="text-red-600 hover:text-red-800 flex items-center bg-red-50 px-3 py-1 rounded">
-                        <i data-lucide="log-out" class="w-4 h-4 mr-1"></i> Wyloguj
+                    <a href="logout.php" class="text-red-400 hover:text-red-300 flex items-center bg-red-500/10 hover:bg-red-500/20 px-4 py-2 rounded-lg font-medium transition-colors">
+                        <i data-lucide="log-out" class="w-4 h-4 mr-1.5"></i> Wyloguj
                     </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <?php if ($message): ?>
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 shadow-sm" role="alert">
+            <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl relative mb-6 backdrop-blur-sm" role="alert">
                 <span class="block sm:inline"><?= htmlspecialchars($message) ?></span>
             </div>
         <?php endif; ?>
 
-        <div class="flex flex-col md:flex-row gap-6">
+        <div class="flex flex-col lg:flex-row gap-6">
             <!-- Sidebar / Folders -->
-            <div class="w-full md:w-1/4">
-                <div class="bg-white shadow-md rounded-lg p-4 border border-gray-100">
-                    <h2 class="text-lg font-bold mb-4 flex items-center text-gray-800 border-b pb-2"><i data-lucide="folders" class="w-5 h-5 mr-2 text-blue-500"></i> Moje Foldery</h2>
-                    <ul class="space-y-1">
+            <div class="w-full lg:w-1/4">
+                <div class="bg-slate-800 shadow-xl rounded-2xl p-5 border border-slate-700">
+                    <h2 class="text-lg font-bold mb-4 flex items-center text-slate-100"><i data-lucide="folders" class="w-5 h-5 mr-2 text-blue-400"></i> Moje Foldery</h2>
+                    <ul class="space-y-1.5">
                         <?php if (empty($folders)): ?>
-                            <li class="text-gray-500 text-sm py-2 px-3">Brak dostępu do folderów.</li>
+                            <li class="text-slate-500 text-sm py-2 px-3 bg-slate-900/50 rounded-lg">Brak dostępu do folderów.</li>
                         <?php endif; ?>
                         <?php foreach ($folders as $f): ?>
                             <li>
-                                <a href="?folder=<?= $f['id'] ?>" class="flex items-center px-3 py-2 rounded-md transition-colors <?= $f['id'] == $active_folder_id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100' ?>">
-                                    <i data-lucide="<?= $f['id'] == $active_folder_id ? 'folder-open' : 'folder' ?>" class="w-4 h-4 mr-2 <?= $f['id'] == $active_folder_id ? 'text-blue-600' : 'text-gray-400' ?>"></i>
-                                    <?= htmlspecialchars($f['name']) ?>
+                                <a href="?folder=<?= $f['id'] ?>" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 <?= $f['id'] == $active_folder_id ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium' : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' ?>">
+                                    <i data-lucide="<?= $f['id'] == $active_folder_id ? 'folder-open' : 'folder' ?>" class="w-5 h-5 mr-3 <?= $f['id'] == $active_folder_id ? 'text-blue-400' : 'text-slate-500' ?>"></i>
+                                    <span class="truncate"><?= htmlspecialchars($f['name']) ?></span>
                                 </a>
                             </li>
                         <?php endforeach; ?>
@@ -149,23 +166,32 @@ if ($active_folder) {
             </div>
 
             <!-- Content / Files -->
-            <div class="w-full md:w-3/4">
-                <div class="bg-white shadow-md rounded-lg p-6 border border-gray-100">
+            <div class="w-full lg:w-3/4">
+                <div class="bg-slate-800 shadow-xl rounded-2xl p-5 sm:p-6 border border-slate-700 min-h-[500px]">
                     <?php if ($active_folder): ?>
-                        <div class="flex justify-between items-center mb-6 pb-2 border-b">
-                            <h2 class="text-xl font-bold text-gray-800 flex items-center"><i data-lucide="folder-open" class="w-6 h-6 mr-2 text-blue-500"></i> <?= htmlspecialchars($active_folder['name']) ?></h2>
-                            <span class="text-sm text-gray-500"><?= count($files) ?> plików</span>
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-slate-700">
+                            <h2 class="text-2xl font-bold text-slate-100 flex items-center">
+                                <div class="p-2 bg-blue-500/10 rounded-lg mr-3">
+                                    <i data-lucide="folder-open" class="w-6 h-6 text-blue-400"></i>
+                                </div>
+                                <?= htmlspecialchars($active_folder['name']) ?>
+                            </h2>
+                            <span class="text-sm font-medium px-3 py-1 bg-slate-900 rounded-full text-slate-400 border border-slate-700"><?= count($files) ?> plików</span>
                         </div>
 
                         <?php if (can_manage_files()): ?>
                             <!-- Upload form for admin and zarząd -->
-                            <div class="bg-gray-50 p-4 rounded-lg mb-6 border border-dashed border-gray-300">
-                                <form method="post" enctype="multipart/form-data" class="flex items-center space-x-4">
+                            <div class="bg-slate-900/50 p-5 rounded-xl mb-6 border border-dashed border-slate-600">
+                                <form method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
                                     <input type="hidden" name="action" value="upload">
                                     <input type="hidden" name="folder_id" value="<?= $active_folder['id'] ?>">
-                                    <i data-lucide="upload-cloud" class="w-8 h-8 text-gray-400 ml-2"></i>
-                                    <input type="file" name="file" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded shadow flex items-center whitespace-nowrap">
+                                    <div class="hidden sm:block p-3 bg-slate-800 rounded-full">
+                                        <i data-lucide="upload-cloud" class="w-6 h-6 text-blue-400"></i>
+                                    </div>
+                                    <div class="flex-1 w-full relative">
+                                        <input type="file" name="file" required class="block w-full text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500/10 file:text-blue-400 hover:file:bg-blue-500/20 cursor-pointer focus:outline-none bg-slate-800 rounded-lg p-1.5 border border-slate-700 w-full">
+                                    </div>
+                                    <button type="submit" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 sm:py-2.5 px-6 rounded-lg shadow-lg shadow-blue-500/20 flex items-center justify-center whitespace-nowrap transition-all duration-200">
                                         <i data-lucide="upload" class="w-4 h-4 mr-2"></i> Wgraj Plik
                                     </button>
                                 </form>
@@ -174,65 +200,81 @@ if ($active_folder) {
 
                         <!-- File list -->
                         <?php if (empty($files)): ?>
-                            <div class="text-center py-12 text-gray-500 flex flex-col items-center">
-                                <i data-lucide="file-question" class="w-12 h-12 text-gray-300 mb-3"></i>
-                                <p>Ten folder jest pusty.</p>
+                            <div class="text-center py-16 flex flex-col items-center">
+                                <div class="bg-slate-900 p-4 rounded-full mb-4 ring-1 ring-slate-700">
+                                    <i data-lucide="file-question" class="w-10 h-10 text-slate-500"></i>
+                                </div>
+                                <h3 class="text-lg font-medium text-slate-300">Folder jest pusty</h3>
+                                <p class="text-slate-500 mt-2">Brak plików w tym folderze.</p>
                             </div>
                         <?php else: ?>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full text-sm text-left">
-                                    <thead class="text-xs text-gray-500 uppercase bg-gray-50">
-                                        <tr>
-                                            <th class="px-4 py-3 font-medium">Nazwa pliku</th>
-                                            <th class="px-4 py-3 font-medium">Rozmiar</th>
-                                            <th class="px-4 py-3 font-medium">Data dodania</th>
-                                            <th class="px-4 py-3 text-right font-medium">Akcja</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-100">
-                                        <?php foreach ($files as $file): 
-                                            // Determine icon based on simple extension check
-                                            $ext = strtolower(pathinfo($file['original_name'], PATHINFO_EXTENSION));
-                                            $icon = 'file';
-                                            $iconColor = 'text-gray-400';
-                                            if ($ext === 'pdf') { $icon = 'file-text'; $iconColor = 'text-red-500'; }
-                                            elseif (in_array($ext, ['doc', 'docx'])) { $icon = 'file-type-2'; $iconColor = 'text-blue-600'; }
-                                            
-                                            $size_val = $file['size'] > 1024*1024 ? round($file['size']/(1024*1024), 2) . ' MB' : round($file['size']/1024) . ' KB';
-                                        ?>
-                                        <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-4 py-3 flex items-center font-medium text-gray-800">
-                                                <i data-lucide="<?= $icon ?>" class="w-5 h-5 mr-3 <?= $iconColor ?>"></i>
-                                                <?= htmlspecialchars($file['original_name']) ?>
-                                            </td>
-                                            <td class="px-4 py-3 text-gray-500"><?= $size_val ?></td>
-                                            <td class="px-4 py-3 text-gray-500"><?= date('d.m.Y H:i', strtotime($file['created_at'])) ?></td>
-                                            <td class="px-4 py-3 text-right flex items-center justify-end space-x-2">
-                                                <a href="download.php?id=<?= $file['id'] ?>" class="inline-flex items-center text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md font-medium transition-colors">
-                                                    <i data-lucide="download" class="w-4 h-4 mr-1"></i> Pobierz
-                                                </a>
-                                                <?php if (can_manage_files()): ?>
-                                                <form method="post" onsubmit="return confirm('Pewny?');" style="display:inline;">
-                                                    <input type="hidden" name="action" value="delete_file">
-                                                    <input type="hidden" name="file_id" value="<?= $file['id'] ?>">
-                                                    <button type="submit" class="text-red-500 hover:text-red-700 p-1.5 rounded-md bg-red-50 hover:bg-red-100">
-                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                                    </button>
-                                                </form>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
+                            <div class="overflow-x-auto -mx-5 sm:mx-0">
+                                <div class="inline-block min-w-full align-middle">
+                                    <table class="min-w-full">
+                                        <thead>
+                                            <tr class="border-b border-slate-700 text-left">
+                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa pliku</th>
+                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Rozmiar</th>
+                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell">Data</th>
+                                                <th class="px-5 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Akcje</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-700/50">
+                                            <?php foreach ($files as $file): 
+                                                $ext = strtolower(pathinfo($file['original_name'], PATHINFO_EXTENSION));
+                                                $icon = 'file';
+                                                $iconColor = 'text-slate-400';
+                                                if ($ext === 'pdf') { $icon = 'file-text'; $iconColor = 'text-red-400'; }
+                                                elseif (in_array($ext, ['doc', 'docx'])) { $icon = 'file-type-2'; $iconColor = 'text-blue-400'; }
+                                                elseif (in_array($ext, ['jpg', 'png', 'jpeg', 'gif', 'webp'])) { $icon = 'image'; $iconColor = 'text-emerald-400'; }
+                                                
+                                                $size_val = $file['size'] > 1024*1024 ? round($file['size']/(1024*1024), 2) . ' MB' : round($file['size']/1024) . ' KB';
+                                            ?>
+                                            <tr class="hover:bg-slate-700/30 transition-colors group">
+                                                <td class="px-5 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="p-2 bg-slate-900 rounded-lg mr-3 group-hover:bg-slate-800 transition-colors">
+                                                            <i data-lucide="<?= $icon ?>" class="w-5 h-5 <?= $iconColor ?>"></i>
+                                                        </div>
+                                                        <div class="flex flex-col">
+                                                            <span class="font-medium text-slate-200 truncate max-w-[150px] sm:max-w-xs md:max-w-sm"><?= htmlspecialchars($file['original_name']) ?></span>
+                                                            <span class="text-xs text-slate-500 sm:hidden mt-0.5"><?= $size_val ?> • <?= date('d.m.y', strtotime($file['created_at'])) ?></span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden sm:table-cell"><?= $size_val ?></td>
+                                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell"><?= date('d.m.Y H:i', strtotime($file['created_at'])) ?></td>
+                                                <td class="px-5 py-4 whitespace-nowrap text-right text-sm">
+                                                    <div class="flex items-center justify-end gap-2">
+                                                        <a href="download.php?id=<?= $file['id'] ?>" class="p-2 sm:px-4 sm:py-2 flex items-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg font-medium transition-all duration-200">
+                                                            <i data-lucide="download" class="w-4 h-4 sm:mr-1.5"></i> <span class="hidden sm:inline">Pobierz</span>
+                                                        </a>
+                                                        <?php if (can_manage_files()): ?>
+                                                        <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" style="display:inline;">
+                                                            <input type="hidden" name="action" value="delete_file">
+                                                            <input type="hidden" name="file_id" value="<?= $file['id'] ?>">
+                                                            <button type="submit" title="Usuń" class="p-2 sm:px-3 sm:py-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all duration-200 flex items-center">
+                                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                            </button>
+                                                        </form>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         <?php endif; ?>
 
                     <?php else: ?>
-                        <div class="text-center py-12 text-gray-500 flex flex-col items-center">
-                            <i data-lucide="folder-search" class="w-16 h-16 text-gray-300 mb-4"></i>
-                            <h3 class="text-lg font-medium text-gray-800 mb-2">Wybierz folder</h3>
-                            <p class="text-gray-500">Wybierz folder z menu po lewej stronie, aby zobaczyć jego zawartość.</p>
+                        <div class="text-center py-20 flex flex-col items-center">
+                            <div class="bg-slate-900 border border-slate-700 p-5 rounded-full mb-5 shadow-inner">
+                                <i data-lucide="folder-search" class="w-12 h-12 text-slate-500"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-200 mb-2">Wybierz folder</h3>
+                            <p class="text-slate-400 max-w-sm mx-auto">Wybierz folder z nawigacji obok, aby zobaczyć jego zawartość lub wgrać nowe pliki dokumentów.</p>
                         </div>
                     <?php endif; ?>
                 </div>

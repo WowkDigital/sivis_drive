@@ -27,52 +27,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logowanie - System Wymiany Plików</title>
+    <title>Logowanie - Sivis Drive</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <div class="flex justify-center mb-6">
-            <i data-lucide="folder-lock" class="w-12 h-12 text-blue-600"></i>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-md">
+        <!-- Logo Header -->
+        <div class="flex flex-col items-center justify-center mb-10 text-slate-100">
+            <div class="flex items-center space-x-3 text-blue-400 mb-2">
+                <div class="p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20 shadow-lg shadow-blue-500/10">
+                    <i data-lucide="cloud" class="w-10 h-10"></i>
+                </div>
+            </div>
+            <h1 class="text-3xl font-extrabold tracking-tight">Sivis Drive</h1>
+            <p class="text-slate-400 mt-2 text-sm text-center">Inteligentny system wymiany plików.</p>
         </div>
-        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Logowanie</h2>
-        
-        <?php if ($error): ?>
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-                <?= htmlspecialchars($error) ?>
-            </div>
-        <?php endif; ?>
 
-        <form method="post" action="">
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Adres E-mail</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-lucide="mail" class="w-5 h-5 text-gray-400"></i>
-                    </div>
-                    <input class="shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="email" type="email" name="email" required placeholder="admin@admin.com">
+        <!-- Login Card -->
+        <div class="bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-700/60 backdrop-blur-xl">
+            <h2 class="text-xl font-bold text-slate-100 mb-6 flex items-center"><i data-lucide="log-in" class="w-5 h-5 mr-2 text-blue-400"></i> Zaloguj się</h2>
+            
+            <?php if ($error): ?>
+                <div class="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl relative mb-6 text-sm">
+                    <?= htmlspecialchars($error) ?>
                 </div>
-            </div>
-            <div class="mb-6">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="password">Hasło</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-lucide="lock" class="w-5 h-5 text-gray-400"></i>
+            <?php endif; ?>
+
+            <form method="post" action="" class="space-y-5">
+                <div>
+                    <label class="block text-slate-400 text-sm font-medium mb-2" for="email">Adres e-mail</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <i data-lucide="mail" class="w-5 h-5 text-slate-500"></i>
+                        </div>
+                        <input class="w-full bg-slate-900/50 border border-slate-700 rounded-xl py-3 pl-11 pr-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder-slate-600" id="email" type="email" name="email" required placeholder="jan@firma.pl">
                     </div>
-                    <input class="shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" type="password" name="password" required placeholder="admin123">
                 </div>
-            </div>
-            <div class="flex items-center justify-between">
-                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 w-full px-4 rounded focus:outline-none focus:shadow-outline flex items-center justify-center" type="submit">
-                    <i data-lucide="log-in" class="w-5 h-5 mr-2"></i> Zaloguj się
-                </button>
-            </div>
-        </form>
+                <div>
+                    <label class="block text-slate-400 text-sm font-medium mb-2" for="password">Hasło</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <i data-lucide="lock" class="w-5 h-5 text-slate-500"></i>
+                        </div>
+                        <input class="w-full bg-slate-900/50 border border-slate-700 rounded-xl py-3 pl-11 pr-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder-slate-600" id="password" type="password" name="password" required placeholder="••••••••">
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button class="bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl w-full flex items-center justify-center transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40" type="submit">
+                        Zaloguj się
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <p class="text-center text-slate-600 text-xs mt-8">
+            &copy; <?= date('Y') ?> Sivis Drive. Wszelkie prawa zastrzeżone.
+        </p>
     </div>
     <script>
         lucide.createIcons();
