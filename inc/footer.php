@@ -97,15 +97,89 @@
             navigator.clipboard.writeText(url).then(() => {
                 const icon = btn.querySelector('i');
                 const originalIcon = icon.getAttribute('data-lucide');
+                const originalText = btn.title;
+                
+                // Add a small label if not exists
+                let label = btn.querySelector('.copy-label');
+                if (!label) {
+                    label = document.createElement('span');
+                    label.className = 'copy-label absolute -top-10 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[10px] px-2 py-1 rounded-md opacity-0 transition-opacity pointer-events-none';
+                    label.innerText = 'Skopiowano!';
+                    btn.classList.add('relative');
+                    btn.appendChild(label);
+                }
+
                 icon.setAttribute('data-lucide', 'check');
                 btn.classList.add('text-emerald-400', 'border-emerald-500/50', 'bg-emerald-500/5');
+                label.classList.add('opacity-100');
+                
                 initIcons();
                 setTimeout(() => {
                     icon.setAttribute('data-lucide', originalIcon);
                     btn.classList.remove('text-emerald-400', 'border-emerald-500/50', 'bg-emerald-500/5');
+                    label.classList.remove('opacity-100');
                     initIcons();
                 }, 2000);
             });
+        }
+
+        async function handleFileUpload(files) {
+            if (files.length === 0) return;
+            
+            const overlay = document.getElementById('upload-progress-overlay');
+            const statusText = document.getElementById('upload-status-text');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const percentText = document.getElementById('upload-percent-text');
+            
+            overlay.classList.remove('hidden', 'opacity-0');
+            overlay.classList.add('pointer-events-auto');
+            
+            const formData = new FormData();
+            formData.append('action', 'upload');
+            formData.append('folder_id', currentFolderId);
+            formData.append('file', files[0]); // Current app handles one file at a time
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'index.php', true);
+            
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    statusText.innerText = `Przesyłanie...`;
+                    progressBar.style.width = percent + '%';
+                    percentText.innerText = percent + '%';
+                }
+            };
+            
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    statusText.innerText = 'Zakończono sukcesem! 🎉';
+                    progressBar.style.width = '100%';
+                    progressBar.classList.replace('bg-blue-500', 'bg-emerald-500');
+                    
+                    setTimeout(() => {
+                        overlay.classList.add('opacity-0');
+                        setTimeout(() => {
+                            overlay.classList.add('hidden');
+                            overlay.classList.remove('pointer-events-auto');
+                            progressBar.style.width = '0%';
+                            progressBar.classList.replace('bg-emerald-500', 'bg-blue-500');
+                            loadFolder(currentFolderId, 0, true);
+                        }, 300);
+                    }, 1000);
+                } else {
+                    alert('Błąd podczas przesyłania pliku.');
+                    overlay.classList.add('hidden');
+                }
+            };
+            
+            xhr.onerror = () => {
+                alert('Błąd połączenia.');
+                overlay.classList.add('hidden');
+            };
+            
+            statusText.innerText = 'Rozpoczynanie...';
+            xhr.send(formData);
         }
 
         async function loadFolder(folderId, offset = 0, clear = false) {
@@ -322,12 +396,13 @@
         function setupDragAndDrop() {
             const dropZone = document.getElementById('drop-zone');
             const fileInput = document.getElementById('file-input');
-            const uploadForm = document.getElementById('upload-form');
 
             if (dropZone && fileInput && !dropZone.dataset.setup) {
                 dropZone.dataset.setup = "true";
                 dropZone.addEventListener('click', () => fileInput.click());
-                fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) uploadForm.submit(); });
+                fileInput.addEventListener('change', () => { 
+                    if (fileInput.files.length > 0) handleFileUpload(fileInput.files);
+                });
 
                 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                     dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
@@ -343,8 +418,7 @@
 
                 dropZone.addEventListener('drop', e => {
                     const files = e.dataTransfer.files;
-                    fileInput.files = files;
-                    if (files.length > 0) uploadForm.submit();
+                    if (files.length > 0) handleFileUpload(files);
                 }, false);
             }
         }

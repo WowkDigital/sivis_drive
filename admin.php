@@ -455,14 +455,28 @@ $formatted_size = $total_size > 1024*1024*1024
             navigator.clipboard.writeText(password).then(() => {
                 const icon = btn.querySelector('i');
                 const originalIcon = icon.getAttribute('data-lucide');
+                
+                // Add label
+                let label = btn.querySelector('.copy-label');
+                if (!label) {
+                    label = document.createElement('span');
+                    label.className = 'copy-label absolute -top-10 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[10px] px-2 py-1 rounded-md opacity-0 transition-opacity pointer-events-none';
+                    label.innerText = 'Skopiowano!';
+                    btn.classList.add('relative');
+                    btn.appendChild(label);
+                }
+
                 icon.setAttribute('data-lucide', 'check');
                 btn.classList.add('bg-emerald-600');
                 btn.classList.remove('bg-blue-600');
+                label.classList.add('opacity-100');
+
                 lucide.createIcons();
                 setTimeout(() => {
                     icon.setAttribute('data-lucide', originalIcon);
                     btn.classList.remove('bg-emerald-600');
                     btn.classList.add('bg-blue-600');
+                    label.classList.remove('opacity-100');
                     lucide.createIcons();
                 }, 2000);
             });
