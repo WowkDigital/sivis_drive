@@ -8,11 +8,42 @@
         let currentFolderId = <?= $active_folder_id ?: 0 ?>;
         let currentOffset = 0;
         const limit = 10;
-        const allRootFolders = <?= json_encode($all_root_folders) ?>;
+        let moveTargets = [];
 
         function initIcons() {
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
+            }
+        }
+
+        async function fetchMoveTargets() {
+            try {
+                const res = await fetch('index.php?ajax_action=get_move_targets');
+                const data = await res.json();
+                
+                // Build a simple tree with indentation
+                const tree = [];
+                const map = {};
+                data.forEach(f => map[f.id] = {...f, children: []});
+                data.forEach(f => {
+                    if (f.parent_id && map[f.parent_id]) {
+                        map[f.parent_id].children.push(map[f.id]);
+                    } else {
+                        tree.push(map[f.id]);
+                    }
+                });
+
+                const flatted = [];
+                const flatten = (nodes, depth = 0) => {
+                    nodes.forEach(n => {
+                        flatted.push({id: n.id, name: "  ".repeat(depth) + (depth > 0 ? "┕ " : "") + n.name});
+                        flatten(n.children, depth + 1);
+                    });
+                };
+                flatten(tree);
+                moveTargets = flatted;
+            } catch (e) {
+                console.error('Error fetching targets:', e);
             }
         }
 
@@ -154,10 +185,10 @@
                                 previewBtn = `<a href="download.php?id=${item.id}&action=view" target="_blank" class="p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Podgląd"><i data-lucide="eye" class="w-4.5 h-4.5"></i></a>`;
                             }
 
-                            let moveOptions = '';
-                            allRootFolders.forEach(f => {
-                                if (f.id != currentFolderId) {
-                                    moveOptions += `<option value="${f.id}">${f.name}</option>`;
+                            let moveOptions = '<option value="" disabled selected>Przenieś do...</option>';
+                            moveTargets.forEach(t => {
+                                if (t.id != currentFolderId) {
+                                    moveOptions += `<option value="${t.id}">${t.name}</option>`;
                                 }
                             });
 
@@ -170,11 +201,10 @@
                                             <form method="post" class="m-0">
                                                 <input type="hidden" name="action" value="move_file">
                                                 <input type="hidden" name="file_id" value="${item.id}">
-                                                <div class="p-2 flex items-center justify-center bg-orange-500/10 text-orange-400 group-hover/move:bg-orange-500/20 group-hover/move:text-orange-300 rounded-lg transition-all duration-200">
+                                                <div class="p-2 flex items-center justify-center bg-slate-700/50 group-hover/move:bg-orange-500/20 group-hover/move:text-orange-300 rounded-lg transition-all duration-200 border border-transparent group-hover/move:border-orange-500/30">
                                                     <i data-lucide="folder-input" class="w-4.5 h-4.5"></i>
                                                 </div>
                                                 <select name="new_folder_id" onchange="this.form.submit()" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="Przenieś plik">
-                                                    <option value="" disabled selected>Przenieś do...</option>
                                                     ${moveOptions}
                                                 </select>
                                             </form>
@@ -182,7 +212,7 @@
                                         <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline m-0 shrink-0">
                                             <input type="hidden" name="action" value="delete_file">
                                             <input type="hidden" name="file_id" value="${item.id}">
-                                            <button type="submit" title="Usuń" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all duration-200 flex items-center justify-center">
+                                            <button type="submit" title="Usuń" class="p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all duration-200 flex items-center justify-center">
                                                 <i data-lucide="trash-2" class="w-4.5 h-4.5"></i>
                                             </button>
                                         </form>
@@ -290,7 +320,8 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchMoveTargets();
             if (currentFolderId) {
                 loadFolder(currentFolderId, 0, true);
             }

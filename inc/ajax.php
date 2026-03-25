@@ -73,3 +73,40 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
     ]);
     exit;
 }
+
+if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_move_targets') {
+    // Get all folders based on roles
+    $all = $db->query("SELECT * FROM folders ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $accessible = [];
+    
+    foreach ($all as $f) {
+        $can_see = false;
+        if (is_admin()) {
+            $can_see = true;
+        } elseif (is_zarzad()) {
+            $can_see = true; // Zarząd sees everything
+        } else {
+            // Private check
+            if ($f['owner_id'] == $_SESSION['user_id'] || is_private_tree($db, $f['id'], $_SESSION['user_id'])) {
+                $can_see = true;
+            } elseif ($f['owner_id'] === null) {
+                // Shared check
+                $groups = array_map('trim', explode(',', $f['access_groups'] ?? ''));
+                if (empty($f['access_groups']) || in_array(get_user_group(), $groups)) {
+                    $can_see = true;
+                }
+            }
+        }
+        
+        if ($can_see) {
+            $accessible[] = [
+                'id' => $f['id'],
+                'name' => $f['name'],
+                'parent_id' => $f['parent_id']
+            ];
+        }
+    }
+    
+    echo json_encode($accessible);
+    exit;
+}
