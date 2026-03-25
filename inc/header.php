@@ -33,7 +33,17 @@
                     <span class="font-bold text-2xl tracking-tight text-white">Sivis Drive</span>
                 </div>
                 <div class="flex flex-wrap justify-center gap-3 items-center">
-                    <span class="text-sm text-slate-400 hidden sm:inline">Zalogowano: <span class="font-semibold text-slate-200"><?= htmlspecialchars($_SESSION['email'] ?? '') ?></span></span>
+                    <span class="text-sm text-slate-400 hidden sm:flex items-center gap-2">
+                        Zalogowano: 
+                        <span class="font-semibold text-slate-200"><?= htmlspecialchars($_SESSION['display_name'] ?: $_SESSION['email']) ?></span>
+                        <button onclick="const n=prompt('Zmień wyświetlaną nazwę:', '<?= htmlspecialchars($_SESSION['display_name'] ?? '') ?>'); if(n){document.getElementById('update_my_name_val').value=n; document.getElementById('update_my_name_form').submit();}" class="p-1 hover:text-blue-400 transition-colors" title="Edytuj profil">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <form id="update_my_name_form" method="post" class="hidden">
+                            <input type="hidden" name="action" value="update_my_name">
+                            <input type="hidden" name="display_name" id="update_my_name_val">
+                        </form>
+                    </span>
                     <?php if (is_admin()): ?>
                         <a href="admin.php" class="text-blue-400 hover:text-blue-300 hover:bg-slate-700 px-3 py-2 rounded-lg font-medium flex items-center transition-colors">
                             <i data-lucide="shield-check" class="w-4 h-4 mr-1.5"></i> Admin

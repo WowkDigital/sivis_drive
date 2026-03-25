@@ -17,8 +17,14 @@ $stmt->execute([$_SESSION['user_id']]);
 $user_private_root_id = $stmt->fetchColumn();
 
 if (!$user_private_root_id) {
+    if (empty($_SESSION['display_name'])) {
+        $stmt = $db->prepare("SELECT display_name FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $_SESSION['display_name'] = $stmt->fetchColumn();
+    }
+    $name = !empty($_SESSION['display_name']) ? 'Pliki ' . $_SESSION['display_name'] : 'Moje pliki (' . $_SESSION['email'] . ')';
     $stmt = $db->prepare("INSERT INTO folders (name, owner_id) VALUES (?, ?)");
-    $stmt->execute(['Moje pliki (' . $_SESSION['email'] . ')', $_SESSION['user_id']]);
+    $stmt->execute([$name, $_SESSION['user_id']]);
     $user_private_root_id = $db->lastInsertId();
 }
 
@@ -121,11 +127,21 @@ require_once 'inc/header.php';
 
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-slate-700">
                         <div class="flex items-center group">
+                            <?php 
+                                $is_private_root = ($active_folder['owner_id'] && !$active_folder['parent_id']);
+                                $raw_name = htmlspecialchars($active_folder['name']);
+                                if ($is_private_root && strpos($active_folder['name'], 'Pliki ') === 0) {
+                                    $user_part = htmlspecialchars(substr($active_folder['name'], 6));
+                                    $name_to_show = 'Pliki <span class="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent ml-2 underline decoration-blue-500/30 underline-offset-8 select-none">' . $user_part . '</span>';
+                                } else {
+                                    $name_to_show = $raw_name;
+                                }
+                            ?>
                             <h2 id="current-folder-name" class="text-2xl font-bold text-slate-100 flex items-center">
                                 <div class="p-2 bg-blue-500/10 rounded-lg mr-3">
                                     <i data-lucide="folder-open" class="w-6 h-6 text-blue-400"></i>
                                 </div>
-                                <?= htmlspecialchars($active_folder['name']) ?>
+                                <?= $name_to_show ?>
                             </h2>
                             <button onclick="copyFolderLink(this)" class="ml-4 p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-blue-400 border border-slate-700 transition-all group-hover:scale-105 active:scale-95" title="Kopiuj link do folderu">
                                 <i data-lucide="share-2" class="w-5 h-5"></i>

@@ -14,11 +14,13 @@ $db->exec("CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT,
     role TEXT,
     user_group TEXT,
+    display_name TEXT,
     last_login DATETIME
 )");
 
-// Migrate: Add last_login to users if missing
+// Migrate: Add columns if missing
 try { @$db->exec("ALTER TABLE users ADD COLUMN last_login DATETIME"); } catch (Exception $e) {}
+try { @$db->exec("ALTER TABLE users ADD COLUMN display_name TEXT"); } catch (Exception $e) {}
 
 $db->exec("CREATE TABLE IF NOT EXISTS folders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

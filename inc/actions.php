@@ -67,6 +67,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             header("Location: index.php");
             exit;
         }
+    } elseif ($_POST['action'] === 'update_my_name' && isset($_POST['display_name'])) {
+        $name = $_POST['display_name'];
+        $uid = $_SESSION['user_id'];
+        
+        $stmt = $db->prepare('UPDATE users SET display_name = ? WHERE id = ?');
+        $stmt->execute([$name, $uid]);
+        
+        $_SESSION['display_name'] = $name;
+
+        // Sync private root folder name
+        $stmt = $db->prepare("UPDATE folders SET name = ? WHERE owner_id = ? AND parent_id IS NULL");
+        $stmt->execute(['Pliki ' . $name, $uid]);
+
+        $message = "Twoja nazwa została zaktualizowana.";
     } elseif ($_POST['action'] === 'delete_file' && isset($_POST['file_id'])) {
         $fid = (int)$_POST['file_id'];
         $stmt = $db->prepare("SELECT folder_id, name FROM files WHERE id = ?");

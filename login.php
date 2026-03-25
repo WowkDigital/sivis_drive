@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?')->execute([$user['id']]);
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['email'] = $user['email'];
+        $_SESSION['display_name'] = $user['display_name'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['user_group'] = $user['user_group'];
         header('Location: index.php');

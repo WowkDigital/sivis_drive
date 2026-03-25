@@ -8,14 +8,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'add_user') {
             $email = $_POST['email'];
+            $display_name = $_POST['display_name'];
             $role = $_POST['role'];
             $group = ($role === 'zarząd') ? 'zarząd' : 'pracownicy';
             $password = generate_random_password(16);
             $hash = password_hash($password, PASSWORD_DEFAULT);
             
             try {
-                $stmt = $db->prepare('INSERT INTO users (email, password_hash, role, user_group) VALUES (?, ?, ?, ?)');
-                $stmt->execute([$email, $hash, $role, $group]);
+                $stmt = $db->prepare('INSERT INTO users (email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, ?, ?)');
+                $stmt->execute([$email, $hash, $role, $group, $display_name]);
                 $new_user_password = $password;
                 $message = "Użytkownik został pomyślnie utworzony.";
             } catch (Exception $e) {
@@ -80,11 +81,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $db->prepare('UPDATE users SET role = ?, user_group = ? WHERE id = ?');
             $stmt->execute([$role, $group, $uid]);
             $message = "Rola użytkownika zaktualizowana.";
+        } elseif ($_POST['action'] === 'update_user_name') {
+            $uid = (int)$_POST['user_id'];
+            $name = $_POST['display_name'];
+            $stmt = $db->prepare('UPDATE users SET display_name = ? WHERE id = ?');
+            $stmt->execute([$name, $uid]);
+            
+            // Sync private root folder name
+            $stmt = $db->prepare("UPDATE folders SET name = ? WHERE owner_id = ? AND parent_id IS NULL");
+            $stmt->execute(['Pliki ' . $name, $uid]);
+
+            $message = "Nazwa wyświetlana zaktualizowana.";
         }
     }
 }
 
-$users = $db->query("SELECT id, email, role, user_group, last_login FROM users")->fetchAll(PDO::FETCH_ASSOC);
+$users = $db->query("SELECT id, email, role, user_group, display_name, last_login FROM users")->fetchAll(PDO::FETCH_ASSOC);
 $folders = $db->query("SELECT id, name, access_groups FROM folders")->fetchAll(PDO::FETCH_ASSOC);
 
 // Stats
@@ -222,6 +234,10 @@ $formatted_size = $total_size > 1024*1024*1024
                         <label class="block text-sm font-medium text-slate-400 mb-1.5">Adres E-mail</label>
                         <input type="email" name="email" required placeholder="jan@firma.pl" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder-slate-600">
                     </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-400 mb-1.5">Imię i Nazwisko</label>
+                        <input type="text" name="display_name" required placeholder="Jan Kowalski" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder-slate-600">
+                    </div>
                     <div class="mb-5">
                         <label class="block text-sm font-medium text-slate-400 mb-1.5">Rola</label>
                         <div class="relative">
@@ -297,8 +313,18 @@ $formatted_size = $total_size > 1024*1024*1024
                                 <?php foreach ($users as $u): ?>
                                 <tr class="hover:bg-slate-700/30 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="font-medium text-slate-200"><?= htmlspecialchars($u['email']) ?></div>
-                                        <div class="text-xs text-slate-500 sm:hidden mt-1">
+                                        <form method="post" class="flex flex-col gap-1">
+                                            <input type="hidden" name="action" value="update_user_name">
+                                            <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                            <div class="relative group/name">
+                                                <input type="text" name="display_name" value="<?= htmlspecialchars($u['display_name'] ?? '') ?>" class="bg-transparent border-none text-slate-200 font-medium p-0 focus:ring-0 w-full" placeholder="Brak nazwy...">
+                                                <button type="submit" class="absolute -right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover/name:opacity-100 text-emerald-400 hover:text-emerald-300 transition-opacity">
+                                                    <i data-lucide="save" class="w-4 h-4"></i>
+                                                </button>
+                                            </div>
+                                            <div class="text-xs text-slate-500"><?= htmlspecialchars($u['email']) ?></div>
+                                        </form>
+                                        <div class="text-xs text-slate-500 sm:hidden mt-2">
                                             Role: <span class="font-semibold text-slate-400"><?= htmlspecialchars($u['role']) ?></span> 
                                             (<span class="italic"><?= htmlspecialchars($u['user_group']) ?></span>)
                                         </div>
