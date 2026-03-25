@@ -221,7 +221,7 @@ if ($active_folder) {
                             <div class="overflow-x-auto -mx-5 sm:mx-0">
                                 <div class="inline-block min-w-full align-middle">
                                     <table class="w-full">
-                                        <thead class="hidden sm:table-header-group">
+                                        <thead>
                                             <tr class="border-b border-slate-700 text-left">
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa pliku</th>
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell w-32">Rozmiar</th>
@@ -240,46 +240,51 @@ if ($active_folder) {
                                                 
                                                 $size_val = $file['size'] > 1024*1024 ? round($file['size']/(1024*1024), 2) . ' MB' : round($file['size']/1024) . ' KB';
                                             ?>
-                                            <tr class="flex flex-col sm:table-row hover:bg-slate-700/30 transition-colors group border-b sm:border-0 border-slate-700/50 mb-3 sm:mb-0 bg-slate-800/30 sm:bg-transparent rounded-xl sm:rounded-none">
-                                                <td class="px-5 pt-4 pb-3 sm:py-4 min-w-0 sm:max-w-0 w-full sm:overflow-hidden block sm:table-cell">
-                                                    <div class="flex items-start sm:items-center min-w-0">
-                                                        <div class="p-2 bg-slate-900 rounded-lg mr-3 group-hover:bg-slate-800 transition-colors shrink-0 mt-0.5 sm:mt-0">
+                                            <tr class="hover:bg-slate-700/30 transition-colors group">
+                                                <td class="px-3 py-4 min-w-0 max-w-0 w-full overflow-hidden">
+                                                    <div class="flex items-center min-w-0">
+                                                        <div class="p-2 bg-slate-900 rounded-lg mr-2 sm:mr-3 group-hover:bg-slate-800 transition-colors shrink-0">
                                                             <i data-lucide="<?= $icon ?>" class="w-5 h-5 <?= $iconColor ?>"></i>
                                                         </div>
-                                                        <div class="flex flex-col min-w-0 break-words w-full">
-                                                            <span class="font-medium text-slate-200 pr-2 whitespace-normal break-words w-full sm:truncate leading-snug"><?= htmlspecialchars($file['original_name']) ?></span>
-                                                            <span class="text-xs text-slate-500 sm:hidden mt-1.5"><?= $size_val ?> • <?= date('d.m.y', strtotime($file['created_at'])) ?></span>
+                                                        <div class="flex flex-col min-w-0 overflow-hidden">
+                                                            <span class="font-medium text-slate-200 truncate pr-1 shrink text-sm sm:text-base"><?= htmlspecialchars($file['original_name']) ?></span>
+                                                            <span class="text-[10px] sm:text-xs text-slate-500 sm:hidden mt-0.5 truncate shrink"><?= $size_val ?> • <?= date('d.m.y', strtotime($file['created_at'])) ?></span>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden sm:table-cell"><?= $size_val ?></td>
+                                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden sm:table-cell text-xs"><?= $size_val ?></td>
                                                 <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell text-xs"><?= date('d.m.Y H:i', strtotime($file['created_at'])) ?></td>
-                                                <td class="px-5 pt-2 pb-4 sm:py-4 sm:whitespace-nowrap sm:text-right text-sm shrink-0 w-full sm:w-px block sm:table-cell bg-slate-900/40 sm:bg-transparent rounded-b-xl sm:rounded-none mt-1 sm:mt-0">
-                                                    <div class="flex items-center justify-start sm:justify-end gap-2 shrink-0 flex-wrap">
+                                                <td class="px-3 py-4 whitespace-nowrap text-right text-sm shrink-0 w-px">
+                                                    <div class="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
                                                         <?php if ($ext === 'pdf'): ?>
-                                                            <a href="download.php?id=<?= $file['id'] ?>&action=view" target="_blank" class="p-2 sm:px-4 sm:py-2 flex items-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg font-medium transition-all duration-200 shadow-sm" title="Podgląd">
-                                                                <i data-lucide="eye" class="w-4 h-4 sm:mr-1.5 shrink-0"></i> <span class="hidden sm:inline whitespace-nowrap shrink-0">Podgląd</span>
+                                                            <a href="download.php?id=<?= $file['id'] ?>&action=view" target="_blank" class="p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Podgląd">
+                                                                <i data-lucide="eye" class="w-4.5 h-4.5"></i>
                                                             </a>
                                                         <?php endif; ?>
-                                                        <a href="download.php?id=<?= $file['id'] ?>" class="p-2 sm:px-4 sm:py-2 flex items-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg font-medium transition-all duration-200 shadow-sm">
-                                                            <i data-lucide="download" class="w-4 h-4 sm:mr-1.5 shrink-0"></i> <span class="hidden sm:inline whitespace-nowrap shrink-0">Pobierz</span>
+                                                        <a href="download.php?id=<?= $file['id'] ?>" class="p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 shadow-sm" title="Pobierz">
+                                                            <i data-lucide="download" class="w-4.5 h-4.5"></i>
                                                         </a>
                                                         <?php if (can_manage_files()): ?>
-                                                        <form method="post" class="inline shrink-0 mr-1">
-                                                            <input type="hidden" name="action" value="move_file">
-                                                            <input type="hidden" name="file_id" value="<?= $file['id'] ?>">
-                                                            <select name="new_folder_id" onchange="this.form.submit()" class="bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 focus:border-blue-500 outline-none transition-all cursor-pointer h-9 px-2" title="Przenieś plik">
-                                                                <option value="" disabled selected>Przenieś do...</option>
-                                                                <?php foreach ($folders as $fold): if ($fold['id'] != $active_folder_id): ?>
-                                                                <option value="<?= $fold['id'] ?>"><?= htmlspecialchars($fold['name']) ?></option>
-                                                                <?php endif; endforeach; ?>
-                                                            </select>
-                                                        </form>
-                                                        <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline shrink-0">
+                                                        <div class="relative group/move shrink-0">
+                                                            <form method="post" class="m-0">
+                                                                <input type="hidden" name="action" value="move_file">
+                                                                <input type="hidden" name="file_id" value="<?= $file['id'] ?>">
+                                                                <div class="p-2 flex items-center justify-center bg-orange-500/10 text-orange-400 group-hover/move:bg-orange-500/20 group-hover/move:text-orange-300 rounded-lg transition-all duration-200">
+                                                                    <i data-lucide="folder-input" class="w-4.5 h-4.5"></i>
+                                                                </div>
+                                                                <select name="new_folder_id" onchange="this.form.submit()" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="Przenieś plik">
+                                                                    <option value="" disabled selected>Przenieś do...</option>
+                                                                    <?php foreach ($folders as $fold): if ($fold['id'] != $active_folder_id): ?>
+                                                                    <option value="<?= $fold['id'] ?>"><?= htmlspecialchars($fold['name']) ?></option>
+                                                                    <?php endif; endforeach; ?>
+                                                                </select>
+                                                            </form>
+                                                        </div>
+                                                        <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline m-0 shrink-0">
                                                             <input type="hidden" name="action" value="delete_file">
                                                             <input type="hidden" name="file_id" value="<?= $file['id'] ?>">
-                                                            <button type="submit" title="Usuń" class="p-2 sm:px-3 sm:py-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all duration-200 flex items-center shrink-0 h-9">
-                                                                <i data-lucide="trash-2" class="w-4 h-4 shrink-0"></i>
+                                                            <button type="submit" title="Usuń" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all duration-200 flex items-center justify-center">
+                                                                <i data-lucide="trash-2" class="w-4.5 h-4.5"></i>
                                                             </button>
                                                         </form>
                                                         <?php endif; ?>
