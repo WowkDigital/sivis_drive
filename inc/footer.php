@@ -74,10 +74,13 @@
 
         function updateItemSelected(id, type, selected) {
             const itemKey = `${type}-${id}`;
+            const row = document.querySelector(`tr[data-key="${itemKey}"]`);
             if (selected) {
                 selectedItems.add(itemKey);
+                if (row) row.classList.add('bg-blue-500/10', 'border-blue-500/20');
             } else {
                 selectedItems.delete(itemKey);
+                if (row) row.classList.remove('bg-blue-500/10', 'border-blue-500/20');
             }
             updateBulkActionBar();
         }
@@ -87,26 +90,29 @@
             if (!bar) {
                 bar = document.createElement('div');
                 bar.id = 'bulk-action-bar';
-                bar.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-slate-800/90 backdrop-blur-xl border border-blue-500/30 px-6 py-3 rounded-2xl shadow-2xl flex items-center justify-between gap-8 transition-all duration-300 translate-y-20 opacity-0 pointer-events-none';
+                bar.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-slate-800/95 backdrop-blur-2xl border border-blue-500/40 px-6 py-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-between gap-10 transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) translate-y-32 opacity-0 pointer-events-none';
                 bar.innerHTML = `
-                    <div class="flex items-center gap-4 border-r border-slate-700 pr-6">
-                        <div class="bg-blue-500/20 text-blue-400 p-2 rounded-xl">
+                    <div class="flex items-center gap-5 border-r border-slate-700/50 pr-8">
+                        <div class="bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] text-white p-2.5 rounded-2xl">
                             <i data-lucide="check-square" class="w-5 h-5"></i>
                         </div>
                         <div class="flex flex-col">
-                            <span id="bulk-count" class="text-white font-bold leading-none">0</span>
-                            <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Zaznaczono</span>
+                            <div class="flex items-baseline gap-1.5">
+                                <span id="bulk-count" class="text-2xl font-black text-white leading-none">0</span>
+                                <span class="text-xs text-blue-400 font-bold uppercase tracking-wider">Elementów</span>
+                            </div>
+                            <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Wybrano do akcji</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="bulkDownload()" class="flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-500/20">
-                            <i data-lucide="download" class="w-4.5 h-4.5"></i> Pobierz
+                    <div class="flex items-center gap-3">
+                        <button onclick="bulkDownload()" class="group flex items-center gap-2.5 px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-600/20">
+                            <i data-lucide="download" class="w-5 h-5 group-hover:translate-y-0.5 transition-transform"></i> Pobierz
                         </button>
-                        <button onclick="bulkMove()" class="flex items-center gap-2 px-4 py-2.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 font-bold rounded-xl border border-purple-500/20 transition-all active:scale-95">
-                            <i data-lucide="folder-input" class="w-4.5 h-4.5"></i> Przenieś
+                        <button onclick="bulkMove()" class="group flex items-center gap-2.5 px-5 py-3 bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold rounded-2xl border border-slate-600 transition-all active:scale-95">
+                            <i data-lucide="folder-input" class="w-5 h-5 group-hover:translate-x-0.5 transition-transform"></i> Przenieś
                         </button>
-                        <button onclick="clearSelection()" class="px-4 py-2.5 text-slate-400 hover:text-white transition-colors" title="Wyczyść zaznaczenie">
-                            <i data-lucide="x" class="w-5 h-5"></i>
+                        <button onclick="clearSelection()" class="ml-2 p-3 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all" title="Wyczyść zaznaczenie">
+                            <i data-lucide="trash-2" class="w-5.5 h-5.5"></i>
                         </button>
                     </div>
                 `;
@@ -118,9 +124,9 @@
             document.getElementById('bulk-count').innerText = count;
 
             if (count > 0) {
-                bar.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+                bar.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');
             } else {
-                bar.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                bar.classList.add('translate-y-32', 'opacity-0', 'pointer-events-none');
             }
         }
 
@@ -128,22 +134,14 @@
             selectedItems.clear();
             const checkboxes = document.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach(cb => cb.checked = false);
+            document.querySelectorAll('tr[data-key]').forEach(tr => tr.classList.remove('bg-blue-500/10', 'border-blue-500/20'));
             updateBulkActionBar();
         }
 
         function bulkDownload() {
-            const ids = [];
-            selectedItems.forEach(key => {
-                const [type, id] = key.split('-');
-                ids.push(id);
-            });
-            
-            if (ids.length === 0) {
-                showToast('Wybierz przynajmniej jeden plik do pobrania.', 'error');
-                return;
-            }
-
-            window.location.href = 'download.php?ids=' + ids.join(',');
+            if (selectedItems.size === 0) return;
+            const items = Array.from(selectedItems).join(','); 
+            window.location.href = 'download.php?items=' + items;
         }
 
         function bulkMove() {
@@ -414,7 +412,12 @@
                                         <thead>
                                             <tr class="border-b border-slate-700 text-left">
                                                 <th class="px-5 py-4 w-12 text-center">
-                                                    <input type="checkbox" onclick="toggleSelectAll(this)" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-800">
+                                                    <label class="relative flex items-center justify-center cursor-pointer group mx-auto w-6 h-6">
+                                                        <input type="checkbox" onclick="toggleSelectAll(this)" class="peer sr-only">
+                                                        <div class="h-6 w-6 rounded-lg bg-slate-900 border-2 border-slate-700/50 peer-checked:bg-blue-600 peer-checked:border-blue-500 transition-all flex items-center justify-center group-hover:border-slate-500">
+                                                            <i data-lucide="check" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                                                        </div>
+                                                    </label>
                                                 </th>
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell w-32 text-center">Rozmiar / Typ</th>
@@ -435,16 +438,25 @@
 
                     data.items.forEach(item => {
                         const tr = document.createElement('tr');
-                        tr.className = 'hover:bg-slate-700/30 transition-colors group';
-                        const isSelected = selectedItems.has(`${item.is_folder ? 'folder' : 'file'}-${item.id}`);
+                        const itemType = item.is_folder ? 'folder' : 'file';
+                        const itemKey = `${itemType}-${item.id}`;
+                        const isSelected = selectedItems.has(itemKey);
+                        
+                        tr.dataset.key = itemKey;
+                        tr.className = 'hover:bg-slate-700/30 transition-colors group ' + (isSelected ? 'bg-blue-500/10 border-blue-500/20' : '');
                         
                         const checkboxHtml = `
                             <td class="px-5 py-4 w-12 text-center" onclick="event.stopPropagation()">
-                                <input type="checkbox" 
-                                    class="item-checkbox w-4 h-4 rounded bg-slate-900 border-slate-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-800"
-                                    data-id="${item.id}" data-type="${item.is_folder ? 'folder' : 'file'}"
-                                    ${isSelected ? 'checked' : ''}
-                                    onchange="updateItemSelected(this.dataset.id, this.dataset.type, this.checked)">
+                                <label class="relative flex items-center justify-center cursor-pointer group mx-auto w-6 h-6">
+                                    <input type="checkbox" 
+                                        class="item-checkbox peer sr-only"
+                                        data-id="${item.id}" data-type="${itemType}"
+                                        ${isSelected ? 'checked' : ''}
+                                        onchange="updateItemSelected(this.dataset.id, this.dataset.type, this.checked)">
+                                    <div class="h-6 w-6 rounded-lg bg-slate-900 border-2 border-slate-700/50 peer-checked:bg-blue-600 peer-checked:border-blue-500 transition-all flex items-center justify-center group-hover:border-slate-500">
+                                        <i data-lucide="check" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                                    </div>
+                                </label>
                             </td>
                         `;
 

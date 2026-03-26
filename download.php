@@ -10,10 +10,10 @@ if (!isset($_GET['id']) && !isset($_GET['ids'])) {
 $role = $_SESSION['role'] ?? 'pracownik';
 $group = get_user_group();
 
-if (isset($_GET['ids'])) {
-    $ids = array_filter(array_map('intval', explode(',', $_GET['ids'])));
+if (isset($_GET['ids']) || isset($_GET['items'])) {
+    $items_raw = isset($_GET['items']) ? explode(',', $_GET['items']) : explode(',', $_GET['ids']);
     
-    if (empty($ids)) die("Brak wybranych plików.");
+    if (empty($items_raw)) die("Brak wybranych plików.");
 
     $zip = new ZipArchive();
     $zip_name = 'SivisDrive_' . date('Y-m-d_H-i-s') . '.zip';
@@ -24,7 +24,6 @@ if (isset($_GET['ids'])) {
     }
 
     function addFolderToZip($db, $fid, $zip, $base_path, $user_id, $role, $group) {
-        // Add files
         $stmt = $db->prepare("SELECT * FROM files WHERE folder_id = ?");
         $stmt->execute([$fid]);
         $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -34,8 +33,6 @@ if (isset($_GET['ids'])) {
                 $zip->addFile($fpath, $base_path . $f['original_name']);
             }
         }
-        
-        // Add subfolders
         $stmt = $db->prepare("SELECT * FROM folders WHERE parent_id = ?");
         $stmt->execute([$fid]);
         $subfolders = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -47,31 +44,35 @@ if (isset($_GET['ids'])) {
         }
     }
 
-    // We don't know if ID is file or folder from the plain list, so we check both tables or use a combined approach
-    // But my JS only sent file IDs. I'll update JS to send objects or I check DB here.
-    
-    foreach ($ids as $id) {
-        // Check if it's a file
-        $stmt = $db->prepare("SELECT * FROM files WHERE id = ?");
-        $stmt->execute([$id]);
-        $file = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($file && can_user_access_folder($db, $file['folder_id'], $_SESSION['user_id'], $role, $group)) {
-            $fpath = __DIR__ . '/uploads/' . $file['name'];
-            if (file_exists($fpath)) {
-                $zip->addFile($fpath, $file['original_name']);
-            }
-            continue;
+    foreach ($items_raw as $item_key) {
+        $parts = explode('-', $item_key);
+        if (count($parts) === 2) {
+            $type = $parts[0];
+            $id = (int)$parts[1];
+        } else {
+            // Fallback for old 'ids' param or unexpected format
+            $type = 'file';
+            $id = (int)$item_key;
         }
 
-        // Check if it's a folder (only if not found as file or if we want to support both with same IDs - unlikely in this DB schema but possible)
-        $stmt = $db->prepare("SELECT * FROM folders WHERE id = ?");
-        $stmt->execute([$id]);
-        $folder = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($folder && can_user_access_folder($db, $folder['id'], $_SESSION['user_id'], $role, $group)) {
-            $zip->addEmptyDir($folder['name']);
-            addFolderToZip($db, $folder['id'], $zip, $folder['name'] . '/', $_SESSION['user_id'], $role, $group);
+        if ($type === 'file') {
+            $stmt = $db->prepare("SELECT * FROM files WHERE id = ?");
+            $stmt->execute([$id]);
+            $file = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($file && can_user_access_folder($db, $file['folder_id'], $_SESSION['user_id'], $role, $group)) {
+                $fpath = __DIR__ . '/uploads/' . $file['name'];
+                if (file_exists($fpath)) {
+                    $zip->addFile($fpath, $file['original_name']);
+                }
+            }
+        } elseif ($type === 'folder') {
+            $stmt = $db->prepare("SELECT * FROM folders WHERE id = ?");
+            $stmt->execute([$id]);
+            $folder = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($folder && can_user_access_folder($db, $folder['id'], $_SESSION['user_id'], $role, $group)) {
+                $zip->addEmptyDir($folder['name']);
+                addFolderToZip($db, $folder['id'], $zip, $folder['name'] . '/', $_SESSION['user_id'], $role, $group);
+            }
         }
     }
 
