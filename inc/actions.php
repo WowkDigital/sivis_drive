@@ -158,14 +158,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     // Check if folder is not the target itself or a parent of target (to avoid cycles)
                     if ($id === $new_folder_id) continue;
                     
-                    $stmt = $db->prepare("SELECT parent_id FROM folders WHERE id = ?");
-                    $stmt->execute([$id]);
-                    $old_parent_id = $stmt->fetchColumn();
-                    
+                    // The original code had a $stmt for parent_id, but it was not used.
+                    // If the intent was to check access for the old parent, it should be done here.
+                    // For now, we'll just check access for the folder itself.
                     if (can_user_access_folder($db, $id, $_SESSION['user_id'], $role, $group)) {
                         $db->prepare("UPDATE folders SET parent_id = ? WHERE id = ?")->execute([$new_folder_id, $id]);
                     }
-                } else {
+                } else { // type === 'file'
                     $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
                     $stmt->execute([$id]);
                     $old_folder_id = $stmt->fetchColumn();
@@ -175,8 +174,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     }
                 }
             }
+            $_SESSION['toast'] = "Pomyślnie przeniesiono " . count($item_ids) . " elementów! 🚀";
             header("Location: index.php?folder=" . $new_folder_id);
             exit;
         }
     }
 }
+?>

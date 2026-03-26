@@ -148,8 +148,7 @@ require_once 'inc/header.php';
                             </button>
                         </div>
                         <div class="flex items-center gap-3">
-                            <?php if ($can_edit): ?>
-                            <button onclick="const n=prompt('Nazwa podfolderu:'); if(n){document.getElementById('new_folder_name').value=n; document.getElementById('new_folder_form').submit();}" class="text-xs font-bold px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 border border-slate-600 transition-all flex items-center">
+                            <button id="new-folder-btn" onclick="const n=prompt('Nazwa podfolderu:'); if(n){document.getElementById('new_folder_name').value=n; document.getElementById('new_folder_form').submit();}" class="text-xs font-bold px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 border border-slate-600 transition-all flex items-center hidden">
                                 <i data-lucide="folder-plus" class="w-3.5 h-3.5 mr-1.5"></i> Nowy folder
                             </button>
                             <form id="new_folder_form" method="post" class="hidden">
@@ -157,7 +156,6 @@ require_once 'inc/header.php';
                                 <input type="hidden" name="name" id="new_folder_name">
                                 <input type="hidden" name="parent_id" id="new_folder_parent_id" value="<?= $active_folder_id ?>">
                             </form>
-                            <?php endif; ?>
                             <span id="file-count-badge" class="text-sm font-medium px-3 py-1 bg-slate-900 rounded-full text-slate-400 border border-slate-700"><?= count($files) + count($subfolders) ?> elementów</span>
                         </div>
                     </div>

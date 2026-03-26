@@ -77,7 +77,7 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
 if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_move_targets') {
     $role = $_SESSION['role'] ?? 'pracownik';
     $group = get_user_group();
-    $all = $db->query("SELECT * FROM folders ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $all = $db->query("SELECT * FROM folders ORDER BY CASE WHEN owner_id IS NULL THEN 0 ELSE 1 END, name ASC")->fetchAll(PDO::FETCH_ASSOC);
     $accessible = [];
     
     foreach ($all as $f) {

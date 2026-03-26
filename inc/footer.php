@@ -273,17 +273,26 @@
             const url = window.location.href;
             navigator.clipboard.writeText(url).then(() => {
                 const icon = btn.querySelector('i');
-                const originalIcon = icon.getAttribute('data-lucide');
-                
+                const originalData = icon.getAttribute('data-lucide');
+
+                // Animate to success state
+                icon.setAttribute('data-lucide', 'check');
+                btn.classList.add(
+                    'text-emerald-400', 'border-emerald-500/40',
+                    'bg-emerald-500/10', 'scale-110', 'shadow-[0_0_12px_rgba(52,211,153,0.3)]'
+                );
+                btn.classList.remove('text-slate-400');
+                initIcons();
+
                 showToast('Link skopiowany do schowka! 📋');
 
-                icon.setAttribute('data-lucide', 'check');
-                btn.classList.add('text-emerald-400', 'border-emerald-500/50', 'bg-emerald-500/5');
-                
-                initIcons();
                 setTimeout(() => {
-                    icon.setAttribute('data-lucide', originalIcon);
-                    btn.classList.remove('text-emerald-400', 'border-emerald-500/50', 'bg-emerald-500/5');
+                    icon.setAttribute('data-lucide', originalData);
+                    btn.classList.remove(
+                        'text-emerald-400', 'border-emerald-500/40',
+                        'bg-emerald-500/10', 'scale-110', 'shadow-[0_0_12px_rgba(52,211,153,0.3)]'
+                    );
+                    btn.classList.add('text-slate-400');
                     initIcons();
                 }, 2000);
             });
@@ -599,6 +608,16 @@
                     }
                 }
 
+                // Toggle new-folder-btn (visible to anyone who can edit)
+                const newFolderBtn = document.getElementById('new-folder-btn');
+                if (newFolderBtn) {
+                    if (data.can_edit) {
+                        newFolderBtn.classList.remove('hidden');
+                    } else {
+                        newFolderBtn.classList.add('hidden');
+                    }
+                }
+
                 initIcons();
                 setupDragAndDrop();
 
@@ -646,6 +665,11 @@
             if (currentFolderId) {
                 loadFolder(currentFolderId, 0, true);
             }
+
+            <?php if (isset($_SESSION['toast'])): ?>
+                showToast("<?= $_SESSION['toast'] ?>");
+                <?php unset($_SESSION['toast']); ?>
+            <?php endif; ?>
         });
     </script>
 </body>
