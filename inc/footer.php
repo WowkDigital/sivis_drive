@@ -9,6 +9,7 @@
         let currentOffset = 0;
         const limit = 10;
         let moveTargets = [];
+        let selectedItems = new Set(); // Stores objects {id: 1, type: 'file'}
 
         function initIcons() {
             if (typeof lucide !== 'undefined') {
@@ -61,11 +62,136 @@
             }
         }
 
-        function openMoveModal(fileId, filename) {
+        function toggleSelectAll(checkbox) {
+            const table = document.getElementById('files-table');
+            const checkboxes = table.querySelectorAll('input[type="checkbox"].item-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+                updateItemSelected(cb.dataset.id, cb.dataset.type, cb.checked);
+            });
+            updateBulkActionBar();
+        }
+
+        function updateItemSelected(id, type, selected) {
+            const itemKey = `${type}-${id}`;
+            if (selected) {
+                selectedItems.add(itemKey);
+            } else {
+                selectedItems.delete(itemKey);
+            }
+            updateBulkActionBar();
+        }
+
+        function updateBulkActionBar() {
+            let bar = document.getElementById('bulk-action-bar');
+            if (!bar) {
+                bar = document.createElement('div');
+                bar.id = 'bulk-action-bar';
+                bar.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-slate-800/90 backdrop-blur-xl border border-blue-500/30 px-6 py-3 rounded-2xl shadow-2xl flex items-center justify-between gap-8 transition-all duration-300 translate-y-20 opacity-0 pointer-events-none';
+                bar.innerHTML = `
+                    <div class="flex items-center gap-4 border-r border-slate-700 pr-6">
+                        <div class="bg-blue-500/20 text-blue-400 p-2 rounded-xl">
+                            <i data-lucide="check-square" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span id="bulk-count" class="text-white font-bold leading-none">0</span>
+                            <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Zaznaczono</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="bulkDownload()" class="flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-500/20">
+                            <i data-lucide="download" class="w-4.5 h-4.5"></i> Pobierz
+                        </button>
+                        <button onclick="bulkMove()" class="flex items-center gap-2 px-4 py-2.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 font-bold rounded-xl border border-purple-500/20 transition-all active:scale-95">
+                            <i data-lucide="folder-input" class="w-4.5 h-4.5"></i> Przenieś
+                        </button>
+                        <button onclick="clearSelection()" class="px-4 py-2.5 text-slate-400 hover:text-white transition-colors" title="Wyczyść zaznaczenie">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(bar);
+                lucide.createIcons();
+            }
+
+            const count = selectedItems.size;
+            document.getElementById('bulk-count').innerText = count;
+
+            if (count > 0) {
+                bar.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            } else {
+                bar.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function clearSelection() {
+            selectedItems.clear();
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            updateBulkActionBar();
+        }
+
+        function bulkDownload() {
+            const ids = [];
+            selectedItems.forEach(key => {
+                const [type, id] = key.split('-');
+                ids.push(id);
+            });
+            
+            if (ids.length === 0) {
+                showToast('Wybierz przynajmniej jeden plik do pobrania.', 'error');
+                return;
+            }
+
+            window.location.href = 'download.php?ids=' + ids.join(',');
+        }
+
+        function bulkMove() {
+            const items = [];
+            selectedItems.forEach(key => {
+                const [type, id] = key.split('-');
+                items.push({id, type});
+            });
+
+            if (items.length === 0) return;
+
+            openMoveModal(items, items.length === 1 ? 'zaznaczony element' : `${items.length} elementów`);
+        }
+
+        function openMoveModal(items, description) {
+            // items can be a single ID or an array of {id, type}
             const modal = document.getElementById('move-modal');
             const list = document.getElementById('modal-folder-list');
-            document.getElementById('modal-move-file-id').value = fileId;
-            document.getElementById('move-modal-filename').innerText = filename;
+            
+            let idsInput = document.getElementById('modal-move-items-ids');
+            if (!idsInput) {
+                idsInput = document.createElement('input');
+                idsInput.type = 'hidden';
+                idsInput.name = 'item_ids';
+                idsInput.id = 'modal-move-items-ids';
+                document.getElementById('modal-move-form').appendChild(idsInput);
+                
+                // Add type input as well
+                const typesInput = document.createElement('input');
+                typesInput.type = 'hidden';
+                typesInput.name = 'item_types';
+                typesInput.id = 'modal-move-items-types';
+                document.getElementById('modal-move-form').appendChild(typesInput);
+                
+                // Change action to bulk
+                document.querySelector('#modal-move-form input[name="action"]').value = 'move_multiple';
+            }
+
+            if (Array.isArray(items)) {
+                idsInput.value = items.map(i => i.id).join(',');
+                document.getElementById('modal-move-items-types').value = items.map(i => i.type).join(',');
+            } else {
+                // Backward compatibility for single file move
+                idsInput.value = items;
+                document.getElementById('modal-move-items-types').value = 'file';
+            }
+
+            document.getElementById('move-modal-filename').innerText = description;
 
             // Render Tree nicely
             const tree = [];
@@ -94,7 +220,7 @@
                                         <i data-lucide="folder" class="w-4 h-4 ${isCurrent ? 'text-purple-400' : 'text-blue-400'}"></i>
                                     </div>
                                     <span class="truncate font-medium">${n.name}</span>
-                                    ${isCurrent ? '<span class="ml-auto text-[10px] uppercase font-bold tracking-widest opacity-50">(Tu jest plik)</span>' : ''}
+                                    ${isCurrent ? '<span class="ml-auto text-[10px] uppercase font-bold tracking-widest opacity-50">(Tu są elementy)</span>' : ''}
                                 </div>
                             </button>
                             ${n.children.length > 0 ? renderNodes(n.children, depth + 1) : ''}
@@ -230,6 +356,8 @@
                 const tbody = document.getElementById('files-tbody');
                 if (tbody) tbody.innerHTML = '';
                 document.getElementById('load-more-container')?.classList.add('hidden');
+                selectedItems.clear();
+                updateBulkActionBar();
             }
 
             try {
@@ -282,12 +410,15 @@
                         container.innerHTML = `
                             <div class="overflow-x-auto -mx-5 sm:mx-0">
                                 <div class="inline-block min-w-full align-middle">
-                                    <table class="w-full">
+                                    <table id="files-table" class="w-full">
                                         <thead>
                                             <tr class="border-b border-slate-700 text-left">
+                                                <th class="px-5 py-4 w-12 text-center">
+                                                    <input type="checkbox" onclick="toggleSelectAll(this)" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-800">
+                                                </th>
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
-                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell w-32 text-center text-center text-center">Rozmiar / Typ</th>
-                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell w-40 text-center text-center text-center">Data</th>
+                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell w-32 text-center">Rozmiar / Typ</th>
+                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell w-40 text-center">Data</th>
                                                 <th class="px-5 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider w-px whitespace-nowrap">Akcje</th>
                                             </tr>
                                         </thead>
@@ -305,11 +436,23 @@
                     data.items.forEach(item => {
                         const tr = document.createElement('tr');
                         tr.className = 'hover:bg-slate-700/30 transition-colors group';
+                        const isSelected = selectedItems.has(`${item.is_folder ? 'folder' : 'file'}-${item.id}`);
                         
+                        const checkboxHtml = `
+                            <td class="px-5 py-4 w-12 text-center" onclick="event.stopPropagation()">
+                                <input type="checkbox" 
+                                    class="item-checkbox w-4 h-4 rounded bg-slate-900 border-slate-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-800"
+                                    data-id="${item.id}" data-type="${item.is_folder ? 'folder' : 'file'}"
+                                    ${isSelected ? 'checked' : ''}
+                                    onchange="updateItemSelected(this.dataset.id, this.dataset.type, this.checked)">
+                            </td>
+                        `;
+
                         if (item.is_folder) {
                             tr.onclick = () => loadFolder(item.id, 0, true);
                             tr.classList.add('cursor-pointer');
                             tr.innerHTML = `
+                                ${checkboxHtml}
                                 <td class="px-3 py-4">
                                     <div class="flex items-center">
                                         <div class="p-2 bg-slate-900 rounded-lg mr-3 group-hover:bg-slate-800 transition-colors shrink-0">
@@ -376,6 +519,7 @@
                             `;
 
                             tr.innerHTML = `
+                                ${checkboxHtml}
                                 <td class="px-3 py-4 min-w-0 max-w-0 w-full overflow-hidden">
                                     <div class="flex items-center min-w-0">
                                         <div class="p-2 bg-slate-900 rounded-lg mr-2 sm:mr-3 group-hover:bg-slate-800 transition-colors shrink-0">
@@ -387,8 +531,8 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden sm:table-cell text-xs text-center text-center text-center">${sizeVal}</td>
-                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell text-xs text-center text-center text-center">${dateTimeStr}</td>
+                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden sm:table-cell text-xs text-center">${sizeVal}</td>
+                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell text-xs text-center">${dateTimeStr}</td>
                                 <td class="px-3 py-4 whitespace-nowrap text-right text-sm shrink-0 w-px">${actions}</td>
                             `;
                         }

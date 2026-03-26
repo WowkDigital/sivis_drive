@@ -141,5 +141,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             header("Location: index.php?folder=" . $new_folder_id);
             exit;
         }
+    } elseif ($_POST['action'] === 'move_multiple' && isset($_POST['item_ids']) && isset($_POST['item_types']) && isset($_POST['new_folder_id'])) {
+        $item_ids = explode(',', $_POST['item_ids']);
+        $item_types = explode(',', $_POST['item_types']);
+        $new_folder_id = (int)$_POST['new_folder_id'];
+        
+        $role = $_SESSION['role'] ?? 'pracownik';
+        $group = get_user_group();
+
+        if (can_user_access_folder($db, $new_folder_id, $_SESSION['user_id'], $role, $group)) {
+            foreach ($item_ids as $index => $id) {
+                $id = (int)$id;
+                $type = $item_types[$index] ?? 'file';
+
+                if ($type === 'folder') {
+                    // Check if folder is not the target itself or a parent of target (to avoid cycles)
+                    if ($id === $new_folder_id) continue;
+                    
+                    $stmt = $db->prepare("SELECT parent_id FROM folders WHERE id = ?");
+                    $stmt->execute([$id]);
+                    $old_parent_id = $stmt->fetchColumn();
+                    
+                    if (can_user_access_folder($db, $id, $_SESSION['user_id'], $role, $group)) {
+                        $db->prepare("UPDATE folders SET parent_id = ? WHERE id = ?")->execute([$new_folder_id, $id]);
+                    }
+                } else {
+                    $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
+                    $stmt->execute([$id]);
+                    $old_folder_id = $stmt->fetchColumn();
+                    
+                    if (can_user_access_folder($db, $old_folder_id, $_SESSION['user_id'], $role, $group)) {
+                        $db->prepare("UPDATE files SET folder_id = ? WHERE id = ?")->execute([$new_folder_id, $id]);
+                    }
+                }
+            }
+            header("Location: index.php?folder=" . $new_folder_id);
+            exit;
+        }
     }
 }
