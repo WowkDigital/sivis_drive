@@ -4,12 +4,24 @@
         </p>
     </footer>
 
+    <style>
+        @keyframes shimmer {
+            0%   { background-position: 200% center; }
+            100% { background-position: -200% center; }
+        }
+    </style>
     <script>
         let currentFolderId = <?= $active_folder_id ?: 0 ?>;
         let currentOffset = 0;
         const limit = 10;
         let moveTargets = [];
         let selectedItems = new Set(); // Stores objects {id: 1, type: 'file'}
+
+        function escHtml(str) {
+            const d = document.createElement('div');
+            d.appendChild(document.createTextNode(str ?? ''));
+            return d.innerHTML;
+        }
 
         function initIcons() {
             if (typeof lucide !== 'undefined') {
@@ -62,13 +74,36 @@
             }
         }
 
+        function applyCheckboxVisual(input, checked) {
+            const box = input.parentElement.querySelector('.checkbox-box');
+            const svg = input.parentElement.querySelector('.checkbox-box svg');
+            if (!box) return;
+            if (checked) {
+                box.classList.add('bg-blue-600', 'border-blue-500', 'shadow-[0_0_8px_rgba(59,130,246,0.5)]');
+                box.classList.remove('bg-slate-900', 'border-slate-700');
+                if (svg) svg.classList.replace('opacity-0', 'opacity-100');
+            } else {
+                box.classList.remove('bg-blue-600', 'border-blue-500', 'shadow-[0_0_8px_rgba(59,130,246,0.5)]');
+                box.classList.add('bg-slate-900', 'border-slate-700');
+                if (svg) svg.classList.replace('opacity-100', 'opacity-0');
+            }
+        }
+
+        function onCheckboxChange(input) {
+            applyCheckboxVisual(input, input.checked);
+            updateItemSelected(input.dataset.id, input.dataset.type, input.checked);
+        }
+
         function toggleSelectAll(checkbox) {
             const table = document.getElementById('files-table');
             const checkboxes = table.querySelectorAll('input[type="checkbox"].item-checkbox');
             checkboxes.forEach(cb => {
                 cb.checked = checkbox.checked;
+                applyCheckboxVisual(cb, cb.checked);
                 updateItemSelected(cb.dataset.id, cb.dataset.type, cb.checked);
             });
+            // Also update the select-all box visual
+            applyCheckboxVisual(checkbox, checkbox.checked);
             updateBulkActionBar();
         }
 
@@ -138,10 +173,81 @@
             updateBulkActionBar();
         }
 
-        function bulkDownload() {
+        function showDownloadOverlay() {
+            let overlay = document.getElementById('download-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'download-overlay';
+                overlay.className = 'fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-md flex items-center justify-center';
+                overlay.innerHTML = `
+                    <div class="bg-slate-800 border border-slate-700 rounded-3xl p-10 flex flex-col items-center gap-6 shadow-2xl max-w-sm w-full mx-4">
+                        <div class="relative w-20 h-20">
+                            <div class="absolute inset-0 rounded-full border-4 border-slate-700"></div>
+                            <div class="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="text-xl font-bold text-white mb-1">Pakowanie plików...</h3>
+                            <p class="text-slate-400 text-sm">Poczekaj chwilę, trwa kompresja do ZIP</p>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-blue-600 via-blue-400 to-blue-600 rounded-full animate-[shimmer_1.5s_ease-in-out_infinite]" style="width:100%; background-size:200% 100%; animation: shimmer 1.5s linear infinite; background-image: linear-gradient(90deg, #1d4ed8 0%, #60a5fa 50%, #1d4ed8 100%); background-size:200%;"></div>
+                        </div>
+                        <p id="download-overlay-dots" class="text-blue-400 font-mono text-sm font-bold tracking-widest">●●●</p>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                // Animated dots
+                const dots = ['●○○', '●●○', '●●●', '○●●', '○○●'];
+                let di = 0;
+                overlay._dotsInterval = setInterval(() => {
+                    const el = document.getElementById('download-overlay-dots');
+                    if (el) el.textContent = dots[di++ % dots.length];
+                }, 400);
+            }
+            overlay.style.display = 'flex';
+        }
+
+        function hideDownloadOverlay() {
+            const overlay = document.getElementById('download-overlay');
+            if (overlay) {
+                clearInterval(overlay._dotsInterval);
+                overlay.style.display = 'none';
+            }
+        }
+
+        async function bulkDownload() {
             if (selectedItems.size === 0) return;
-            const items = Array.from(selectedItems).join(','); 
-            window.location.href = 'download.php?items=' + items;
+            const items = Array.from(selectedItems).join(',');
+
+            showDownloadOverlay();
+            try {
+                const response = await fetch('download.php?items=' + encodeURIComponent(items));
+                if (!response.ok) throw new Error('Server error');
+
+                const blob = await response.blob();
+                const contentDisposition = response.headers.get('Content-Disposition') || '';
+                let filename = 'SivisDrive_pobrane.zip';
+                const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (match) filename = match[1];
+
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+
+                showToast('Pobieranie gotowe! 📦');
+            } catch (e) {
+                showToast('Błąd podczas pobierania.', 'error');
+            } finally {
+                hideDownloadOverlay();
+            }
         }
 
         function bulkMove() {
@@ -217,7 +323,7 @@
                                     <div class="p-1.5 rounded-lg mr-3 ${isCurrent ? 'bg-purple-500/10' : 'bg-slate-900 group-hover/folder:bg-slate-600'} transition-colors">
                                         <i data-lucide="folder" class="w-4 h-4 ${isCurrent ? 'text-purple-400' : 'text-blue-400'}"></i>
                                     </div>
-                                    <span class="truncate font-medium">${n.name}</span>
+                                    <span class="truncate font-medium">${escHtml(n.name)}</span>
                                     ${isCurrent ? '<span class="ml-auto text-[10px] uppercase font-bold tracking-widest opacity-50">(Tu są elementy)</span>' : ''}
                                 </div>
                             </button>
@@ -386,7 +492,7 @@
                         <div class="p-2 bg-blue-500/10 rounded-lg mr-3">
                             <i data-lucide="folder-open" class="w-6 h-6 text-blue-400"></i>
                         </div>
-                        ${data.folder_name}
+                        ${escHtml(data.folder_name)}
                     `;
                 }
                 
@@ -400,7 +506,7 @@
                     data.breadcrumbs.forEach((bc, i) => {
                         if (i > 0) bcHtml += '<i data-lucide="chevron-right" class="w-3 h-3 mx-1 opacity-50"></i>';
                         const isLast = i === data.breadcrumbs.length - 1;
-                        bcHtml += `<a href="javascript:void(0)" onclick="loadFolder(${bc.id}, 0, true)" class="hover:text-blue-400 transition-colors ${isLast ? 'text-slate-300 font-bold' : ''}">${bc.name}</a>`;
+                        bcHtml += `<a href="javascript:void(0)" onclick="loadFolder(${bc.id}, 0, true)" class="hover:text-blue-400 transition-colors ${isLast ? 'text-slate-300 font-bold' : ''}">${escHtml(bc.name)}</a>`;
                     });
                     bcContainer.innerHTML = bcHtml;
                 }
@@ -420,14 +526,16 @@
                                     <table id="files-table" class="w-full">
                                         <thead>
                                             <tr class="border-b border-slate-700 text-left">
-                                                <th class="px-5 py-4 w-12 text-center">
-                                                    <label class="relative flex items-center justify-center cursor-pointer group mx-auto w-6 h-6">
-                                                        <input type="checkbox" onclick="toggleSelectAll(this)" class="peer sr-only">
-                                                        <div class="h-6 w-6 rounded-lg bg-slate-900 border-2 border-slate-700/50 peer-checked:bg-blue-600 peer-checked:border-blue-500 transition-all flex items-center justify-center group-hover:border-slate-500">
-                                                            <i data-lucide="check" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
-                                                        </div>
-                                                    </label>
-                                                </th>
+                                                <th class="px-3 py-4 w-12 text-center">
+                                                     <label class="flex items-center justify-center cursor-pointer mx-auto w-8 h-8">
+                                                         <input type="checkbox" onclick="toggleSelectAll(this)" class="sr-only">
+                                                         <div class="checkbox-box h-6 w-6 rounded-lg bg-slate-900 border-2 border-slate-700 transition-all duration-150 flex items-center justify-center hover:border-slate-500">
+                                                             <svg class="w-3.5 h-3.5 text-white opacity-0 transition-opacity duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                                                 <polyline points="20 6 9 17 4 12"></polyline>
+                                                             </svg>
+                                                         </div>
+                                                     </label>
+                                                 </th>
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell w-32 text-center">Rozmiar / Typ</th>
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell w-40 text-center">Data</th>
@@ -455,15 +563,22 @@
                         tr.className = 'hover:bg-slate-700/30 transition-colors group ' + (isSelected ? 'bg-blue-500/10 border-blue-500/20' : '');
                         
                         const checkboxHtml = `
-                            <td class="px-5 py-4 w-12 text-center" onclick="event.stopPropagation()">
-                                <label class="relative flex items-center justify-center cursor-pointer group mx-auto w-6 h-6">
+                            <td class="px-3 py-4 w-12 text-center" onclick="event.stopPropagation()">
+                                <label class="flex items-center justify-center cursor-pointer mx-auto w-8 h-8">
                                     <input type="checkbox" 
-                                        class="item-checkbox peer sr-only"
+                                        class="item-checkbox sr-only"
                                         data-id="${item.id}" data-type="${itemType}"
                                         ${isSelected ? 'checked' : ''}
-                                        onchange="updateItemSelected(this.dataset.id, this.dataset.type, this.checked)">
-                                    <div class="h-6 w-6 rounded-lg bg-slate-900 border-2 border-slate-700/50 peer-checked:bg-blue-600 peer-checked:border-blue-500 transition-all flex items-center justify-center group-hover:border-slate-500">
-                                        <i data-lucide="check" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                                        onchange="onCheckboxChange(this)">
+                                    <div class="checkbox-box h-6 w-6 rounded-lg border-2 transition-all duration-150 flex items-center justify-center
+                                        ${isSelected
+                                            ? 'bg-blue-600 border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'
+                                            : 'bg-slate-900 border-slate-700 hover:border-slate-500'}"
+                                    >
+                                        <svg class="w-3.5 h-3.5 text-white transition-opacity duration-150 ${isSelected ? 'opacity-100' : 'opacity-0'}"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
                                     </div>
                                 </label>
                             </td>
@@ -480,17 +595,17 @@
                                             <i data-lucide="folder" class="w-5 h-5 text-blue-400"></i>
                                         </div>
                                         <div class="flex flex-col">
-                                            <span class="font-medium text-slate-200">${item.name}</span>
+                                            <span class="font-medium text-slate-200">${escHtml(item.name)}</span>
                                             <span class="text-[10px] text-slate-500 uppercase font-bold tracking-tight sm:hidden">${item.file_count} plików</span>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-5 py-4 text-center text-[10px] text-slate-500 hidden sm:table-cell uppercase font-bold tracking-tight">${item.file_count} plików</td>
+                                <td class="px-5 py-4 text-center text-[10px] text-slate-500 hidden sm:table-cell uppercase font-bold tracking-tight">${escHtml(String(item.file_count))} plików</td>
                                 <td class="px-5 py-4 text-center text-sm text-slate-400 hidden md:table-cell">-</td>
                                 <td class="px-3 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
                                         ${data.can_edit ? `
-                                            <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', '${item.name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all" title="Zmień nazwę">
+                                            <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', ${JSON.stringify(item.name)})" class="p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all" title="Zmień nazwę">
                                                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                                             </button>
                                         ` : ''}
@@ -522,10 +637,10 @@
                                     ${previewBtn}
                                     <a href="download.php?id=${item.id}" class="p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 shadow-sm" title="Pobierz"><i data-lucide="download" class="w-4.5 h-4.5"></i></a>
                                     ${data.can_edit ? `
-                                        <button onclick="renameItem(${item.id}, 'file', '${item.original_name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-yellow-500/30" title="Zmień nazwę">
+                                        <button onclick="renameItem(${item.id}, 'file', ${JSON.stringify(item.original_name)})" class="p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-yellow-500/30" title="Zmień nazwę">
                                             <i data-lucide="edit-3" class="w-4.5 h-4.5"></i>
                                         </button>
-                                        <button onclick="openMoveModal(${item.id}, '${item.original_name.replace(/'/g, "\\'")}')" class="p-2 flex items-center justify-center bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-purple-500/30" title="Przenieś plik">
+                                        <button onclick="openMoveModal(${item.id}, ${JSON.stringify(item.original_name)})" class="p-2 flex items-center justify-center bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-purple-500/30" title="Przenieś plik">
                                             <i data-lucide="folder-input" class="w-4.5 h-4.5"></i>
                                         </button>
                                         <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline m-0 shrink-0">
@@ -547,8 +662,8 @@
                                             <i data-lucide="${icon}" class="w-5 h-5 ${iconColor}"></i>
                                         </div>
                                         <div class="flex flex-col min-w-0 overflow-hidden">
-                                            <span class="font-medium text-slate-200 truncate pr-1 shrink text-sm sm:text-base">${item.original_name}</span>
-                                            <span class="text-[10px] sm:text-xs text-slate-500 sm:hidden mt-0.5 truncate shrink">${sizeVal} • ${dateStr}</span>
+                                            <span class="font-medium text-slate-200 truncate pr-1 shrink text-sm sm:text-base">${escHtml(item.original_name)}</span>
+                                            <span class="text-[10px] sm:text-xs text-slate-500 sm:hidden mt-0.5 truncate shrink">${escHtml(sizeVal)} • ${escHtml(dateStr)}</span>
                                         </div>
                                     </div>
                                 </td>
@@ -667,7 +782,7 @@
             }
 
             <?php if (isset($_SESSION['toast'])): ?>
-                showToast("<?= $_SESSION['toast'] ?>");
+                showToast("<?= htmlspecialchars($_SESSION['toast'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>");
                 <?php unset($_SESSION['toast']); ?>
             <?php endif; ?>
         });
