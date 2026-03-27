@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $db->prepare('INSERT INTO users (email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, ?, ?)');
                 $stmt->execute([$email, $hash, $role, $group, $display_name]);
                 $new_user_password = $password;
+                $new_user_email = $email;
                 
                 log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_USER', "Utworzono użytkownika: $email ($role)");
 
@@ -38,6 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $db->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([$hash, $uid]);
             $new_user_password = $password;
+            
+            $stmt_email = $db->prepare('SELECT email FROM users WHERE id = ?');
+            $stmt_email->execute([$uid]);
+            $new_user_email = $stmt_email->fetchColumn();
             
             log_activity($db, $_SESSION['user_id'], 'ADMIN_RESET_PASSWORD', "Zresetowano hasło dla użytkownika ID: $uid");
 

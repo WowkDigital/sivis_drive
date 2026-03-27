@@ -35,6 +35,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS folders (
     access_groups TEXT,
     parent_id INTEGER DEFAULT NULL,
     owner_id INTEGER DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(parent_id) REFERENCES folders(id),
     FOREIGN KEY(owner_id) REFERENCES users(id)
 )");
@@ -43,6 +44,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS folders (
 try { @$db->exec("ALTER TABLE folders ADD COLUMN parent_id INTEGER DEFAULT NULL"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE folders ADD COLUMN owner_id INTEGER DEFAULT NULL"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE folders ADD COLUMN deleted_at DATETIME DEFAULT NULL"); } catch (Exception $e) {}
+try { @$db->exec("ALTER TABLE folders ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"); } catch (Exception $e) {}
 
 $db->exec("CREATE TABLE IF NOT EXISTS files (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

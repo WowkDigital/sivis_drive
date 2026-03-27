@@ -733,13 +733,18 @@
                 // Update Breadcrumbs
                 const bcContainer = document.getElementById('breadcrumbs-container');
                 if (bcContainer) {
-                    let bcHtml = '<i data-lucide="home" class="w-3.5 h-3.5 mr-2"></i>';
+                    let bcHtml = '<i data-lucide="home" class="w-4 h-4 mr-2 text-blue-400"></i>';
                     data.breadcrumbs.forEach((bc, i) => {
-                        if (i > 0) bcHtml += '<i data-lucide="chevron-right" class="w-3 h-3 mx-1 opacity-50"></i>';
+                        if (i > 0) bcHtml += '<i data-lucide="chevron-right" class="w-3.5 h-3.5 mx-1.5 opacity-50"></i>';
                         const isLast = i === data.breadcrumbs.length - 1;
-                        bcHtml += `<a href="javascript:void(0)" onclick="loadFolder(${bc.id}, 0, true)" class="hover:text-blue-400 transition-colors ${isLast ? 'text-slate-300 font-bold' : ''}">${escHtml(bc.name)}</a>`;
+                        bcHtml += `<a href="javascript:void(0)" onclick="loadFolder(${bc.id}, 0, true)" class="hover:text-blue-400 transition-colors ${isLast ? 'text-blue-300 font-bold bg-blue-500/10 px-2 py-0.5 rounded' : ''}">${escHtml(bc.name)}</a>`;
                     });
                     bcContainer.innerHTML = bcHtml;
+                }
+                
+                const dateContainer = document.getElementById('current-folder-date');
+                if (dateContainer && data.folder_created_at) {
+                    dateContainer.innerHTML = `<i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5 opacity-70"></i> Utworzono: ${data.folder_created_at}`;
                 }
 
                 // Render items

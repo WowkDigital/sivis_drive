@@ -127,11 +127,11 @@ require_once 'views/header.php';
         <div class="bg-slate-800 shadow-xl rounded-2xl p-5 sm:p-6 border border-slate-700 min-h-[500px]">
             <div id="folder-content-wrapper">
                 <?php if ($active_folder): ?>
-                    <div id="breadcrumbs-container" class="mb-4 flex items-center text-xs text-slate-500 bg-slate-900/40 p-2 rounded-lg border border-slate-700/50">
-                        <i data-lucide="home" class="w-3.5 h-3.5 mr-2"></i>
+                    <div id="breadcrumbs-container" class="mb-4 flex flex-wrap items-center text-sm text-slate-400 bg-slate-800/80 p-3 rounded-xl border border-slate-600/50 shadow-inner">
+                        <i data-lucide="home" class="w-4 h-4 mr-2 text-blue-400"></i>
                         <?php foreach ($breadcrumbs as $i => $bc): ?>
-                            <?php if ($i > 0): ?><i data-lucide="chevron-right" class="w-3 h-3 mx-1 opacity-50"></i><?php endif; ?>
-                            <a href="javascript:void(0)" onclick="loadFolder(<?= $bc['id'] ?>, 0, true)" class="hover:text-blue-400 transition-colors <?= $i === count($breadcrumbs)-1 ? 'text-slate-300 font-bold' : '' ?>">
+                            <?php if ($i > 0): ?><i data-lucide="chevron-right" class="w-3.5 h-3.5 mx-1.5 opacity-50"></i><?php endif; ?>
+                            <a href="javascript:void(0)" onclick="loadFolder(<?= $bc['id'] ?>, 0, true)" class="hover:text-blue-400 transition-colors <?= $i === count($breadcrumbs)-1 ? 'text-blue-300 font-bold bg-blue-500/10 px-2 py-0.5 rounded' : '' ?>">
                                 <?= htmlspecialchars($bc['name']) ?>
                             </a>
                         <?php endforeach; ?>
@@ -157,12 +157,18 @@ require_once 'views/header.php';
                                     $name_to_show = $raw_name;
                                 }
                             ?>
-                            <h2 id="current-folder-name" class="text-xl sm:text-2xl font-bold text-slate-100 flex items-center min-w-0 flex-1">
-                                <div class="p-2 bg-blue-500/10 rounded-lg mr-2 sm:mr-3 shrink-0">
-                                    <i data-lucide="folder-open" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"></i>
+                            <div class="flex flex-col min-w-0 flex-1">
+                                <h2 id="current-folder-name" class="text-xl sm:text-2xl font-bold text-slate-100 flex items-center">
+                                    <div class="p-2 bg-blue-500/10 rounded-lg mr-2 sm:mr-3 shrink-0">
+                                        <i data-lucide="folder-open" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"></i>
+                                    </div>
+                                    <span class="truncate"><?= $name_to_show ?></span>
+                                </h2>
+                                <div class="mt-1.5 ml-[3.25rem] text-xs font-medium text-slate-500 flex items-center" id="current-folder-date">
+                                    <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5 opacity-70"></i>
+                                    Utworzono: <?= !empty($active_folder['created_at']) ? date('d.m.Y', strtotime($active_folder['created_at'])) : 'Brak danych' ?>
                                 </div>
-                                <span class="truncate"><?= $name_to_show ?></span>
-                            </h2>
+                            </div>
                         </div>
                         <div class="flex items-center gap-3">
                             <button onclick="copyFolderLink(this)" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-blue-400 border border-slate-700 transition-all hover:scale-105 active:scale-95" title="Kopiuj link do folderu">

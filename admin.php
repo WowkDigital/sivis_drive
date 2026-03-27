@@ -58,22 +58,29 @@ require_once 'core/admin_logic.php';
             </div>
         <?php endif; ?>
 
-        <?php if (isset($new_user_password)): ?>
+        <?php if (isset($new_user_password) && isset($new_user_email)): ?>
             <div class="bg-blue-500/10 border border-blue-500/30 text-blue-100 px-6 py-6 rounded-2xl relative mb-8 backdrop-blur-md shadow-2xl ring-1 ring-blue-500/20">
                 <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div class="flex items-start">
                         <div class="p-3 bg-blue-500/20 rounded-xl mr-4 shrink-0">
-                            <i data-lucide="key" class="w-8 h-8 text-blue-400"></i>
+                            <i data-lucide="user-check" class="w-8 h-8 text-blue-400"></i>
                         </div>
                         <div>
-                            <h4 class="text-lg font-bold text-white mb-1">Wygenerowane Hasło</h4>
-                            <p class="text-blue-300/80 text-sm">Przekaż to hasło użytkownikowi. Po zamknięciu tego komunikatu nie będzie ono widoczne.</p>
+                            <h4 class="text-lg font-bold text-white mb-1">Dane Logowania</h4>
+                            <p class="text-blue-300/80 text-sm">Przekaż te dane użytkownikowi. Po zamknięciu strony wygenerowane hasło nie będzie widoczne.</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-blue-500/30 animate-pulse-subtle">
-                        <code class="px-3 py-1.5 text-xl font-mono text-blue-400 tracking-wider" id="generated-password"><?= htmlspecialchars($new_user_password) ?></code>
-                        <button onclick="copyPasswordToClipboard(this)" class="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all shadow-lg active:scale-95 group" title="Kopiuj hasło">
-                            <i data-lucide="copy" class="w-5 h-5 group-active:scale-90 transition-transform"></i>
+                    <div class="flex flex-col gap-2 bg-slate-900/80 p-4 rounded-xl border border-blue-500/30 w-full md:w-auto min-w-[280px]">
+                        <div class="flex items-center justify-between gap-4">
+                            <span class="text-slate-400 text-sm font-medium">Login:</span>
+                            <code class="px-2 py-1 bg-slate-800 text-sm font-mono text-slate-300 rounded border border-slate-700" id="generated-email"><?= htmlspecialchars($new_user_email) ?></code>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <span class="text-slate-400 text-sm font-medium">Hasło:</span>
+                            <code class="px-2 py-1 bg-slate-800 text-sm font-mono text-blue-400 tracking-wider rounded border border-slate-700" id="generated-password"><?= htmlspecialchars($new_user_password) ?></code>
+                        </div>
+                        <button onclick="copyCredentialsToClipboard(this)" class="mt-2 w-full flex justify-center items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-lg transition-all shadow-lg shadow-blue-500/20 active:scale-95 group" title="Kopiuj dane logowania">
+                            <i data-lucide="copy" class="w-4 h-4 group-active:scale-90 transition-transform"></i> Skopiuj dane
                         </button>
                     </div>
                 </div>
@@ -91,20 +98,21 @@ require_once 'core/admin_logic.php';
     <?php require_once 'views/action_modal.php'; ?>
 
     <script>
-        function copyPasswordToClipboard(btn) {
+        function copyCredentialsToClipboard(btn) {
+            const email = document.getElementById('generated-email').innerText;
             const password = document.getElementById('generated-password').innerText;
-            navigator.clipboard.writeText(password).then(() => {
-                const icon = btn.querySelector('i');
-                const originalIcon = icon.getAttribute('data-lucide');
-                icon.setAttribute('data-lucide', 'check');
-                btn.classList.add('bg-emerald-600');
-                btn.classList.remove('bg-blue-600');
+            const textToCopy = `Login: ${email}\nHasło: ${password}`;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Skopiowano!`;
+                btn.classList.add('bg-emerald-600', 'shadow-emerald-500/20');
+                btn.classList.remove('bg-blue-600', 'shadow-blue-500/20');
 
                 lucide.createIcons();
                 setTimeout(() => {
-                    icon.setAttribute('data-lucide', originalIcon);
-                    btn.classList.remove('bg-emerald-600');
-                    btn.classList.add('bg-blue-600');
+                    btn.innerHTML = `<i data-lucide="copy" class="w-4 h-4 group-active:scale-90 transition-transform"></i> Skopiuj dane`;
+                    btn.classList.remove('bg-emerald-600', 'shadow-emerald-500/20');
+                    btn.classList.add('bg-blue-600', 'shadow-blue-500/20');
                     lucide.createIcons();
                 }, 2000);
             });

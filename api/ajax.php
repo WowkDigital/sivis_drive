@@ -72,6 +72,7 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
     echo json_encode([
         'folder_name' => $folder['name'],
         'folder_name_html' => $folder_name_html,
+        'folder_created_at' => !empty($folder['created_at']) ? date('d.m.Y', strtotime($folder['created_at'])) : 'Brak danych',
         'items' => $items,
         'has_more' => $has_more,
         'breadcrumbs' => $breadcrumbs,
