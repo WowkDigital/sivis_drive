@@ -831,13 +831,13 @@
                                             <i data-lucide="folder" class="w-5 h-5 text-blue-400"></i>
                                         </div>
                                         <div class="flex flex-col min-w-0 overflow-hidden">
-                                            <span class="font-medium text-slate-200 truncate pr-1 text-sm sm:text-base">${escHtml(item.name)}</span>
+                                            <span class="font-medium text-slate-200 truncate pr-1 text-sm sm:text-base block md:max-w-[30ch] lg:max-w-[40ch]" title="${escHtml(item.name)}">${escHtml(item.name)}</span>
                                             <span class="text-[10px] text-slate-500 uppercase font-bold tracking-tight sm:hidden">${item.file_count} plików</span>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-5 py-4 text-center text-[10px] text-slate-500 hidden sm:table-cell uppercase font-bold tracking-tight">${escHtml(String(item.file_count))} plików</td>
-                                <td class="px-5 py-4 text-center text-sm text-slate-400 hidden md:table-cell">-</td>
+                                <td class="px-5 py-4 text-center text-sm text-slate-400 hidden md:table-cell whitespace-nowrap">${item.created_at ? new Date(item.created_at).toLocaleDateString('pl-PL', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '-'}</td>
                                 <td class="px-2 sm:px-3 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1 sm:gap-2 shrink-0 relative">
                                         <button id="actions-btn-${itemKey}" onclick="event.stopPropagation(); toggleActions('${itemKey}')" class="sm:hidden p-2 text-slate-400 hover:text-white bg-slate-900/50 rounded-xl transition-all" title="Opcje">
@@ -873,8 +873,7 @@
                             else if (['jpg', 'png', 'jpeg', 'gif', 'webp'].includes(ext)) { icon = 'image'; iconColor = 'text-emerald-400'; }
                             
                             const sizeVal = item.size > 1024*1024 ? (item.size/(1024*1024)).toFixed(2) + ' MB' : Math.round(item.size/1024) + ' KB';
-                            const dateStr = new Date(item.created_at).toLocaleDateString('pl-PL', {day: '2-digit', month: '2-digit', year: 'numeric'});
-                            const dateTimeStr = new Date(item.created_at).toLocaleString('pl-PL', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+                            const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('pl-PL', {day: '2-digit', month: '2-digit', year: 'numeric'}) : '-';
 
                             let previewBtn = '';
                             if (['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
@@ -919,13 +918,13 @@
                                             <i data-lucide="${icon}" class="w-5 h-5 ${iconColor}"></i>
                                         </div>
                                         <div class="flex flex-col min-w-0 overflow-hidden">
-                                            <span class="font-medium text-slate-200 truncate pr-1 text-sm sm:text-base">${escHtml(item.original_name)}</span>
+                                            <span class="font-medium text-slate-200 truncate pr-1 text-sm sm:text-base block md:max-w-[30ch] lg:max-w-[40ch]" title="${escHtml(item.original_name)}">${escHtml(item.original_name)}</span>
                                             <span class="text-[10px] sm:text-xs text-slate-500 sm:hidden mt-0.5 truncate shrink">${escHtml(sizeVal)} • ${escHtml(dateStr)}</span>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden sm:table-cell text-xs text-center">${sizeVal}</td>
-                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell text-xs text-center">${dateTimeStr}</td>
+                                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell text-xs text-center">${dateStr}</td>
                                 <td class="px-2 sm:px-3 py-4 whitespace-nowrap text-right text-sm shrink-0 w-px">${actions}</td>
                             `;
                         }
