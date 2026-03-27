@@ -381,17 +381,19 @@ $formatted_size = $total_size > 1024*1024*1024
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
                                         <?php if ($u['id'] != $_SESSION['user_id']): ?>
                                         <div class="flex items-center justify-end gap-2">
-                                            <form method="post" onsubmit="return confirm('Czy na pewno chcesz zresetować hasło dla <?= htmlspecialchars($u['email']) ?><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">?');" class="inline">
+                                            <form method="post" id="reset-pass-form-<?= $u['id'] ?>" class="inline">
+                                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                                 <input type="hidden" name="action" value="reset_password">
                                                 <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                                <button type="submit" class="p-2 text-orange-400 hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg transition-all" title="Resetuj hasło">
+                                                <button type="button" onclick="showConfirmModal('Zresetować hasło?', 'Czy na pewno chcesz zresetować hasło dla <?= htmlspecialchars($u['email']) ?>?\nZostanie wygenerowane nowe, losowe hasło.', () => document.getElementById('reset-pass-form-<?= $u['id'] ?>').submit(), 'orange')" class="p-2 text-orange-400 hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg transition-all" title="Resetuj hasło">
                                                     <i data-lucide="refresh-cw" class="w-5 h-5"></i>
                                                 </button>
                                             </form>
-                                            <form method="post" onsubmit="return confirm('Trwale usunąć tego użytkownika?');" class="inline"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                            <form method="post" id="delete-user-form-<?= $u['id'] ?>" class="inline">
+                                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                                 <input type="hidden" name="action" value="delete_user">
                                                 <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                                <button type="submit" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń użytkownika">
+                                                <button type="button" onclick="showConfirmModal('Trwale usunąć użytkownika?', 'UWAGA: Spowoduje to również usunięcie WSZYSTKICH plików i folderów tego pracownika.', () => document.getElementById('delete-user-form-<?= $u['id'] ?>').submit(), 'red')" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń użytkownika">
                                                     <i data-lucide="user-minus" class="w-5 h-5"></i>
                                                 </button>
                                             </form>
@@ -446,10 +448,11 @@ $formatted_size = $total_size > 1024*1024*1024
                                         </form>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                                        <form method="post" class="inline-flex gap-2" onsubmit="return confirm('UWAGA: Usunięcie folderu spowoduje TRWAŁE usunięcie wszystkich zawartych w nim plików! Czy na pewno chcesz kontynuować?');"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                        <form method="post" id="delete-folder-form-<?= $f['id'] ?>" class="inline-flex gap-2">
+                                            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                             <input type="hidden" name="action" value="delete_folder">
                                             <input type="hidden" name="folder_id" value="<?= $f['id'] ?>">
-                                            <button type="submit" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń folder z zawartością">
+                                            <button type="button" onclick="showConfirmModal('Usunąć folder udostępniony?', 'UWAGA: Usunięcie folderu spowoduje TRWAŁE usunięcie WSZYSTKICH plików i podfolderów w nim zawartych.', () => document.getElementById('delete-folder-form-<?= $f['id'] ?>').submit(), 'red')" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń folder z zawartością">
                                                 <i data-lucide="trash-2" class="w-5 h-5"></i>
                                             </button>
                                         </form>
@@ -512,34 +515,16 @@ $formatted_size = $total_size > 1024*1024*1024
             </div>
         </div>
     </div>
+    <?php require_once 'views/action_modal.php'; ?>
     <footer class="max-w-7xl mx-auto py-12 px-4 text-center">
         <p class="text-slate-600 text-xs flex items-center justify-center gap-1.5">
             Made with <i data-lucide="heart" class="w-3 h-3 text-red-500 fill-red-500"></i> by <span class="font-bold text-slate-500">WowkDigital</span>
         </p>
     </footer>
 
+    <script src="assets/js/modals.js"></script>
     <script>
         function showToast(message) {
-            let container = document.getElementById('toast-container');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'toast-container';
-                container.className = 'fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none';
-                document.body.appendChild(container);
-            }
-            const toast = document.createElement('div');
-            toast.className = `transform translate-x-full opacity-0 transition-all duration-500 ease-out flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md pointer-events-auto min-w-[200px] mb-2 bg-emerald-500/20 border-emerald-500/30 text-emerald-100`;
-            toast.innerHTML = `<div class="p-1.5 rounded-lg bg-emerald-500/20"><i data-lucide="check-circle" class="w-5 h-5"></i></div><span class="font-bold text-sm tracking-wide">${message}</span>`;
-            container.appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => toast.classList.remove('translate-x-full', 'opacity-0'), 10);
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
-        }
-
-        function copyPasswordToClipboard(btn) {
             const password = document.getElementById('generated-password').innerText;
             navigator.clipboard.writeText(password).then(() => {
                 const icon = btn.querySelector('i');

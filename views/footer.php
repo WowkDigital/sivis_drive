@@ -363,31 +363,32 @@
         }
 
         function renameItem(id, type, currentName) {
-            const newName = prompt('Zmień nazwę:', currentName);
-            if (!newName || newName === currentName) return;
-            
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'index.php';
-            
-            const inputs = {
-                'csrf_token': '<?= generate_csrf_token() ?>',
-                'action': 'rename_item',
-                'item_id': id,
-                'new_name': newName,
-                'type': type
-            };
+            showPromptModal('Zmień nazwę:', currentName, (newName) => {
+                if (!newName || newName === currentName) return;
+                
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'index.php';
+                
+                const inputs = {
+                    'csrf_token': '<?= generate_csrf_token() ?>',
+                    'action': 'rename_item',
+                    'item_id': id,
+                    'new_name': newName,
+                    'type': type
+                };
 
-            for (const [name, value] of Object.entries(inputs)) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = name;
-                input.value = value;
-                form.appendChild(input);
-            }
+                for (const [name, value] of Object.entries(inputs)) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = name;
+                    input.value = value;
+                    form.appendChild(input);
+                }
 
-            document.body.appendChild(form);
-            form.submit();
+                document.body.appendChild(form);
+                form.submit();
+            });
         }
 
         function copyFolderLink(btn) {
@@ -469,13 +470,13 @@
                         }, 300);
                     }, 1000);
                 } else {
-                    alert('Błąd podczas przesyłania pliku.');
+                    showToast('Błąd podczas przesyłania pliku.', 'error');
                     overlay.classList.add('hidden');
                 }
             };
             
             xhr.onerror = () => {
-                alert('Błąd połączenia.');
+                showToast('Błąd połączenia.', 'error');
                 overlay.classList.add('hidden');
             };
             
@@ -498,7 +499,7 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    alert(data.error);
+                    showToast(data.error, 'error');
                     return;
                 }
 
@@ -629,11 +630,11 @@
                                             <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', this.getAttribute('data-name'))" data-name="${escHtml(item.name)}" class="p-1.5 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all" title="Zmień nazwę">
                                                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                                             </button>
-                                            <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten folder wraz z CAŁĄ zawartością?');" class="inline m-0 shrink-0" onclick="event.stopPropagation()">
+                                            <form method="post" id="delete-folder-form-${item.id}" class="inline m-0 shrink-0" onclick="event.stopPropagation()">
                                                 <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                                 <input type="hidden" name="action" value="delete_folder">
                                                 <input type="hidden" name="folder_id" value="${item.id}">
-                                                <button type="submit" title="Usuń folder" class="p-1.5 sm:p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all flex items-center justify-center">
+                                                <button type="button" onclick="showConfirmModal('Usunąć folder?', 'Czy na pewno chcesz usunąć ten folder wraz z CAŁĄ zawartością?', () => document.getElementById('delete-folder-form-${item.id}').submit(), 'red')" title="Usuń folder" class="p-1.5 sm:p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all flex items-center justify-center">
                                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                                 </button>
                                             </form>
@@ -672,11 +673,11 @@
                                         <button onclick="openMoveModal(${item.id}, this.getAttribute('data-name'))" data-name="${escHtml(item.original_name)}" class="p-1.5 sm:p-2 flex items-center justify-center bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-purple-500/30" title="Przenieś plik">
                                             <i data-lucide="folder-input" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
                                         </button>
-                                        <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline m-0 shrink-0">
+                                        <form method="post" id="delete-file-form-${item.id}" class="inline m-0 shrink-0">
                                             <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                             <input type="hidden" name="action" value="delete_file">
                                             <input type="hidden" name="file_id" value="${item.id}">
-                                            <button type="submit" title="Usuń" class="p-1.5 sm:p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all duration-200 flex items-center justify-center">
+                                            <button type="button" onclick="showConfirmModal('Usunąć plik?', 'Czy na pewno chcesz trwale usunąć ten plik?', () => document.getElementById('delete-file-form-${item.id}').submit(), 'red')" title="Usuń" class="p-1.5 sm:p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all duration-200 flex items-center justify-center">
                                                 <i data-lucide="trash-2" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
                                             </button>
                                         </form>

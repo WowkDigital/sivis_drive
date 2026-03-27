@@ -22,6 +22,7 @@
         }
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="assets/js/modals.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-200 min-h-screen">
     <nav class="bg-slate-800 shadow-lg border-b border-slate-700">
@@ -37,7 +38,7 @@
                     <span class="text-sm text-slate-400 hidden sm:flex items-center gap-2">
                         Zalogowano: 
                         <span class="font-semibold text-slate-200"><?= htmlspecialchars(($_SESSION['display_name'] ?? '') ?: $_SESSION['email']) ?></span>
-                        <button onclick="const n=prompt('Zmień wyświetlaną nazwę:', '<?= htmlspecialchars($_SESSION['display_name'] ?? '') ?>'); if(n){document.getElementById('update_my_name_val').value=n; document.getElementById('update_my_name_form').submit();}" class="p-1 hover:text-blue-400 transition-colors" title="Edytuj profil">
+                        <button onclick="showPromptModal('Zmień wyświetlaną nazwę:', '<?= htmlspecialchars($_SESSION['display_name'] ?? '') ?>', (n) => { if(n){document.getElementById('update_my_name_val').value=n; document.getElementById('update_my_name_form').submit();} })" class="p-1 hover:text-blue-400 transition-colors" title="Edytuj profil">
                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                         </button>
                         <form id="update_my_name_form" method="post" class="hidden">

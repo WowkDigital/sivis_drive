@@ -152,7 +152,7 @@ require_once 'views/header.php';
                             </button>
                         </div>
                         <div class="flex items-center gap-3">
-                            <button id="new-folder-btn" onclick="const n=prompt('Nazwa podfolderu:'); if(n){document.getElementById('new_folder_name').value=n; document.getElementById('new_folder_form').submit();}" class="text-xs font-bold px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 border border-slate-600 transition-all flex items-center hidden">
+                            <button id="new-folder-btn" onclick="showPromptModal('Nazwa podfolderu:', '', (n) => { if(n) { document.getElementById('new_folder_name').value=n; document.getElementById('new_folder_form').submit(); } })" class="text-xs font-bold px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 border border-slate-600 transition-all flex items-center hidden">
                                 <i data-lucide="folder-plus" class="w-3.5 h-3.5 mr-1.5"></i> Nowy folder
                             </button>
                             <form id="new_folder_form" method="post" class="hidden">
@@ -260,6 +260,6 @@ require_once 'views/header.php';
                 <button onclick="closeMoveModal()" class="px-5 py-2.5 text-sm font-bold text-slate-400 hover:text-slate-200 transition-colors">Anuluj</button>
             </div>
         </div>
-    </div>
+    <?php require_once 'views/action_modal.php'; ?>
 </div>
 <?php require_once 'views/footer.php'; ?>
