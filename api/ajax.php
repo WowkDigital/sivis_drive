@@ -106,6 +106,12 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_move_targets') 
 }
 
 if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'rename_item' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrf_token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($csrf_token)) {
+        echo json_encode(['error' => 'Błąd CSRF']);
+        exit;
+    }
+
     $id = (int)$_POST['item_id'];
     $new_name = $_POST['new_name'];
     $type = $_POST['type'];
@@ -142,6 +148,12 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'rename_item' && $_S
 }
 
 if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_folder' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrf_token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($csrf_token)) {
+        echo json_encode(['error' => 'Błąd CSRF']);
+        exit;
+    }
+
     $name = $_POST['name'];
     $parent_id = (int)$_POST['parent_id'];
 
@@ -167,6 +179,12 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_folder' && $
 }
 
 if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_shared_folder' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrf_token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($csrf_token)) {
+        echo json_encode(['error' => 'Błąd CSRF']);
+        exit;
+    }
+
     if (is_admin() || is_zarzad()) {
         $name = $_POST['name'];
         if (empty($name)) {
@@ -202,8 +220,10 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_logs') {
     // Format dates and prepare classes for UI
     foreach ($logs as &$l) {
         $l['formatted_date'] = date('d.m.Y H:i', strtotime($l['created_at']));
-        $l['display_name'] = $l['display_name'] ?: 'System';
-        $l['email'] = $l['email'] ?: '-';
+        $l['display_name'] = htmlspecialchars($l['display_name'] ?: 'System');
+        $l['email'] = htmlspecialchars($l['email'] ?: '-');
+        $l['details'] = htmlspecialchars($l['details']);
+        $l['action'] = htmlspecialchars($l['action']);
         
         // Determine color class based on action
         $action = $l['action'];
