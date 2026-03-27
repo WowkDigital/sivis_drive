@@ -58,7 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "Folder dodany.";
         } elseif ($_POST['action'] === 'delete_user') {
             $uid = (int)$_POST['user_id'];
-            if ($uid != $_SESSION['user_id']) {
+            if ($uid === 1) {
+                $message = "Błąd: Nie możesz usunąć głównego konta administratora (Konto Instalacyjne).";
+            } elseif ($uid != $_SESSION['user_id']) {
                 $upload_dir = __DIR__ . '/../uploads'; // Adjusting path for include
                 
                 // 1. Delete all root folders owned by user (recursive)
@@ -105,15 +107,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "Nazwa folderu zaktualizowana.";
         } elseif ($_POST['action'] === 'update_user_role') {
             $uid = (int)$_POST['user_id'];
-            $role = $_POST['role'];
-            $group = ($role === 'zarząd') ? 'zarząd' : 'pracownicy';
-            
-            $stmt = $db->prepare('UPDATE users SET role = ?, user_group = ? WHERE id = ?');
-            $stmt->execute([$role, $group, $uid]);
-            
-            log_activity($db, $_SESSION['user_id'], 'ADMIN_UPDATE_USER_ROLE', "Zmieniono rolę użytkownika ID: $uid na: $role");
+            if ($uid === 1) {
+                $message = "Błąd: Nie można zmienić roli głównego administratora.";
+            } else {
+                $role = $_POST['role'];
+                $group = ($role === 'zarząd') ? 'zarząd' : 'pracownicy';
+                
+                $stmt = $db->prepare('UPDATE users SET role = ?, user_group = ? WHERE id = ?');
+                $stmt->execute([$role, $group, $uid]);
+                
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_UPDATE_USER_ROLE', "Zmieniono rolę użytkownika ID: $uid na: $role");
 
-            $message = "Rola użytkownika zaktualizowana.";
+                $message = "Rola użytkownika zaktualizowana.";
+            }
         } elseif ($_POST['action'] === 'update_user_name') {
             $uid = (int)$_POST['user_id'];
             $name = $_POST['display_name'];

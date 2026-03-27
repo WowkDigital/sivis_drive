@@ -75,45 +75,51 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                                        <?php if ($u['id'] != $_SESSION['user_id']): ?>
-                                        <form method="post" class="flex items-center gap-2"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
-                                            <input type="hidden" name="action" value="update_user_role">
-                                            <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                            <div class="relative">
-                                                <select name="role" onchange="this.form.submit()" class="appearance-none bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 focus:border-blue-500 outline-none transition-all cursor-pointer">
-                                                    <option value="pracownik" <?= $u['role'] == 'pracownik' ? 'selected' : '' ?>>Pracownik</option>
-                                                    <option value="zarząd" <?= $u['role'] == 'zarząd' ? 'selected' : '' ?>>Zarząd</option>
-                                                    <option value="admin" <?= $u['role'] == 'admin' ? 'selected' : '' ?>>Administrator</option>
-                                                </select>
-                                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                                                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                                        <?php if ($u['id'] == 1): ?>
+                                            <span class="font-bold text-xs uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+                                                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Główny Administrator
+                                            </span>
+                                        <?php elseif ($u['id'] != $_SESSION['user_id']): ?>
+                                            <form method="post" class="flex items-center gap-2"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                                <input type="hidden" name="action" value="update_user_role">
+                                                <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                                <div class="relative">
+                                                    <select name="role" onchange="this.form.submit()" class="appearance-none bg-slate-900 border border-slate-700 rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 focus:border-blue-500 outline-none transition-all cursor-pointer">
+                                                        <option value="pracownik" <?= $u['role'] == 'pracownik' ? 'selected' : '' ?>>Pracownik</option>
+                                                        <option value="zarząd" <?= $u['role'] == 'zarząd' ? 'selected' : '' ?>>Zarząd</option>
+                                                        <option value="admin" <?= $u['role'] == 'admin' ? 'selected' : '' ?>>Administrator</option>
+                                                    </select>
+                                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                                                        <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </form>
+                                            </form>
                                         <?php else: ?>
                                             <span class="font-bold text-xs uppercase tracking-wider text-slate-500 italic">Administrator (To Ty)</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                                        <?php if ($u['id'] != $_SESSION['user_id']): ?>
-                                        <div class="flex items-center justify-end gap-2">
-                                            <form method="post" id="reset-pass-form-<?= $u['id'] ?>" class="inline">
-                                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
-                                                <input type="hidden" name="action" value="reset_password">
-                                                <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                                <button type="button" onclick="showConfirmModal('Zresetować hasło?', 'Czy na pewno chcesz zresetować hasło dla <?= htmlspecialchars($u['email']) ?>?\\nZostanie wygenerowane nowe, losowe hasło.', () => document.getElementById('reset-pass-form-<?= $u['id'] ?>').submit(), 'orange')" class="p-2 text-orange-400 hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg transition-all" title="Resetuj hasło">
-                                                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
-                                                </button>
-                                            </form>
-                                            <form method="post" id="delete-user-form-<?= $u['id'] ?>" class="inline">
-                                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
-                                                <input type="hidden" name="action" value="delete_user">
-                                                <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                                <button type="button" onclick="showConfirmModal('Trwale usunąć użytkownika?', 'UWAGA: Spowoduje to również usunięcie WSZYSTKICH plików i folderów tego pracownika.', () => document.getElementById('delete-user-form-<?= $u['id'] ?>').submit(), 'red')" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń użytkownika">
-                                                    <i data-lucide="user-minus" class="w-5 h-5"></i>
-                                                </button>
-                                            </form>
-                                        </div>
+                                        <?php if ($u['id'] == 1): ?>
+                                            <span class="text-[10px] bg-slate-900 text-slate-500 border border-slate-700 px-2 py-1 rounded-md uppercase font-bold opacity-60">Konto Systemowe</span>
+                                        <?php elseif ($u['id'] != $_SESSION['user_id']): ?>
+                                            <div class="flex items-center justify-end gap-2">
+                                                <form method="post" id="reset-pass-form-<?= $u['id'] ?>" class="inline">
+                                                    <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                                    <input type="hidden" name="action" value="reset_password">
+                                                    <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                                    <button type="button" onclick="showConfirmModal('Zresetować hasło?', 'Czy na pewno chcesz zresetować hasło dla <?= htmlspecialchars($u['email']) ?>?\\nZostanie wygenerowane nowe, losowe hasło.', () => document.getElementById('reset-pass-form-<?= $u['id'] ?>').submit(), 'orange')" class="p-2 text-orange-400 hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg transition-all" title="Resetuj hasło">
+                                                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="post" id="delete-user-form-<?= $u['id'] ?>" class="inline">
+                                                    <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                                    <input type="hidden" name="action" value="delete_user">
+                                                    <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                                    <button type="button" onclick="showConfirmModal('Trwale usunąć użytkownika?', 'UWAGA: Spowoduje to również usunięcie WSZYSTKICH plików i folderów tego pracownika.', () => document.getElementById('delete-user-form-<?= $u['id'] ?>').submit(), 'red')" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń użytkownika">
+                                                        <i data-lucide="user-minus" class="w-5 h-5"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         <?php else: ?>
                                             <span class="text-xs text-slate-500 px-2 py-1 bg-slate-900 rounded border border-slate-700">To Ty</span>
                                         <?php endif; ?>
