@@ -43,6 +43,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
 
             if (empty($error_msg)) {
+                // Handle relative path (folder upload)
+                $current_target_folder_id = $folder_id;
+                if (!empty($_POST['relative_path'])) {
+                    $path_parts = explode('/', $_POST['relative_path']);
+                    array_pop($path_parts); // Remove the filename from path
+                    
+                    foreach ($path_parts as $part) {
+                        $part = trim($part);
+                        if ($part === '') continue;
+                        
+                        $stmt_find = $db->prepare("SELECT id FROM folders WHERE name = ? AND parent_id = ?");
+                        $stmt_find->execute([$part, $current_target_folder_id]);
+                        $found_id = $stmt_find->fetchColumn();
+                        
+                        if ($found_id) {
+                            $current_target_folder_id = $found_id;
+                        } else {
+                            $stmt_owner = $db->prepare("SELECT owner_id FROM folders WHERE id = ?");
+                            $stmt_owner->execute([$current_target_folder_id]);
+                            $p_owner = $stmt_owner->fetchColumn();
+                            
+                            $stmt_ins = $db->prepare("INSERT INTO folders (name, parent_id, owner_id) VALUES (?, ?, ?)");
+                            $stmt_ins->execute([$part, $current_target_folder_id, $p_owner]);
+                            $current_target_folder_id = $db->lastInsertId();
+                        }
+                    }
+                }
+                $folder_id = $current_target_folder_id;
+
                 if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
                 if ($file['error'] !== UPLOAD_ERR_OK) {
                     $error_msg = "Błąd wysyłania (kod: " . $file['error'] . ").";

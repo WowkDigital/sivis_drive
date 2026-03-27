@@ -186,8 +186,19 @@ require_once 'views/header.php';
                         </button>
                     </div>
 
+                    <!-- Hidden file inputs — placed OUTSIDE drop-zone to prevent synthetic click bubbling -->
+                    <input type="file" name="file[]" id="file-input" multiple required class="hidden">
+                    <input type="file" name="folder_upload[]" id="folder-input" webkitdirectory directory multiple class="hidden">
+
+                    <!-- Upload form with hidden data fields only -->
+                    <form id="upload-form" method="post" enctype="multipart/form-data" class="hidden">
+                        <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                        <input type="hidden" name="action" value="upload">
+                        <input type="hidden" name="folder_id" id="upload-folder-id" value="<?= $active_folder['id'] ?>">
+                    </form>
+
                     <!-- Always present, visibility toggled via JS -->
-                    <div id="drop-zone" class="bg-slate-900/50 p-10 rounded-3xl mt-10 border-2 border-dashed border-slate-700 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all duration-300 group cursor-pointer text-center relative overflow-hidden hidden">
+                    <div id="drop-zone" class="bg-slate-900/40 p-8 rounded-3xl border-2 border-dashed border-slate-700/50 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all duration-300 group cursor-pointer text-center relative overflow-hidden hidden">
                         <!-- Uploading Overlay -->
                         <div id="upload-progress-overlay" class="absolute inset-0 bg-slate-900/90 backdrop-blur-md z-20 flex flex-col items-center justify-center p-8 opacity-0 pointer-events-none transition-opacity duration-300">
                             <div class="w-20 h-20 mb-6 relative">
@@ -204,24 +215,26 @@ require_once 'views/header.php';
                             <p id="upload-percent-text" class="text-blue-400 font-mono text-sm font-bold">0%</p>
                         </div>
 
-                        <form id="upload-form" method="post" enctype="multipart/form-data" class="flex flex-col items-center justify-center gap-5 w-full">
-                            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
-                            <input type="hidden" name="action" value="upload">
-                            <input type="hidden" name="folder_id" id="upload-folder-id" value="<?= $active_folder['id'] ?>">
-                            
-                            <div class="p-6 bg-blue-500/10 rounded-2xl group-hover:scale-110 group-hover:bg-blue-500/20 transition-all duration-300">
-                                <i data-lucide="upload-cloud" class="w-16 h-16 text-blue-400"></i>
+                        <!-- Drop zone visual content only -->
+                        <div class="flex flex-col items-center justify-center gap-4 w-full pointer-events-none">
+                            <div class="p-4 bg-blue-500/10 rounded-2xl group-hover:scale-110 group-hover:bg-blue-500/20 transition-all duration-300">
+                                <i data-lucide="upload-cloud" class="w-12 h-12 text-blue-400"></i>
                             </div>
-                            
                             <div>
-                                <h3 class="text-2xl font-bold text-slate-100 mb-2">Przeciągnij pliki tutaj 🚀</h3>
-                                <p class="text-slate-400">lub <span class="text-blue-400 font-semibold group-hover:underline">kliknij</span>, aby wybrać dokumenty z komputera 📁</p>
+                                <h3 class="text-xl font-bold text-slate-100 mb-1">Przeciągnij pliki tutaj 🚀</h3>
+                                <p class="text-slate-400 text-sm">lub <span class="text-blue-400 font-semibold">kliknij</span>, aby wybrać dokumenty 📁</p>
                             </div>
+                            <div class="text-[10px] text-slate-500 uppercase tracking-widest font-bold opacity-60">Max: 100MB na plik • PDF, JPG, PNG, DOCX</div>
+                        </div>
+                    </div>
 
-                            <input type="file" name="file[]" id="file-input" multiple required class="hidden">
-                            
-                            <div class="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Max: 100MB na plik • PDF, JPG, PNG, DOCX</div>
-                        </form>
+                    <div id="upload-actions" class="mt-8 flex flex-wrap justify-center gap-4 items-center <?= $can_edit ? '' : 'hidden' ?>">
+                        <label for="file-input" class="cursor-pointer px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-95 flex items-center gap-2.5">
+                            <i data-lucide="file-plus" class="w-5 h-5"></i> Wybierz pliki
+                        </label>
+                        <label for="folder-input" class="cursor-pointer px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-2xl transition-all border border-slate-600 active:scale-95 flex items-center gap-2.5">
+                            <i data-lucide="folder-plus" class="w-5 h-5"></i> Wgraj folder
+                        </label>
                     </div>
 
                 <?php else: ?>

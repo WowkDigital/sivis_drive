@@ -47,8 +47,9 @@ W Sivis Drive obowiązuje hierarchia dostępu oparta na rolach:
 
 ## ✨ Zaawansowane Funkcje
 
-### 1. Masowy Upload Plików
+### 1. Masowy Upload Plików i Folderów
 - Możliwość zaznaczenia wielu plików naraz (`multiple`).
+- **Wgrywanie folderów**: Pełne wsparcie dla przesyłania całych struktur katalogów (przez przycisk "Wgraj folder" lub Drag & Drop). System inteligentnie odtwarza strukturę folderów po stronie serwera, przypisując pliki do odpowiednich podfolderów.
 - **Przetwarzanie sekwencyjne**: Pliki są wgrywane jeden po drugim przez `XMLHttpRequest`. Zapewnia to stabilność przy limitach `post_max_size` i precyzyjne śledzenie postępu każdego pliku.
 
 ### 2. Kosz Systemowy (Recycle Bin)

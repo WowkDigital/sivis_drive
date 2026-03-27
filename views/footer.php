@@ -587,11 +587,14 @@
             const progressBar = document.getElementById('upload-progress-bar');
             const percentText = document.getElementById('upload-percent-text');
             
+            if (!overlay) { showToast('Błąd: strefa uploadu niedostępna', 'error'); return; }
+
             overlay.classList.remove('hidden', 'opacity-0');
             overlay.classList.add('pointer-events-auto');
             
             let totalFiles = files.length;
             let successFiles = 0;
+            let failedFiles = 0;
             let currentFileIndex = 0;
 
             const uploadOneFile = (file) => {
@@ -601,6 +604,10 @@
                     formData.append('action', 'upload');
                     formData.append('folder_id', currentFolderId);
                     formData.append('file', file);
+                    const relPath = file.webkitRelativePath || file.fullPath || "";
+                    if (relPath) {
+                        formData.append('relative_path', relPath);
+                    }
                     
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', 'index.php', true);
@@ -610,7 +617,6 @@
                         if (e.lengthComputable) {
                             const filePercent = Math.round((e.loaded / e.total) * 100);
                             statusText.innerText = `Przesyłanie (${currentFileIndex + 1}/${totalFiles}): ${file.name}`;
-                            // Overall progress (approximate, since files might have different sizes)
                             const overallPercent = Math.round(((currentFileIndex / totalFiles) * 100) + (filePercent / totalFiles));
                             progressBar.style.width = overallPercent + '%';
                             percentText.innerText = overallPercent + '%';
@@ -625,19 +631,27 @@
                                     successFiles++;
                                     resolve();
                                 } else {
-                                    reject(data.error || `Błąd przy pliku: ${file.name}`);
+                                    failedFiles++;
+                                    showToast(data.error || `Błąd przy pliku: ${file.name}`, 'error');
+                                    resolve(); // resolve so loop continues
                                 }
                             } catch (e) {
-                                // If not JSON, assume success if status is 200 (backward compatibility)
+                                // Non-JSON response — treat as success 
                                 successFiles++;
                                 resolve();
                             }
                         } else {
-                            reject(`Nie udało się wysłać pliku: ${file.name} (Status: ${xhr.status})`);
+                            failedFiles++;
+                            showToast(`Błąd serwera (${xhr.status}) dla: ${file.name}`, 'error');
+                            resolve(); // keep going for remaining files
                         }
                     };
                     
-                    xhr.onerror = () => reject('Błąd połączenia.');
+                    xhr.onerror = () => {
+                        failedFiles++;
+                        showToast(`Błąd połączenia dla: ${file.name}`, 'error');
+                        resolve();
+                    };
                     xhr.send(formData);
                 });
             };
@@ -648,9 +662,14 @@
                     await uploadOneFile(files[i]);
                 }
                 
-                statusText.innerText = `Zakończono! Wgrano ${successFiles} plików. 🎉`;
-                progressBar.style.width = '100%';
-                progressBar.classList.replace('bg-blue-500', 'bg-emerald-500');
+                if (successFiles > 0) {
+                    statusText.innerText = `Zakończono! Wgrano ${successFiles} z ${totalFiles} plików. 🎉`;
+                    progressBar.style.width = '100%';
+                    progressBar.classList.replace('bg-blue-500', 'bg-emerald-500');
+                } else {
+                    statusText.innerText = `Nie wgrano żadnego pliku.`;
+                    progressBar.classList.replace('bg-blue-500', 'bg-red-500');
+                }
                 
                 setTimeout(() => {
                     overlay.classList.add('opacity-0');
@@ -659,13 +678,18 @@
                         overlay.classList.remove('pointer-events-auto');
                         progressBar.style.width = '0%';
                         progressBar.classList.replace('bg-emerald-500', 'bg-blue-500');
+                        progressBar.classList.replace('bg-red-500', 'bg-blue-500');
                         loadFolder(currentFolderId, 0, true);
+                        const fi = document.getElementById('file-input'); if(fi) fi.value = "";
+                        const foi = document.getElementById('folder-input'); if(foi) foi.value = "";
+                        if (successFiles > 0) showToast(`Wgrano ${successFiles} plików! 🎉`);
                     }, 300);
                 }, 1500);
 
             } catch (error) {
-                showToast(error, 'error');
+                showToast(String(error), 'error');
                 overlay.classList.add('hidden', 'opacity-0');
+                overlay.classList.remove('pointer-events-auto');
             }
         }
 
@@ -943,11 +967,15 @@
 
                 // Toggle drop-zone visibility
                 const dropZone = document.getElementById('drop-zone');
+                const uploadActions = document.getElementById('upload-actions');
+                
                 if (dropZone) {
                     if (data.can_edit) {
                         dropZone.classList.remove('hidden');
+                        if (uploadActions) uploadActions.classList.remove('hidden');
                     } else {
                         dropZone.classList.add('hidden');
+                        if (uploadActions) uploadActions.classList.add('hidden');
                     }
                 }
 
@@ -985,13 +1013,25 @@
 
         function setupDragAndDrop() {
             const dropZone = document.getElementById('drop-zone');
-            const fileInput = document.getElementById('file-input');
 
-            if (dropZone && fileInput && !dropZone.dataset.setup) {
+            if (dropZone && !dropZone.dataset.setup) {
                 dropZone.dataset.setup = "true";
-                dropZone.addEventListener('click', () => fileInput.click());
-                fileInput.addEventListener('change', () => { 
-                    if (fileInput.files.length > 0) handleFileUpload(fileInput.files);
+                
+                // Clicking the drop zone opens file selection (safe - inputs are outside drop-zone now)
+                dropZone.addEventListener('click', () => {
+                    const fi = document.getElementById('file-input');
+                    if (fi) fi.click();
+                });
+
+                // Attach change handlers ONCE globally (not inside drop-zone)
+                ['file-input', 'folder-input'].forEach(id => {
+                    const inp = document.getElementById(id);
+                    if (inp && !inp.dataset.setup) {
+                        inp.dataset.setup = "true";
+                        inp.addEventListener('change', () => {
+                            if (inp.files.length > 0) handleFileUpload(inp.files);
+                        });
+                    }
                 });
 
                 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -1006,9 +1046,53 @@
                     dropZone.addEventListener(eventName, () => dropZone.classList.remove('border-blue-500', 'bg-blue-500/5'), false);
                 });
 
-                dropZone.addEventListener('drop', e => {
-                    const files = e.dataTransfer.files;
-                    if (files.length > 0) handleFileUpload(files);
+                async function traverseFileTree(item, path = "") {
+                    if (item.isFile) {
+                        return new Promise((resolve) => {
+                            item.file((file) => {
+                                // Important: webkitRelativePath is read-only, we might need to store path separately
+                                // but if we use the same handleFileUpload, we can just pass the path.
+                                // Let's redefine file objects slightly for the uploader if needed,
+                                // or just use a modified request.
+                                file.fullPath = path + item.name;
+                                resolve([file]);
+                            });
+                        });
+                    } else if (item.isDirectory) {
+                        let dirReader = item.createReader();
+                        let entries = [];
+                        let getEntries = async () => {
+                            let results = await new Promise(resolve => dirReader.readEntries(resolve));
+                            if (results.length) {
+                                entries = entries.concat(results);
+                                return getEntries();
+                            }
+                        };
+                        await getEntries();
+                        let files = [];
+                        for (let entry of entries) {
+                            files = files.concat(await traverseFileTree(entry, path + item.name + "/"));
+                        }
+                        return files;
+                    }
+                    return [];
+                }
+
+                dropZone.addEventListener('drop', async (e) => {
+                    const items = e.dataTransfer.items;
+                    if (items && items.length > 0) {
+                        let allFiles = [];
+                        for (let i = 0; i < items.length; i++) {
+                            let item = items[i].webkitGetAsEntry();
+                            if (item) {
+                                allFiles = allFiles.concat(await traverseFileTree(item));
+                            }
+                        }
+                        if (allFiles.length > 0) handleFileUpload(allFiles);
+                    } else {
+                        const files = e.dataTransfer.files;
+                        if (files.length > 0) handleFileUpload(files);
+                    }
                 }, false);
             }
         }
