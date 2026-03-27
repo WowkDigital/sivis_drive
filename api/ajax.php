@@ -101,3 +101,82 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_move_targets') 
     echo json_encode($accessible);
     exit;
 }
+
+if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'rename_item' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = (int)$_POST['item_id'];
+    $new_name = $_POST['new_name'];
+    $type = $_POST['type'];
+
+    if (empty($new_name)) {
+        echo json_encode(['error' => 'Nazwa nie może być pusta']);
+        exit;
+    }
+
+    if ($type === 'folder') {
+        if (is_admin() || is_zarzad() || is_private_tree($db, $id, $_SESSION['user_id'])) {
+            $stmt = $db->prepare("UPDATE folders SET name = ? WHERE id = ?");
+            if ($stmt->execute([$new_name, $id])) {
+                log_activity($db, $_SESSION['user_id'], 'RENAME_FOLDER', "Zmieniono nazwę folderu ID: $id na: $new_name (AJAX)");
+                echo json_encode(['success' => true]);
+                exit;
+            }
+        }
+    } else {
+        $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
+        $stmt->execute([$id]);
+        $folder_id = $stmt->fetchColumn();
+        if (is_admin() || is_zarzad() || is_private_tree($db, $folder_id, $_SESSION['user_id'])) {
+            $stmt = $db->prepare("UPDATE files SET original_name = ? WHERE id = ?");
+            if ($stmt->execute([$new_name, $id])) {
+                log_activity($db, $_SESSION['user_id'], 'RENAME_FILE', "Zmieniono nazwę pliku ID: $id na: $new_name (AJAX)");
+                echo json_encode(['success' => true]);
+                exit;
+            }
+        }
+    }
+    echo json_encode(['error' => 'Brak uprawnień lub błąd serwera']);
+    exit;
+}
+
+if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_folder' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = $_POST['name'];
+    $parent_id = (int)$_POST['parent_id'];
+
+    if (empty($name)) {
+        echo json_encode(['error' => 'Nazwa nie może być pusta']);
+        exit;
+    }
+
+    if (is_admin() || is_zarzad() || is_private_tree($db, $parent_id, $_SESSION['user_id'])) {
+        $stmt = $db->prepare("SELECT owner_id FROM folders WHERE id = ?");
+        $stmt->execute([$parent_id]);
+        $owner_id = $stmt->fetchColumn();
+
+        $stmt = $db->prepare("INSERT INTO folders (name, parent_id, owner_id) VALUES (?, ?, ?)");
+        if ($stmt->execute([$name, $parent_id, $owner_id])) {
+            log_activity($db, $_SESSION['user_id'], 'CREATE_FOLDER', "Utworzono folder: $name (AJAX)");
+            echo json_encode(['success' => true, 'new_id' => $db->lastInsertId()]);
+            exit;
+        }
+    }
+    echo json_encode(['error' => 'Brak uprawnień lub błąd serwera']);
+    exit;
+}
+
+if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_shared_folder' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (is_admin() || is_zarzad()) {
+        $name = $_POST['name'];
+        if (empty($name)) {
+            echo json_encode(['error' => 'Nazwa nie może być pusta']);
+            exit;
+        }
+        $stmt = $db->prepare("INSERT INTO folders (name, owner_id, access_groups) VALUES (?, NULL, 'zarząd,pracownicy')");
+        if ($stmt->execute([$name])) {
+            log_activity($db, $_SESSION['user_id'], 'CREATE_SHARED_FOLDER', "Utworzono folder udostępniony: $name (AJAX)");
+            echo json_encode(['success' => true]);
+            exit;
+        }
+    }
+    echo json_encode(['error' => 'Brak uprawnień lub błąd serwera']);
+    exit;
+}

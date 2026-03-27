@@ -374,35 +374,80 @@
                 }
             }
 
-            showPromptModal('Zmień nazwę:', displayName, (newName) => {
+            showPromptModal('Zmień nazwę:', displayName, async (newName) => {
                 if (!newName || newName === displayName) return;
                 
-                // For files, re-append extension
                 const finalName = type === 'file' ? newName + extension : newName;
                 
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = 'index.php';
-                
-                const inputs = {
-                    'csrf_token': '<?= generate_csrf_token() ?>',
-                    'action': 'rename_item',
-                    'item_id': id,
-                    'new_name': finalName,
-                    'type': type
-                };
+                const formData = new FormData();
+                formData.append('item_id', id);
+                formData.append('new_name', finalName);
+                formData.append('type', type);
+                formData.append('csrf_token', '<?= generate_csrf_token() ?>');
 
-                for (const [name, value] of Object.entries(inputs)) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = name;
-                    input.value = value;
-                    form.appendChild(input);
+                try {
+                    const response = await fetch('index.php?ajax_action=rename_item', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast("Nazwa została zmieniona! ✔");
+                        loadFolder(currentFolderId, 0, true);
+                    } else {
+                        showToast(data.error || "Błąd zmiany nazwy", "error");
+                    }
+                } catch (e) {
+                    showToast("Błąd połączenia", "error");
                 }
-
-                document.body.appendChild(form);
-                form.submit();
             });
+        }
+
+        async function createNewFolder(name) {
+            if (!name) return;
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('parent_id', currentFolderId);
+            formData.append('csrf_token', '<?= generate_csrf_token() ?>');
+
+            try {
+                const response = await fetch('index.php?ajax_action=create_folder', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast("Folder został utworzony! 📁");
+                    loadFolder(currentFolderId, 0, true);
+                } else {
+                    showToast(data.error || "Błąd tworzenia folderu", "error");
+                }
+            } catch (e) {
+                showToast("Błąd połączenia", "error");
+            }
+        }
+
+        async function createSharedFolder(name) {
+            if (!name) return;
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('csrf_token', '<?= generate_csrf_token() ?>');
+
+            try {
+                const response = await fetch('index.php?ajax_action=create_shared_folder', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast("Nowy folder udostępniony został utworzony! 🌎");
+                    location.reload(); // Sidebar needs update, simple reload for now or AJAX update sidebar
+                } else {
+                    showToast(data.error || "Błąd tworzenia folderu", "error");
+                }
+            } catch (e) {
+                showToast("Błąd połączenia", "error");
+            }
         }
 
         function copyFolderLink(btn) {
