@@ -36,7 +36,7 @@
                 <div class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
                     <i data-lucide="history" class="w-3.5 h-3.5"></i> Retencja
                 </div>
-                <div class="text-xl font-bold text-white">3 Dni</div>
+                <div class="text-xl font-bold text-white">7 Dni</div>
                 <div class="text-slate-500 text-xs mt-1">Starsze pliki są usuwane</div>
             </div>
             <div class="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">

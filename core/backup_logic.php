@@ -58,9 +58,9 @@ function run_backup($db) {
     
     $zip->close();
 
-    // --- STEP 3: CLEANUP (Keep 3 days) ---
+    // --- STEP 3: CLEANUP (Keep 7 days) ---
     $backups = glob($backup_dir . '/backup_*.zip');
-    $retention_days = 3;
+    $retention_days = 7;
     $now_ts = time();
     foreach ($backups as $b) {
         if (filemtime($b) < ($now_ts - ($retention_days * 86400))) {
