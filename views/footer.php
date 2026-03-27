@@ -125,29 +125,29 @@
             if (!bar) {
                 bar = document.createElement('div');
                 bar.id = 'bulk-action-bar';
-                bar.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-slate-800/95 backdrop-blur-2xl border border-blue-500/40 px-6 py-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-between gap-10 transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) translate-y-32 opacity-0 pointer-events-none';
+                bar.className = 'fixed bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-slate-800/95 backdrop-blur-2xl border border-blue-500/40 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-between gap-4 sm:gap-10 transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) translate-y-32 opacity-0 pointer-events-none max-w-[95%] sm:max-w-none';
                 bar.innerHTML = `
-                    <div class="flex items-center gap-5 border-r border-slate-700/50 pr-8">
-                        <div class="bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] text-white p-2.5 rounded-2xl">
-                            <i data-lucide="check-square" class="w-5 h-5"></i>
+                    <div class="flex items-center gap-3 sm:gap-5 border-r border-slate-700/50 pr-4 sm:pr-8 shrink-0">
+                        <div class="bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] text-white p-2 sm:p-2.5 rounded-xl sm:rounded-2xl shrink-0">
+                            <i data-lucide="check-square" class="w-4 h-4 sm:w-5 h-5"></i>
                         </div>
                         <div class="flex flex-col">
-                            <div class="flex items-baseline gap-1.5">
-                                <span id="bulk-count" class="text-2xl font-black text-white leading-none">0</span>
-                                <span class="text-xs text-blue-400 font-bold uppercase tracking-wider">Elementów</span>
+                            <div class="flex items-baseline gap-1">
+                                <span id="bulk-count" class="text-xl sm:text-2xl font-black text-white leading-none">0</span>
+                                <span class="text-[10px] sm:text-xs text-blue-400 font-bold uppercase tracking-wider">Wybrano</span>
                             </div>
-                            <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Wybrano do akcji</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-0.5 hidden sm:block text-nowrap">Elementów</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="bulkDownload()" class="group flex items-center gap-2.5 px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-600/20">
-                            <i data-lucide="download" class="w-5 h-5 group-hover:translate-y-0.5 transition-transform"></i> Pobierz
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <button onclick="bulkDownload()" class="group flex items-center gap-2 px-3 sm:px-5 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl sm:rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-600/20 text-xs sm:text-base text-nowrap shrink-0">
+                            <i data-lucide="download" class="w-4 h-4 sm:w-5 h-5 group-hover:translate-y-0.5 transition-transform"></i> <span class="hidden sm:inline">Pobierz</span>
                         </button>
-                        <button onclick="bulkMove()" class="group flex items-center gap-2.5 px-5 py-3 bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold rounded-2xl border border-slate-600 transition-all active:scale-95">
-                            <i data-lucide="folder-input" class="w-5 h-5 group-hover:translate-x-0.5 transition-transform"></i> Przenieś
+                        <button onclick="bulkMove()" class="group flex items-center gap-2 px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold rounded-xl sm:rounded-2xl border border-slate-600 transition-all active:scale-95 text-xs sm:text-base text-nowrap shrink-0">
+                            <i data-lucide="folder-input" class="w-4 h-4 sm:w-5 h-5 group-hover:translate-x-0.5 transition-transform"></i> <span class="hidden sm:inline">Przenieś</span>
                         </button>
-                        <button onclick="clearSelection()" class="ml-2 p-3 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all" title="Wyczyść zaznaczenie">
-                            <i data-lucide="trash-2" class="w-5.5 h-5.5"></i>
+                        <button onclick="clearSelection()" class="p-2 sm:p-3 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all shrink-0" title="Anuluj zaznaczenie">
+                            <i data-lucide="x-circle" class="w-5 h-5 sm:w-5.5 h-5.5"></i>
                         </button>
                     </div>
                 `;
@@ -491,10 +491,10 @@
                 const folderNameEl = document.getElementById('current-folder-name');
                 if (folderNameEl) {
                     folderNameEl.innerHTML = `
-                        <div class="p-2 bg-blue-500/10 rounded-lg mr-3">
-                            <i data-lucide="folder-open" class="w-6 h-6 text-blue-400"></i>
+                        <div class="p-2 bg-blue-500/10 rounded-lg mr-2 sm:mr-3 shrink-0">
+                            <i data-lucide="folder-open" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"></i>
                         </div>
-                        ${escHtml(data.folder_name)}
+                        <span class="truncate">${escHtml(data.folder_name)}</span>
                     `;
                 }
                 
@@ -528,20 +528,20 @@
                                     <table id="files-table" class="w-full">
                                         <thead>
                                             <tr class="border-b border-slate-700 text-left">
-                                                <th class="px-3 py-4 w-12 text-center">
+                                                <th class="px-2 sm:px-3 py-4 w-10 sm:w-12 text-center">
                                                      <label class="flex items-center justify-center cursor-pointer mx-auto w-8 h-8">
                                                          <input type="checkbox" onclick="toggleSelectAll(this)" class="sr-only">
-                                                         <div class="checkbox-box h-6 w-6 rounded-lg bg-slate-900 border-2 border-slate-700 transition-all duration-150 flex items-center justify-center hover:border-slate-500">
-                                                             <svg class="w-3.5 h-3.5 text-white opacity-0 transition-opacity duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                                         <div class="checkbox-box h-5 w-5 sm:h-6 sm:w-6 rounded-lg bg-slate-900 border-2 border-slate-700 transition-all duration-150 flex items-center justify-center hover:border-slate-500">
+                                                             <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white opacity-0 transition-opacity duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                                                  <polyline points="20 6 9 17 4 12"></polyline>
                                                              </svg>
                                                          </div>
                                                      </label>
                                                  </th>
-                                                <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
+                                                <th class="px-3 sm:px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nazwa</th>
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell w-32 text-center">Rozmiar / Typ</th>
                                                 <th class="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell w-40 text-center">Data</th>
-                                                <th class="px-5 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider w-px whitespace-nowrap">Akcje</th>
+                                                <th class="px-3 sm:px-5 py-4 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider w-px whitespace-nowrap">Akcje</th>
                                             </tr>
                                         </thead>
                                         <tbody id="files-tbody" class="divide-y divide-slate-700/50"></tbody>
@@ -565,19 +565,19 @@
                         tr.className = 'hover:bg-slate-700/30 transition-colors group ' + (isSelected ? 'bg-blue-500/10 border-blue-500/20' : '');
                         
                         const checkboxHtml = `
-                            <td class="px-3 py-4 w-12 text-center" onclick="event.stopPropagation()">
+                            <td class="px-2 sm:px-3 py-4 w-10 sm:w-12 text-center" onclick="event.stopPropagation()">
                                 <label class="flex items-center justify-center cursor-pointer mx-auto w-8 h-8">
                                     <input type="checkbox" 
                                         class="item-checkbox sr-only"
                                         data-id="${item.id}" data-type="${itemType}"
                                         ${isSelected ? 'checked' : ''}
                                         onchange="onCheckboxChange(this)">
-                                    <div class="checkbox-box h-6 w-6 rounded-lg border-2 transition-all duration-150 flex items-center justify-center
+                                    <div class="checkbox-box h-5 w-5 sm:h-6 sm:w-6 rounded-lg border-2 transition-all duration-150 flex items-center justify-center
                                         ${isSelected
                                             ? 'bg-blue-600 border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'
                                             : 'bg-slate-900 border-slate-700 hover:border-slate-500'}"
                                     >
-                                        <svg class="w-3.5 h-3.5 text-white transition-opacity duration-150 ${isSelected ? 'opacity-100' : 'opacity-0'}"
+                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white transition-opacity duration-150 ${isSelected ? 'opacity-100' : 'opacity-0'}"
                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                             <polyline points="20 6 9 17 4 12"></polyline>
                                         </svg>
@@ -591,27 +591,27 @@
                             tr.classList.add('cursor-pointer');
                             tr.innerHTML = `
                                 ${checkboxHtml}
-                                <td class="px-3 py-4">
-                                    <div class="flex items-center">
-                                        <div class="p-2 bg-slate-900 rounded-lg mr-3 group-hover:bg-slate-800 transition-colors shrink-0">
+                                <td class="px-3 py-4 w-full min-w-0">
+                                    <div class="flex items-center min-w-0">
+                                        <div class="p-2 bg-slate-900 rounded-lg mr-2 sm:mr-3 group-hover:bg-slate-800 transition-colors shrink-0">
                                             <i data-lucide="folder" class="w-5 h-5 text-blue-400"></i>
                                         </div>
-                                        <div class="flex flex-col">
-                                            <span class="font-medium text-slate-200">${escHtml(item.name)}</span>
+                                        <div class="flex flex-col min-w-0 overflow-hidden">
+                                            <span class="font-medium text-slate-200 truncate pr-1 text-sm sm:text-base">${escHtml(item.name)}</span>
                                             <span class="text-[10px] text-slate-500 uppercase font-bold tracking-tight sm:hidden">${item.file_count} plików</span>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-5 py-4 text-center text-[10px] text-slate-500 hidden sm:table-cell uppercase font-bold tracking-tight">${escHtml(String(item.file_count))} plików</td>
                                 <td class="px-5 py-4 text-center text-sm text-slate-400 hidden md:table-cell">-</td>
-                                <td class="px-3 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
+                                <td class="px-2 sm:px-3 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-1 sm:gap-2 shrink-0">
                                         ${data.can_edit ? `
-                                            <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', ${JSON.stringify(item.name)})" class="p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all" title="Zmień nazwę">
+                                            <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', ${JSON.stringify(item.name)})" class="p-1.5 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all" title="Zmień nazwę">
                                                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                                             </button>
                                         ` : ''}
-                                        <a href="javascript:void(0)" class="p-2 inline-flex items-center justify-center bg-slate-700/50 text-slate-400 hover:text-white rounded-lg transition-all">
+                                        <a href="javascript:void(0)" class="p-1.5 sm:p-2 inline-flex items-center justify-center bg-slate-700/50 text-slate-400 hover:text-white rounded-lg transition-all">
                                             <i data-lucide="chevron-right" class="w-4 h-4"></i>
                                         </a>
                                     </div>
@@ -631,26 +631,26 @@
 
                             let previewBtn = '';
                             if (['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-                                previewBtn = `<a href="download.php?id=${item.id}&action=view" target="_blank" class="p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Podgląd"><i data-lucide="eye" class="w-4.5 h-4.5"></i></a>`;
+                                previewBtn = `<a href="download.php?id=${item.id}&action=view" target="_blank" class="p-1.5 sm:p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Podgląd"><i data-lucide="eye" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i></a>`;
                             }
 
                             let actions = `
-                                <div class="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
+                                <div class="flex items-center justify-end gap-1 sm:gap-2 shrink-0">
                                     ${previewBtn}
-                                    <a href="download.php?id=${item.id}" class="p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 shadow-sm" title="Pobierz"><i data-lucide="download" class="w-4.5 h-4.5"></i></a>
+                                    <a href="download.php?id=${item.id}" class="p-1.5 sm:p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 shadow-sm" title="Pobierz"><i data-lucide="download" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i></a>
                                     ${data.can_edit ? `
-                                        <button onclick="renameItem(${item.id}, 'file', ${JSON.stringify(item.original_name)})" class="p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-yellow-500/30" title="Zmień nazwę">
-                                            <i data-lucide="edit-3" class="w-4.5 h-4.5"></i>
+                                        <button onclick="renameItem(${item.id}, 'file', ${JSON.stringify(item.original_name)})" class="p-1.5 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-yellow-500/30" title="Zmień nazwę">
+                                            <i data-lucide="edit-3" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
                                         </button>
-                                        <button onclick="openMoveModal(${item.id}, ${JSON.stringify(item.original_name)})" class="p-2 flex items-center justify-center bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-purple-500/30" title="Przenieś plik">
-                                            <i data-lucide="folder-input" class="w-4.5 h-4.5"></i>
+                                        <button onclick="openMoveModal(${item.id}, ${JSON.stringify(item.original_name)})" class="p-1.5 sm:p-2 flex items-center justify-center bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-purple-500/30" title="Przenieś plik">
+                                            <i data-lucide="folder-input" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
                                         </button>
                                         <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline m-0 shrink-0">
                                             <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                             <input type="hidden" name="action" value="delete_file">
                                             <input type="hidden" name="file_id" value="${item.id}">
-                                            <button type="submit" title="Usuń" class="p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all duration-200 flex items-center justify-center">
-                                                <i data-lucide="trash-2" class="w-4.5 h-4.5"></i>
+                                            <button type="submit" title="Usuń" class="p-1.5 sm:p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all duration-200 flex items-center justify-center">
+                                                <i data-lucide="trash-2" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
                                             </button>
                                         </form>
                                     ` : ''}
@@ -659,20 +659,20 @@
 
                             tr.innerHTML = `
                                 ${checkboxHtml}
-                                <td class="px-3 py-4 min-w-0 max-w-0 w-full overflow-hidden">
+                                <td class="px-2 sm:px-3 py-4 min-w-0 w-full overflow-hidden">
                                     <div class="flex items-center min-w-0">
                                         <div class="p-2 bg-slate-900 rounded-lg mr-2 sm:mr-3 group-hover:bg-slate-800 transition-colors shrink-0">
                                             <i data-lucide="${icon}" class="w-5 h-5 ${iconColor}"></i>
                                         </div>
                                         <div class="flex flex-col min-w-0 overflow-hidden">
-                                            <span class="font-medium text-slate-200 truncate pr-1 shrink text-sm sm:text-base">${escHtml(item.original_name)}</span>
+                                            <span class="font-medium text-slate-200 truncate pr-1 text-sm sm:text-base">${escHtml(item.original_name)}</span>
                                             <span class="text-[10px] sm:text-xs text-slate-500 sm:hidden mt-0.5 truncate shrink">${escHtml(sizeVal)} • ${escHtml(dateStr)}</span>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden sm:table-cell text-xs text-center">${sizeVal}</td>
                                 <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-400 hidden md:table-cell text-xs text-center">${dateTimeStr}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-right text-sm shrink-0 w-px">${actions}</td>
+                                <td class="px-2 sm:px-3 py-4 whitespace-nowrap text-right text-sm shrink-0 w-px">${actions}</td>
                             `;
                         }
                         tbody.appendChild(tr);
