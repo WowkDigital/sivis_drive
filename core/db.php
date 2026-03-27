@@ -1,6 +1,6 @@
 <?php
-$db_file = __DIR__ . '/database.sqlite';
-if (!file_exists($db_file) && file_exists(__DIR__ . '/install.php')) {
+$db_file = dirname(__DIR__) . '/data/database.sqlite';
+if (!file_exists($db_file) && file_exists(dirname(__DIR__) . '/install.php')) {
     header("Location: install.php");
     exit;
 }

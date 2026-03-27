@@ -22,7 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 2) {
     
     if (empty($errors)) {
         try {
-            $db_file = __DIR__ . '/database.sqlite';
+            if (!is_dir(__DIR__ . '/data')) {
+                mkdir(__DIR__ . '/data', 0777, true);
+            }
+            $db_file = __DIR__ . '/data/database.sqlite';
             $db = new PDO("sqlite:$db_file");
             $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 

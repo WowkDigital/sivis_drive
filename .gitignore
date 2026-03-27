@@ -4,7 +4,7 @@ desktop.ini
 .DS_Store
 
 # Baza danych ( SQLite )
-database.sqlite
+data/database.sqlite
 
 # Pliki uzytkownikow
 uploads/

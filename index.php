@@ -3,8 +3,8 @@
  * Sivis Drive - Main Entry Point
  * Refactored modular version
  */
-require_once 'auth.php';
-require_once 'inc/functions.php';
+require_once 'core/auth.php';
+require_once 'core/functions.php';
 
 require_login();
 
@@ -98,17 +98,17 @@ if ($active_folder) {
 }
 
 // Handle AJAX requests
-require_once 'inc/ajax.php';
+require_once 'api/ajax.php';
 
 // Handle POST actions
-require_once 'inc/actions.php';
+require_once 'api/actions.php';
 
 // --- FRONTEND ---
-require_once 'inc/header.php';
+require_once 'views/header.php';
 ?>
 <div class="flex flex-col lg:flex-row gap-6">
     <!-- Sidebar / Folders -->
-    <?php require_once 'inc/sidebar.php'; ?>
+    <?php require_once 'views/sidebar.php'; ?>
 
     <!-- Content / Files -->
     <div class="w-full lg:w-3/4">
@@ -258,4 +258,4 @@ require_once 'inc/header.php';
         </div>
     </div>
 </div>
-<?php require_once 'inc/footer.php'; ?>
+<?php require_once 'views/footer.php'; ?>

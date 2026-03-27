@@ -1,6 +1,6 @@
 <?php
-require_once 'auth.php';
-require_once 'inc/functions.php';
+require_once 'core/auth.php';
+require_once 'core/functions.php';
 require_login();
 
 if (!isset($_GET['id']) && !isset($_GET['ids']) && !isset($_GET['items'])) {

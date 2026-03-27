@@ -1,5 +1,5 @@
 <?php
-require_once 'auth.php';
+require_once 'core/auth.php';
 if (is_logged_in()) {
     header('Location: index.php');
     exit;

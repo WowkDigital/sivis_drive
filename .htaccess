@@ -1,0 +1,15 @@
+# Restrict access to all folders by default
+Options -Indexes
+
+# Allow only main entry points
+<FilesMatch "^(index\.php|login\.php|logout\.php|admin\.php|download\.php|install\.php)$">
+    Allow from all
+</FilesMatch>
+
+# Specifically block core folders (for servers that don't support above logic correctly)
+RedirectMatch 403 ^/(core|api|views|data|uploads)/.*\.php$
+
+# Allow access to assets (CSS, JS, images)
+<Directory "assets">
+    Allow from all
+</Directory>
