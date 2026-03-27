@@ -5,10 +5,12 @@ if (!is_dir($data_dir)) {
 }
 $db_file = $data_dir . '/database.sqlite';
 
-if (!file_exists($db_file) && file_exists(dirname(__DIR__) . '/install.php')) {
+$is_install_page = strpos($_SERVER['PHP_SELF'], 'install.php') !== false;
+if (!file_exists($db_file) && file_exists(dirname(__DIR__) . '/install.php') && !$is_install_page) {
     header("Location: install.php");
     exit;
 }
+
 
 $db = new PDO("sqlite:$db_file");
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
