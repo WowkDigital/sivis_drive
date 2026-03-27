@@ -4,6 +4,14 @@
  */
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    
+    // Weryfikacja CSRF
+    $csrf_token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (!verify_csrf_token($csrf_token)) {
+        header("HTTP/1.1 403 Forbidden");
+        die("Błąd weryfikacji CSRF. Proszę odświeżyć stronę.");
+    }
+
     if ($_POST['action'] === 'upload' && isset($_FILES['file']) && isset($_POST['folder_id'])) {
         $folder_id = (int)$_POST['folder_id'];
         $can_edit_target = is_admin() || is_zarzad() || is_private_tree($db, $folder_id, $_SESSION['user_id']);
@@ -27,13 +35,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 } elseif ($file['size'] > 100 * 1024 * 1024) {
                     $message = "Błąd: Plik jest za duży (max 100MB).";
                 } else {
-                    $unique_name = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9.\-_]/', '', basename($file['name']));
+                    $forbidden_extensions = ['php', 'php3', 'php4', 'php5', 'php6', 'phtml', 'exe', 'bat', 'sh', 'cgi', 'pl', 'py', 'htaccess'];
+                    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                    if (in_array($ext, $forbidden_extensions)) {
+                        $message = "Błąd: Niedozwolone rozszerzenie pliku.";
+                    } else {
+                        $unique_name = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9.\-_]/', '', basename($file['name']));
                     if (move_uploaded_file($file['tmp_name'], $upload_dir . '/' . $unique_name)) {
                         $stmt = $db->prepare('INSERT INTO files (folder_id, name, original_name, size, uploaded_by) VALUES (?, ?, ?, ?, ?)');
                         $stmt->execute([$folder_id, $unique_name, $file['name'], $file['size'], $_SESSION['user_id']]);
                         $message = "Plik został dodany.";
                         header("Location: index.php?folder=" . $folder_id);
                         exit;
+                    }
                     }
                 }
             }

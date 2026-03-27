@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sivis Drive</title>
+    <meta name="csrf-token" content="<?= generate_csrf_token() ?>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -40,6 +41,7 @@
                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                         </button>
                         <form id="update_my_name_form" method="post" class="hidden">
+                            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                             <input type="hidden" name="action" value="update_my_name">
                             <input type="hidden" name="display_name" id="update_my_name_val">
                         </form>

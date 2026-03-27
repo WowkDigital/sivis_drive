@@ -152,6 +152,7 @@ require_once 'inc/header.php';
                                 <i data-lucide="folder-plus" class="w-3.5 h-3.5 mr-1.5"></i> Nowy folder
                             </button>
                             <form id="new_folder_form" method="post" class="hidden">
+                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                 <input type="hidden" name="action" value="create_folder">
                                 <input type="hidden" name="name" id="new_folder_name">
                                 <input type="hidden" name="parent_id" id="new_folder_parent_id" value="<?= $active_folder_id ?>">
@@ -190,6 +191,7 @@ require_once 'inc/header.php';
                         </div>
 
                         <form id="upload-form" method="post" enctype="multipart/form-data" class="flex flex-col items-center justify-center gap-5 w-full">
+                            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                             <input type="hidden" name="action" value="upload">
                             <input type="hidden" name="folder_id" id="upload-folder-id" value="<?= $active_folder['id'] ?>">
                             
@@ -244,6 +246,7 @@ require_once 'inc/header.php';
             </div>
             
             <form id="modal-move-form" method="post" class="hidden">
+                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                 <input type="hidden" name="action" value="move_file">
                 <input type="hidden" name="file_id" id="modal-move-file-id">
                 <input type="hidden" name="new_folder_id" id="modal-move-new-folder-id">

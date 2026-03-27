@@ -6,6 +6,11 @@ require_admin();
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrf_token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($csrf_token)) {
+        die("Błąd weryfikacji CSRF. Powrót <a href='admin.php'>tutaj</a>");
+    }
+
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'add_user') {
             $email = $_POST['email'];
@@ -229,7 +234,7 @@ $formatted_size = $total_size > 1024*1024*1024
                     </div>
                     Dodaj Użytkownika
                 </h3>
-                <form method="post">
+                <form method="post"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                     <input type="hidden" name="action" value="add_user">
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-slate-400 mb-1.5">Adres E-mail</label>
@@ -266,7 +271,7 @@ $formatted_size = $total_size > 1024*1024*1024
                     </div>
                     Dodaj Folder
                 </h3>
-                <form method="post">
+                <form method="post"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                     <input type="hidden" name="action" value="add_folder">
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-slate-400 mb-1.5">Nazwa folderu</label>
@@ -314,7 +319,7 @@ $formatted_size = $total_size > 1024*1024*1024
                                 <?php foreach ($users as $u): ?>
                                 <tr class="hover:bg-slate-700/30 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <form method="post" class="flex flex-col gap-1">
+                                        <form method="post" class="flex flex-col gap-1"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                             <input type="hidden" name="action" value="update_user_name">
                                             <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
                                             <div class="relative group/name">
@@ -332,7 +337,7 @@ $formatted_size = $total_size > 1024*1024*1024
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                                         <?php if ($u['id'] != $_SESSION['user_id']): ?>
-                                        <form method="post" class="flex items-center gap-2">
+                                        <form method="post" class="flex items-center gap-2"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                             <input type="hidden" name="action" value="update_user_role">
                                             <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
                                             <div class="relative">
@@ -353,14 +358,14 @@ $formatted_size = $total_size > 1024*1024*1024
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
                                         <?php if ($u['id'] != $_SESSION['user_id']): ?>
                                         <div class="flex items-center justify-end gap-2">
-                                            <form method="post" onsubmit="return confirm('Czy na pewno chcesz zresetować hasło dla <?= htmlspecialchars($u['email']) ?>?');" class="inline">
+                                            <form method="post" onsubmit="return confirm('Czy na pewno chcesz zresetować hasło dla <?= htmlspecialchars($u['email']) ?><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">?');" class="inline">
                                                 <input type="hidden" name="action" value="reset_password">
                                                 <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
                                                 <button type="submit" class="p-2 text-orange-400 hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg transition-all" title="Resetuj hasło">
                                                     <i data-lucide="refresh-cw" class="w-5 h-5"></i>
                                                 </button>
                                             </form>
-                                            <form method="post" onsubmit="return confirm('Trwale usunąć tego użytkownika?');" class="inline">
+                                            <form method="post" onsubmit="return confirm('Trwale usunąć tego użytkownika?');" class="inline"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                                 <input type="hidden" name="action" value="delete_user">
                                                 <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
                                                 <button type="submit" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń użytkownika">
@@ -401,7 +406,7 @@ $formatted_size = $total_size > 1024*1024*1024
                                 <?php foreach ($folders as $f): ?>
                                 <tr class="hover:bg-slate-700/30 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <form method="post" class="flex items-center">
+                                        <form method="post" class="flex items-center"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                             <input type="hidden" name="action" value="rename_folder">
                                             <input type="hidden" name="folder_id" value="<?= $f['id'] ?>">
                                             <div class="flex items-center font-medium text-slate-200 w-full max-w-xs">
@@ -418,7 +423,7 @@ $formatted_size = $total_size > 1024*1024*1024
                                         </form>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                                        <form method="post" class="inline-flex gap-2" onsubmit="return confirm('UWAGA: Usunięcie folderu spowoduje TRWAŁE usunięcie wszystkich zawartych w nim plików! Czy na pewno chcesz kontynuować?');">
+                                        <form method="post" class="inline-flex gap-2" onsubmit="return confirm('UWAGA: Usunięcie folderu spowoduje TRWAŁE usunięcie wszystkich zawartych w nim plików! Czy na pewno chcesz kontynuować?');"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                             <input type="hidden" name="action" value="delete_folder">
                                             <input type="hidden" name="folder_id" value="<?= $f['id'] ?>">
                                             <button type="submit" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all" title="Usuń folder z zawartością">
@@ -487,3 +492,4 @@ $formatted_size = $total_size > 1024*1024*1024
     </script>
 </body>
 </html>
+

@@ -366,6 +366,7 @@
             form.method = 'POST';
             form.action = 'index.php';
             form.innerHTML = `
+                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                 <input type="hidden" name="action" value="rename_item">
                 <input type="hidden" name="item_id" value="${id}">
                 <input type="hidden" name="new_name" value="${newName}">
@@ -416,6 +417,7 @@
             overlay.classList.add('pointer-events-auto');
             
             const formData = new FormData();
+            formData.append('csrf_token', '<?= generate_csrf_token() ?>');
             formData.append('action', 'upload');
             formData.append('folder_id', currentFolderId);
             formData.append('file', files[0]); // Current app handles one file at a time
@@ -644,6 +646,7 @@
                                             <i data-lucide="folder-input" class="w-4.5 h-4.5"></i>
                                         </button>
                                         <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline m-0 shrink-0">
+                                            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                             <input type="hidden" name="action" value="delete_file">
                                             <input type="hidden" name="file_id" value="${item.id}">
                                             <button type="submit" title="Usuń" class="p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all duration-200 flex items-center justify-center">

@@ -7,8 +7,12 @@ if (is_logged_in()) {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
+    $csrf_token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($csrf_token)) {
+        $error = 'Błąd weryfikacji tokenu CSRF.';
+    } else {
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
 
     $stmt = $db->prepare('SELECT * FROM users WHERE email = ?');
     $stmt->execute([$email]);
@@ -25,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     } else {
         $error = 'Nieprawidłowy email lub hasło.';
+    }
     }
 }
 ?>
@@ -82,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="post" action="" class="space-y-5">
+                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                 <div>
                     <label class="block text-slate-400 text-sm font-medium mb-2" for="email">Adres e-mail</label>
                     <div class="relative">

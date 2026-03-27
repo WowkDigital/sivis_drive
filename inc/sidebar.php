@@ -53,6 +53,7 @@
                     <i data-lucide="plus-circle" class="w-4 h-4"></i>
                 </button>
                 <form id="new_shared_folder_form" method="post" class="hidden">
+                    <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                     <input type="hidden" name="action" value="create_shared_folder">
                     <input type="hidden" name="name" id="new_shared_folder_name">
                 </form>
