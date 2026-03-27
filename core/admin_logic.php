@@ -147,6 +147,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 log_activity($db, $_SESSION['user_id'], 'ADMIN_DELETE_FILE_PERM', "Trwale usunięto plik: " . $finfo['original_name']);
                 $message = "Plik został trwale usunięty.";
             }
+        } elseif ($_POST['action'] === 'run_backup') {
+            require_once 'core/backup_logic.php';
+            if (run_backup($db)) {
+                $message = "Backup został pomyślnie wykonany.";
+            } else {
+                $message = "Błąd podczas wykonywania backupu.";
+            }
+        } elseif ($_POST['action'] === 'delete_backup') {
+            $filename = basename($_POST['filename']);
+            $backup_path = $data_dir . '/backups/' . $filename;
+            if (file_exists($backup_path) && strpos($filename, 'backup_') === 0 && substr($filename, -4) === '.zip') {
+                @unlink($backup_path);
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_DELETE_BACKUP', "Usunięto plik backupu: $filename");
+                $message = "Plik backupu został usunięty.";
+            }
         }
     }
 }
@@ -162,6 +177,18 @@ $logs = $db->query("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN us
 $total_files = $db->query("SELECT COUNT(*) FROM files WHERE deleted_at IS NULL")->fetchColumn();
 $total_size = $db->query("SELECT SUM(size) FROM files WHERE deleted_at IS NULL")->fetchColumn() ?: 0;
 $last_admin = $db->query("SELECT MAX(last_login) FROM users WHERE role = 'admin'")->fetchColumn();
+
+// Backups list
+$backups_list = glob($data_dir . '/backups/backup_*.zip');
+usort($backups_list, function($a, $b) { return filemtime($b) - filemtime($a); });
+$backups = [];
+foreach ($backups_list as $b) {
+    $backups[] = [
+        'filename' => basename($b),
+        'size' => filesize($b),
+        'date' => date('d.m.Y H:i', filemtime($b))
+    ];
+}
 
 $formatted_size = $total_size > 1024*1024*1024 
     ? round($total_size/(1024*1024*1024), 2) . ' GB' 
