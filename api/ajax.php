@@ -76,6 +76,8 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
         'has_more' => $has_more,
         'breadcrumbs' => $breadcrumbs,
         'can_edit' => (is_admin() || is_zarzad() || is_private_tree($db, $fid, $_SESSION['user_id'])),
+        'is_private_tree' => is_private_tree($db, $fid, $_SESSION['user_id']),
+        'user_role' => $_SESSION['role'] ?? 'pracownik',
         'total' => $total,
         'active_folder_id' => $fid
     ]);

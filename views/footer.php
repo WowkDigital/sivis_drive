@@ -9,6 +9,22 @@
             0%   { background-position: 200% center; }
             100% { background-position: -200% center; }
         }
+        /* Mobile actions expansion - inline in row, absolute to prevent horizontal scroll */
+        .mobile-actions-active {
+            display: flex !important;
+            position: absolute;
+            right: 110%; /* Place to the left of the trigger button */
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(30, 41, 59, 1); /* solid slate-800 to cover text below */
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid #334155; /* slate-700 */
+            gap: 0.5rem !important;
+            z-index: 40;
+            box-shadow: -10px 0 20px rgba(15, 23, 42, 0.5);
+            white-space: nowrap;
+        }
     </style>
     <script>
         let currentFolderId = <?= $active_folder_id ?: 0 ?>;
@@ -28,6 +44,29 @@
                 lucide.createIcons();
             }
         }
+
+        function toggleActions(key) {
+            const container = document.getElementById(`actions-${key}`);
+            if (!container) return;
+            
+            // Close other open menus
+            document.querySelectorAll('[id^="actions-"].mobile-actions-active').forEach(el => {
+                if (el.id !== `actions-${key}`) {
+                    el.classList.remove('mobile-actions-active');
+                }
+            });
+
+            container.classList.toggle('mobile-actions-active');
+        }
+
+        // Close menus on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('[id^="actions-"]') && !e.target.closest('button[id^="actions-btn-"]')) {
+                document.querySelectorAll('[id^="actions-"].mobile-actions-active').forEach(el => {
+                    el.classList.remove('mobile-actions-active');
+                });
+            }
+        });
 
         function showToast(message, type = 'success') {
             let container = document.getElementById('toast-container');
@@ -684,23 +723,28 @@
                                 <td class="px-5 py-4 text-center text-[10px] text-slate-500 hidden sm:table-cell uppercase font-bold tracking-tight">${escHtml(String(item.file_count))} plików</td>
                                 <td class="px-5 py-4 text-center text-sm text-slate-400 hidden md:table-cell">-</td>
                                 <td class="px-2 sm:px-3 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-1 sm:gap-2 shrink-0">
-                                        ${data.can_edit ? `
-                                            <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', this.getAttribute('data-name'))" data-name="${escHtml(item.name)}" class="p-1.5 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all" title="Zmień nazwę">
-                                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                            </button>
-                                            <form method="post" id="delete-folder-form-${item.id}" class="inline m-0 shrink-0" onclick="event.stopPropagation()">
-                                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
-                                                <input type="hidden" name="action" value="delete_folder">
-                                                <input type="hidden" name="folder_id" value="${item.id}">
-                                                <button type="button" onclick="showConfirmModal('Usunąć folder?', 'Czy na pewno chcesz usunąć ten folder wraz z CAŁĄ zawartością?', () => document.getElementById('delete-folder-form-${item.id}').submit(), 'red')" title="Usuń folder" class="p-1.5 sm:p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all flex items-center justify-center">
-                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    <div class="flex items-center justify-end gap-1 sm:gap-2 shrink-0 relative">
+                                        <button id="actions-btn-${itemKey}" onclick="event.stopPropagation(); toggleActions('${itemKey}')" class="sm:hidden p-2 text-slate-400 hover:text-white bg-slate-900/50 rounded-xl transition-all" title="Opcje">
+                                            <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                                        </button>
+                                        <div id="actions-${itemKey}" class="hidden sm:flex items-center gap-1 sm:gap-2 shrink-0">
+                                            ${data.can_edit ? `
+                                                <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', this.getAttribute('data-name'))" data-name="${escHtml(item.name)}" class="p-2 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-xl transition-all" title="Zmień nazwę">
+                                                    <i data-lucide="edit-3" class="w-4.5 h-4.5 sm:w-4 sm:h-4"></i>
                                                 </button>
-                                            </form>
-                                        ` : ''}
-                                        <a href="javascript:void(0)" class="p-1.5 sm:p-2 inline-flex items-center justify-center bg-slate-700/50 text-slate-400 hover:text-white rounded-lg transition-all">
-                                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                                        </a>
+                                                <form method="post" id="delete-folder-form-${item.id}" class="inline m-0 shrink-0" onclick="event.stopPropagation()">
+                                                    <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                                    <input type="hidden" name="action" value="delete_folder">
+                                                    <input type="hidden" name="folder_id" value="${item.id}">
+                                                    <button type="button" onclick="showConfirmModal('Usunąć folder?', 'Czy na pewno chcesz usunąć ten folder wraz z CAŁĄ zawartością?', () => document.getElementById('delete-folder-form-${item.id}').submit(), 'red')" title="Usuń folder" class="p-2 sm:p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-xl transition-all flex items-center justify-center">
+                                                        <i data-lucide="trash-2" class="w-4.5 h-4.5 sm:w-4 sm:h-4"></i>
+                                                    </button>
+                                                </form>
+                                            ` : ''}
+                                            <a href="javascript:void(0)" class="p-2 sm:p-2 inline-flex items-center justify-center bg-slate-700/50 text-slate-400 hover:text-white rounded-xl transition-all">
+                                                <i data-lucide="chevron-right" class="w-4.5 h-4.5 sm:w-4 sm:h-4"></i>
+                                            </a>
+                                        </div>
                                     </div>
                                 </td>
                             `;
@@ -722,25 +766,32 @@
                             }
 
                             let actions = `
-                                <div class="flex items-center justify-end gap-1 sm:gap-2 shrink-0">
-                                    ${previewBtn}
-                                    <a href="download.php?id=${item.id}" class="p-1.5 sm:p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 shadow-sm" title="Pobierz"><i data-lucide="download" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i></a>
-                                    ${data.can_edit ? `
-                                        <button onclick="renameItem(${item.id}, 'file', this.getAttribute('data-name'))" data-name="${escHtml(item.original_name)}" class="p-1.5 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-yellow-500/30" title="Zmień nazwę">
-                                            <i data-lucide="edit-3" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
-                                        </button>
-                                        <button onclick="openMoveModal(${item.id}, this.getAttribute('data-name'))" data-name="${escHtml(item.original_name)}" class="p-1.5 sm:p-2 flex items-center justify-center bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-purple-500/30" title="Przenieś plik">
-                                            <i data-lucide="folder-input" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
-                                        </button>
-                                        <form method="post" id="delete-file-form-${item.id}" class="inline m-0 shrink-0">
-                                            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
-                                            <input type="hidden" name="action" value="delete_file">
-                                            <input type="hidden" name="file_id" value="${item.id}">
-                                            <button type="button" onclick="showConfirmModal('Usunąć plik?', 'Czy na pewno chcesz trwale usunąć ten plik?', () => document.getElementById('delete-file-form-${item.id}').submit(), 'red')" title="Usuń" class="p-1.5 sm:p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all duration-200 flex items-center justify-center">
-                                                <i data-lucide="trash-2" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
+                                <div class="flex items-center justify-end gap-1 sm:gap-2 shrink-0 relative">
+                                    <button id="actions-btn-${itemKey}" onclick="event.stopPropagation(); toggleActions('${itemKey}')" class="sm:hidden p-2 text-slate-400 hover:text-white bg-slate-900/50 rounded-xl transition-all" title="Opcje">
+                                        <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                                    </button>
+                                    <div id="actions-${itemKey}" class="hidden sm:flex items-center gap-1 sm:gap-2 shrink-0">
+                                        ${previewBtn ? previewBtn.replace('p-1.5 sm:p-2', 'p-2 sm:p-2').replace('w-4 sm:w-4.5 h-4 sm:h-4.5', 'w-4.5 h-4.5 sm:w-4 sm:h-4') : ''}
+                                        <a href="download.php?id=${item.id}" class="p-2 sm:p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-xl transition-all duration-200 shadow-sm" title="Pobierz">
+                                            <i data-lucide="download" class="w-4.5 h-4.5 sm:w-4 sm:h-4"></i>
+                                        </a>
+                                        ${data.can_edit ? `
+                                            <button onclick="renameItem(${item.id}, 'file', this.getAttribute('data-name'))" data-name="${escHtml(item.original_name)}" class="p-2 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-xl transition-all duration-200 border border-transparent hover:border-yellow-500/30" title="Zmień nazwę">
+                                                <i data-lucide="edit-3" class="w-4.5 h-4.5 sm:w-4 sm:h-4"></i>
                                             </button>
-                                        </form>
-                                    ` : ''}
+                                            <button onclick="openMoveModal(${item.id}, this.getAttribute('data-name'))" data-name="${escHtml(item.original_name)}" class="p-2 sm:p-2 flex items-center justify-center bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-xl transition-all duration-200 border border-transparent hover:border-purple-500/30" title="Przenieś plik">
+                                                <i data-lucide="folder-input" class="w-4.5 h-4.5 sm:w-4 sm:h-4"></i>
+                                            </button>
+                                            <form method="post" id="delete-file-form-${item.id}" class="inline m-0 shrink-0" onclick="event.stopPropagation()">
+                                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                                <input type="hidden" name="action" value="delete_file">
+                                                <input type="hidden" name="file_id" value="${item.id}">
+                                                <button type="button" onclick="showConfirmModal('Usunąć plik?', 'Czy na pewno chcesz trwale usunąć ten plik?', () => document.getElementById('delete-file-form-${item.id}').submit(), 'red')" title="Usuń" class="p-2 sm:p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-xl transition-all duration-200 flex items-center justify-center">
+                                                    <i data-lucide="trash-2" class="w-4.5 h-4.5 sm:w-4 sm:h-4"></i>
+                                                </button>
+                                            </form>
+                                        ` : ''}
+                                    </div>
                                 </div>
                             `;
 
@@ -820,6 +871,16 @@
                         newFolderBtn.classList.remove('hidden');
                     } else {
                         newFolderBtn.classList.add('hidden');
+                    }
+                }
+                
+                // Toggle private notice
+                const privateNotice = document.getElementById('private-notice');
+                if (privateNotice) {
+                    if (data.is_private_tree && data.user_role === 'pracownik') {
+                        privateNotice.classList.remove('hidden');
+                    } else {
+                        privateNotice.classList.add('hidden');
                     }
                 }
 

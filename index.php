@@ -129,7 +129,15 @@ require_once 'views/header.php';
                         <?php endforeach; ?>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-slate-700">
+                    <div class="flex flex-col gap-4 mb-6 pb-4 border-b border-slate-700">
+                        <?php 
+                            $is_private_tree = $active_folder_id && is_private_tree($db, $active_folder_id, $_SESSION['user_id']);
+                            $role = $_SESSION['role'] ?? 'pracownik';
+                        ?>
+                        <div id="private-notice" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/5 border border-indigo-500/20 rounded-lg text-[10px] text-indigo-400 font-bold uppercase tracking-wider <?= ($is_private_tree && $role === 'pracownik') ? '' : 'hidden' ?>">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                            <span>Informacja: Zawartość tego folderu jest widoczna dla Zarządu.</span>
+                        </div>
                         <div class="flex items-center group">
                             <?php 
                                 $is_private_root = ($active_folder['owner_id'] && !$active_folder['parent_id']);
@@ -147,11 +155,11 @@ require_once 'views/header.php';
                                 </div>
                                 <span class="truncate"><?= $name_to_show ?></span>
                             </h2>
-                            <button onclick="copyFolderLink(this)" class="ml-4 p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-blue-400 border border-slate-700 transition-all group-hover:scale-105 active:scale-95" title="Kopiuj link do folderu">
-                                <i data-lucide="share-2" class="w-5 h-5"></i>
-                            </button>
                         </div>
                         <div class="flex items-center gap-3">
+                            <button onclick="copyFolderLink(this)" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-blue-400 border border-slate-700 transition-all hover:scale-105 active:scale-95" title="Kopiuj link do folderu">
+                                <i data-lucide="share-2" class="w-5 h-5"></i>
+                            </button>
                             <button id="new-folder-btn" onclick="showPromptModal('Nazwa podfolderu:', '', (n) => createNewFolder(n))" class="text-xs font-bold px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 border border-slate-600 transition-all flex items-center hidden">
                                 <i data-lucide="folder-plus" class="w-3.5 h-3.5 mr-1.5"></i> Nowy folder
                             </button>
