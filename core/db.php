@@ -1,5 +1,10 @@
 <?php
-$db_file = dirname(__DIR__) . '/data/database.sqlite';
+$data_dir = dirname(__DIR__) . '/data';
+if (!is_dir($data_dir)) {
+    @mkdir($data_dir, 0777, true);
+}
+$db_file = $data_dir . '/database.sqlite';
+
 if (!file_exists($db_file) && file_exists(dirname(__DIR__) . '/install.php')) {
     header("Location: install.php");
     exit;
