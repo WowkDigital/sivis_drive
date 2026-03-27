@@ -1,0 +1,165 @@
+<?php
+require_once 'core/auth.php';
+require_once 'core/functions.php';
+require_admin();
+
+$db = db_connect();
+$message = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrf_token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($csrf_token)) {
+        die("Błąd weryfikacji CSRF. Powrót <a href='admin.php'>tutaj</a>");
+    }
+
+    if (isset($_POST['action'])) {
+        if ($_POST['action'] === 'add_user') {
+            $email = $_POST['email'];
+            $display_name = $_POST['display_name'];
+            $role = $_POST['role'];
+            $group = ($role === 'zarząd') ? 'zarząd' : 'pracownicy';
+            $password = generate_random_password(16);
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            
+            try {
+                $stmt = $db->prepare('INSERT INTO users (email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, ?, ?)');
+                $stmt->execute([$email, $hash, $role, $group, $display_name]);
+                $new_user_password = $password;
+                
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_USER', "Utworzono użytkownika: $email ($role)");
+
+                $message = "Użytkownik został pomyślnie utworzony.";
+            } catch (Exception $e) {
+                $message = "Błąd: " . $e->getMessage();
+            }
+        } elseif ($_POST['action'] === 'reset_password' && isset($_POST['user_id'])) {
+            $uid = (int)$_POST['user_id'];
+            $password = generate_random_password(16);
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $db->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([$hash, $uid]);
+            $new_user_password = $password;
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_RESET_PASSWORD', "Zresetowano hasło dla użytkownika ID: $uid");
+
+            $message = "Hasło użytkownika zostało zresetowane.";
+        } elseif ($_POST['action'] === 'add_folder') {
+            $name = $_POST['name'];
+            $access = $_POST['access_groups'];
+            $stmt = $db->prepare('INSERT INTO folders (name, access_groups) VALUES (?, ?)');
+            $stmt->execute([$name, $access]);
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_SHARED_FOLDER', "Utworzono folder udostępniony: $name");
+
+            $message = "Folder dodany.";
+        } elseif ($_POST['action'] === 'delete_user') {
+            $uid = (int)$_POST['user_id'];
+            if ($uid != $_SESSION['user_id']) {
+                $upload_dir = __DIR__ . '/../uploads'; // Adjusting path for include
+                
+                // 1. Delete all root folders owned by user (recursive)
+                $stmt = $db->prepare("SELECT id FROM folders WHERE owner_id = ? AND parent_id IS NULL");
+                $stmt->execute([$uid]);
+                $user_roots = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                
+                foreach ($user_roots as $root_id) {
+                    delete_folder_recursive($db, $root_id, $upload_dir);
+                }
+                
+                // 2. Delete user
+                $stmt = $db->prepare('DELETE FROM users WHERE id = ?');
+                $stmt->execute([$uid]);
+                
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_DELETE_USER', "Usunięto użytkownika ID: $uid (oraz wszystkie jego pliki)");
+
+                $message = "Użytkownik oraz jego wszystkie pliki i foldery zostały usunięte.";
+            } else {
+                $message = "Błąd: Nie możesz usunąć sam siebie!";
+            }
+        } elseif ($_POST['action'] === 'delete_folder') {
+            $fid = (int)$_POST['folder_id'];
+            $upload_dir = __DIR__ . '/../uploads';
+            delete_folder_recursive($db, $fid, $upload_dir);
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_DELETE_SHARED_FOLDER', "Usunięto folder udostępniony ID: $fid");
+
+            $message = "Folder i cała jego struktura zostały usunięte.";
+        } elseif ($_POST['action'] === 'update_folder') {
+            $fid = (int)$_POST['folder_id'];
+            $access = $_POST['access_groups'];
+            $stmt = $db->prepare('UPDATE folders SET access_groups = ? WHERE id = ?');
+            $stmt->execute([$access, $fid]);
+            $message = "Uprawnienia folderu zaktualizowane.";
+        } elseif ($_POST['action'] === 'rename_folder') {
+            $fid = (int)$_POST['folder_id'];
+            $new_name = $_POST['new_name'];
+            $stmt = $db->prepare('UPDATE folders SET name = ? WHERE id = ?');
+            $stmt->execute([$new_name, $fid]);
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_RENAME_FOLDER', "Zmieniono nazwę folderu ID: $fid na: $new_name");
+
+            $message = "Nazwa folderu zaktualizowana.";
+        } elseif ($_POST['action'] === 'update_user_role') {
+            $uid = (int)$_POST['user_id'];
+            $role = $_POST['role'];
+            $group = ($role === 'zarząd') ? 'zarząd' : 'pracownicy';
+            
+            $stmt = $db->prepare('UPDATE users SET role = ?, user_group = ? WHERE id = ?');
+            $stmt->execute([$role, $group, $uid]);
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_UPDATE_USER_ROLE', "Zmieniono rolę użytkownika ID: $uid na: $role");
+
+            $message = "Rola użytkownika zaktualizowana.";
+        } elseif ($_POST['action'] === 'update_user_name') {
+            $uid = (int)$_POST['user_id'];
+            $name = $_POST['display_name'];
+            $stmt = $db->prepare('UPDATE users SET display_name = ? WHERE id = ?');
+            $stmt->execute([$name, $uid]);
+            
+            // Sync private root folder name
+            $stmt = $db->prepare("UPDATE folders SET name = ? WHERE owner_id = ? AND parent_id IS NULL");
+            $stmt->execute(['Pliki ' . $name, $uid]);
+
+            $message = "Nazwa wyświetlana zaktualizowana.";
+        } elseif ($_POST['action'] === 'restore_item') {
+            $id = (int)$_POST['item_id'];
+            $type = $_POST['type'];
+            if ($type === 'folder') {
+                $db->prepare("UPDATE folders SET deleted_at = NULL WHERE id = ?")->execute([$id]);
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FOLDER', "Przywrócono folder ID: $id z kosza");
+            } else {
+                $db->prepare("UPDATE files SET deleted_at = NULL WHERE id = ?")->execute([$id]);
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FILE', "Przywrócono plik ID: $id z kosza");
+            }
+            $message = "Element został przywrócony.";
+        } elseif ($_POST['action'] === 'delete_file') {
+            $fid = (int)$_POST['file_id'];
+            $stmt = $db->prepare("SELECT name, original_name FROM files WHERE id = ?");
+            $stmt->execute([$fid]);
+            $finfo = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($finfo) {
+                @unlink(__DIR__ . '/../uploads/' . $finfo['name']);
+                $db->prepare("DELETE FROM files WHERE id = ?")->execute([$fid]);
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_DELETE_FILE_PERM', "Trwale usunięto plik: " . $finfo['original_name']);
+                $message = "Plik został trwale usunięty.";
+            }
+        }
+    }
+}
+
+// Data Fetching
+$users = $db->query("SELECT id, email, role, user_group, display_name, last_login FROM users")->fetchAll(PDO::FETCH_ASSOC);
+$folders = $db->query("SELECT id, name, access_groups FROM folders WHERE owner_id IS NULL AND parent_id IS NULL AND deleted_at IS NULL")->fetchAll(PDO::FETCH_ASSOC);
+$deleted_files = $db->query("SELECT f.*, u.email as u_email FROM files f LEFT JOIN users u ON f.uploaded_by = u.id WHERE f.deleted_at IS NOT NULL ORDER BY f.deleted_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+$deleted_folders = $db->query("SELECT f.*, u.email as u_email FROM folders f LEFT JOIN users u ON f.owner_id = u.id WHERE f.deleted_at IS NOT NULL ORDER BY f.deleted_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+$logs = $db->query("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.created_at DESC LIMIT 15")->fetchAll(PDO::FETCH_ASSOC);
+
+// Stats
+$total_files = $db->query("SELECT COUNT(*) FROM files WHERE deleted_at IS NULL")->fetchColumn();
+$total_size = $db->query("SELECT SUM(size) FROM files WHERE deleted_at IS NULL")->fetchColumn() ?: 0;
+$last_admin = $db->query("SELECT MAX(last_login) FROM users WHERE role = 'admin'")->fetchColumn();
+
+$formatted_size = $total_size > 1024*1024*1024 
+    ? round($total_size/(1024*1024*1024), 2) . ' GB' 
+    : ($total_size > 1024*1024 
+        ? round($total_size/(1024*1024), 2) . ' MB' 
+        : round($total_size/1024) . ' KB');
