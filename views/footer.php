@@ -831,7 +831,7 @@
                                             <i data-lucide="folder" class="w-5 h-5 text-blue-400"></i>
                                         </div>
                                         <div class="flex flex-col min-w-0 overflow-hidden">
-                                            <span class="font-medium text-slate-200 truncate pr-1 text-sm sm:text-base block md:max-w-[30ch] lg:max-w-[40ch]" title="${escHtml(item.name)}">${escHtml(item.name)}</span>
+                                            <span class="font-medium text-slate-200 truncate pr-1 text-sm sm:text-base block max-w-[30ch] lg:max-w-[40ch]" title="${escHtml(item.name)}">${escHtml(item.name)}</span>
                                             <span class="text-[10px] text-slate-500 uppercase font-bold tracking-tight sm:hidden">${item.file_count} plików</span>
                                         </div>
                                     </div>
@@ -918,7 +918,7 @@
                                             <i data-lucide="${icon}" class="w-5 h-5 ${iconColor}"></i>
                                         </div>
                                         <div class="flex flex-col min-w-0 overflow-hidden">
-                                            <span class="font-medium text-slate-200 truncate pr-1 text-sm sm:text-base block md:max-w-[30ch] lg:max-w-[40ch]" title="${escHtml(item.original_name)}">${escHtml(item.original_name)}</span>
+                                            <span class="font-medium text-slate-200 truncate pr-1 text-sm sm:text-base block max-w-[30ch] lg:max-w-[40ch]" title="${escHtml(item.original_name)}">${escHtml(item.original_name)}</span>
                                             <span class="text-[10px] sm:text-xs text-slate-500 sm:hidden mt-0.5 truncate shrink">${escHtml(sizeVal)} • ${escHtml(dateStr)}</span>
                                         </div>
                                     </div>
