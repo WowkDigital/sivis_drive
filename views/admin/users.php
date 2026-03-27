@@ -74,10 +74,10 @@
                                             (<span class="italic"><?= htmlspecialchars($u['user_group']) ?></span>)
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                                    <td class="px-6 py-4 whitespace-normal hidden sm:table-cell">
                                         <?php if ($u['id'] == 1): ?>
-                                            <span class="font-bold text-xs uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-                                                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Główny Administrator
+                                            <span class="font-bold text-xs uppercase tracking-wider text-blue-400 flex items-center gap-1.5 leading-tight">
+                                                <i data-lucide="shield-check" class="w-3.5 h-3.5 shrink-0"></i> Główny Administrator
                                             </span>
                                         <?php elseif ($u['id'] != $_SESSION['user_id']): ?>
                                             <form method="post" class="flex items-center gap-2"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
@@ -98,9 +98,9 @@
                                             <span class="font-bold text-xs uppercase tracking-wider text-slate-500 italic">Administrator (To Ty)</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    <td class="px-6 py-4 whitespace-normal text-right">
                                         <?php if ($u['id'] == 1): ?>
-                                            <span class="text-[10px] bg-slate-900 text-slate-500 border border-slate-700 px-2 py-1 rounded-md uppercase font-bold opacity-60">Konto Systemowe</span>
+                                            <span class="text-[10px] bg-slate-900 text-slate-500 border border-slate-700 px-2 py-1 rounded-md uppercase font-bold opacity-60 leading-tight inline-block">Konto Systemowe</span>
                                         <?php elseif ($u['id'] != $_SESSION['user_id']): ?>
                                             <div class="flex items-center justify-end gap-2">
                                                 <form method="post" id="reset-pass-form-<?= $u['id'] ?>" class="inline">

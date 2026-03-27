@@ -3,7 +3,7 @@
  * Sivis Drive - Admin Backups Management
  */
 ?>
-<section class="bg-slate-800 shadow-2xl rounded-3xl border border-slate-700/50 mb-10 overflow-hidden">
+<section class="bg-slate-800 shadow-2xl rounded-3xl border border-slate-700/50 mt-10 mb-10 overflow-hidden">
     <div class="p-6 sm:p-8 border-b border-slate-700 bg-slate-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
         <div class="flex items-center gap-4">
             <div class="p-3 bg-blue-500/10 rounded-2xl">
