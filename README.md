@@ -54,4 +54,4 @@ System Sivis Drive zawiera dedykowany skrypt `update.sh` przeznaczony dla środo
 - `uploads/` – Katalog chroniony z dokumentami.
 
 ---
-*Created with ❤️ by WowkDigital*
+*Created with ❤️ by Wowk Digital*

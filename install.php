@@ -146,8 +146,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         
         <footer class="max-w-7xl mx-auto py-10 px-4 text-center">
-            <p class="text-slate-600 text-xs flex items-center justify-center gap-1.5">
-                Made with <i data-lucide="heart" class="w-3 h-3 text-red-500 fill-red-500"></i> by <span class="font-bold text-slate-500">WowkDigital</span>
+            <p class="text-slate-600 text-xs flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 opacity-70 hover:opacity-100 transition-all duration-300">
+                <span class="flex items-center gap-1.5 font-medium">
+                    Made with <i data-lucide="heart" class="w-3 h-3 text-red-500 fill-red-500 animate-pulse"></i> by 
+                    <a href="https://wowk.digital" target="_blank" class="font-black text-slate-500 hover:text-blue-400 transition-all tracking-tight">Wowk Digital</a>
+                </span>
+                <span class="hidden sm:inline-block w-1 h-1 bg-slate-700 rounded-full"></span>
+                <span class="font-bold text-[9px] uppercase tracking-[0.2em] text-slate-600">&copy; <?= date('Y') ?> Sivis Drive</span>
             </p>
         </footer>
     </div>

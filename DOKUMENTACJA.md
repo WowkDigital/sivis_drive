@@ -95,4 +95,4 @@ Dla każdego drzewa prywatnego użytkownika obowiązują twarde limity:
 
 ---
 *Dokumentacja aktualna na dzień: 27.03.2026*
-*Autor: WowkDigital / Antigraviti Condes*
+*Autor: Wowk Digital / Antigraviti Condes*

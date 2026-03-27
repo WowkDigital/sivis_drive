@@ -1,6 +1,11 @@
-    <footer class="max-w-7xl mx-auto py-12 px-4 text-center border-t border-slate-800/60 mt-8">
-        <p class="text-slate-500 text-sm flex items-center justify-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
-            Made with <i data-lucide="heart" class="w-4 h-4 text-red-500 fill-red-500"></i> by <span class="font-bold text-slate-400">WowkDigital</span>
+    <footer class="max-w-7xl mx-auto py-12 px-4 text-center border-t border-slate-800/60 mt-12 mb-8">
+        <p class="text-slate-500 text-sm flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 opacity-70 hover:opacity-100 transition-all duration-300">
+            <span class="flex items-center gap-1.5 font-medium">
+                Made with <i data-lucide="heart" class="w-4 h-4 text-red-500 fill-red-500 animate-pulse"></i> by 
+                <a href="https://wowk.digital" target="_blank" class="font-black text-slate-400 hover:text-blue-400 transition-colors tracking-tight">Wowk Digital</a>
+            </span>
+            <span class="hidden sm:inline-block w-1.5 h-1.5 bg-slate-700 rounded-full"></span>
+            <span class="font-bold text-[10px] uppercase tracking-[0.2em] text-slate-600">&copy; <?= date('Y') ?> Sivis Drive</span>
         </p>
     </footer>
     </div> <!-- Close the wrapper div started in header.php -->
