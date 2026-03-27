@@ -62,8 +62,16 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
     }
     $breadcrumbs = array_reverse($breadcrumbs);
 
+    $is_private_root = ($folder['owner_id'] && !$folder['parent_id']);
+    $folder_name_html = '';
+    if ($is_private_root && strpos($folder['name'], 'Pliki ') === 0) {
+        $user_part = htmlspecialchars(substr($folder['name'], 6));
+        $folder_name_html = 'Pliki <span class="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent ml-2 underline decoration-blue-500/30 underline-offset-8 select-none">' . $user_part . '</span>';
+    }
+
     echo json_encode([
         'folder_name' => $folder['name'],
+        'folder_name_html' => $folder_name_html,
         'items' => $items,
         'has_more' => $has_more,
         'breadcrumbs' => $breadcrumbs,

@@ -123,9 +123,11 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
             header('Content-Type: ' . $viewable_types[$ext]);
             header('Content-Disposition: inline; filename="' . basename($file['original_name']) . '"');
         } else {
+            $info = pathinfo($file['original_name']);
+            $formatted_name = $info['filename'] . '_' . date('Y-m-d_Hi') . (isset($info['extension']) ? '.' . $info['extension'] : '');
             header('Content-Description: File Transfer');
             header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="' . basename($file['original_name']) . '"');
+            header('Content-Disposition: attachment; filename="' . $formatted_name . '"');
         }
 
         header('Expires: 0');

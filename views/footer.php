@@ -508,11 +508,12 @@
                 // Update folder name and badge
                 const folderNameEl = document.getElementById('current-folder-name');
                 if (folderNameEl) {
+                    folderNameEl.classList.add('min-w-0', 'flex-1');
                     folderNameEl.innerHTML = `
                         <div class="p-2 bg-blue-500/10 rounded-lg mr-2 sm:mr-3 shrink-0">
                             <i data-lucide="folder-open" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"></i>
                         </div>
-                        <span class="truncate">${escHtml(data.folder_name)}</span>
+                        <span class="truncate">${data.folder_name_html || escHtml(data.folder_name)}</span>
                     `;
                 }
                 

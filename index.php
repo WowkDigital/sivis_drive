@@ -141,11 +141,11 @@ require_once 'views/header.php';
                                     $name_to_show = $raw_name;
                                 }
                             ?>
-                            <h2 id="current-folder-name" class="text-2xl font-bold text-slate-100 flex items-center">
-                                <div class="p-2 bg-blue-500/10 rounded-lg mr-3">
-                                    <i data-lucide="folder-open" class="w-6 h-6 text-blue-400"></i>
+                            <h2 id="current-folder-name" class="text-xl sm:text-2xl font-bold text-slate-100 flex items-center min-w-0 flex-1">
+                                <div class="p-2 bg-blue-500/10 rounded-lg mr-2 sm:mr-3 shrink-0">
+                                    <i data-lucide="folder-open" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"></i>
                                 </div>
-                                <?= $name_to_show ?>
+                                <span class="truncate"><?= $name_to_show ?></span>
                             </h2>
                             <button onclick="copyFolderLink(this)" class="ml-4 p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-blue-400 border border-slate-700 transition-all group-hover:scale-105 active:scale-95" title="Kopiuj link do folderu">
                                 <i data-lucide="share-2" class="w-5 h-5"></i>
