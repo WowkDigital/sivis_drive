@@ -1,9 +1,9 @@
 <?php
 require_once 'core/auth.php';
 require_once 'core/functions.php';
+require_once 'core/db.php';
 require_admin();
 
-$db = db_connect();
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
