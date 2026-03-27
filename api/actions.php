@@ -172,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     } elseif ($_POST['action'] === 'delete_file' && isset($_POST['file_id'])) {
         $fid = (int)$_POST['file_id'];
-        $stmt = $db->prepare("SELECT folder_id, name FROM files WHERE id = ?");
+        $stmt = $db->prepare("SELECT folder_id, name, original_name FROM files WHERE id = ?");
         $stmt->execute([$fid]);
         $file_info = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -261,6 +261,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             header("Location: index.php?folder=" . $new_folder_id);
             exit;
         }
+    } elseif ($_POST['action'] === 'delete_multiple' && isset($_POST['item_ids']) && isset($_POST['item_types'])) {
+        $item_ids = explode(',', $_POST['item_ids']);
+        $item_types = explode(',', $_POST['item_types']);
+        $folder_id = (int)($_POST['current_folder_id'] ?? 0);
+        
+        $delete_count = 0;
+        foreach ($item_ids as $index => $id) {
+            $id = (int)$id;
+            $type = $item_types[$index] ?? 'file';
+
+            if ($type === 'folder') {
+                if (is_admin() || is_zarzad() || is_private_tree($db, $id, $_SESSION['user_id'])) {
+                    delete_folder_recursive($db, $id, $upload_dir);
+                    log_activity($db, $_SESSION['user_id'], 'DELETE_FOLDER', "Masowo usunięto folder ID: $id (oraz całą zawartość)");
+                    $delete_count++;
+                }
+            } else { // type === 'file'
+                $stmt = $db->prepare("SELECT folder_id, name, original_name FROM files WHERE id = ?");
+                $stmt->execute([$id]);
+                $file_info = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($file_info) {
+                    if (is_admin() || is_zarzad() || is_private_tree($db, $file_info['folder_id'], $_SESSION['user_id'])) {
+                        @unlink($upload_dir . '/' . $file_info['name']);
+                        $db->prepare("DELETE FROM files WHERE id = ?")->execute([$id]);
+                        log_activity($db, $_SESSION['user_id'], 'DELETE_FILE', "Masowo usunięto plik: " . ($file_info['original_name'] ?? 'Nieznany') . " (ID: $id)");
+                        $delete_count++;
+                    }
+                }
+            }
+        }
+        $_SESSION['toast'] = "Pomyślnie usunięto $delete_count elementów! 🗑️";
+        header("Location: index.php?folder=" . $folder_id);
+        exit;
     }
 }
+
 ?>

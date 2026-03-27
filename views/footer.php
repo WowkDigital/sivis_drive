@@ -180,15 +180,19 @@
                             <span class="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-0.5 hidden sm:block text-nowrap">Elementów</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 sm:gap-3">
-                        <button onclick="bulkDownload()" class="group flex items-center gap-2 px-3 sm:px-5 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl sm:rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-600/20 text-xs sm:text-base text-nowrap shrink-0">
-                            <i data-lucide="download" class="w-4 h-4 sm:w-5 h-5 group-hover:translate-y-0.5 transition-transform"></i> <span class="hidden sm:inline">Pobierz</span>
+                    <div class="flex items-center gap-2 sm:gap-2.5">
+                        <button onclick="bulkDownload()" class="p-2.5 sm:p-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl sm:rounded-2xl transition-all active:scale-90 shadow-lg shadow-blue-600/20" title="Pobierz wybrane">
+                            <i data-lucide="download" class="w-5 h-5 sm:w-6 h-6"></i>
                         </button>
-                        <button onclick="bulkMove()" class="group flex items-center gap-2 px-3 sm:px-5 py-2.5 sm:py-3 bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold rounded-xl sm:rounded-2xl border border-slate-600 transition-all active:scale-95 text-xs sm:text-base text-nowrap shrink-0">
-                            <i data-lucide="folder-input" class="w-4 h-4 sm:w-5 h-5 group-hover:translate-x-0.5 transition-transform"></i> <span class="hidden sm:inline">Przenieś</span>
+                        <button onclick="bulkMove()" class="p-2.5 sm:p-3.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl sm:rounded-2xl border border-slate-600 transition-all active:scale-90" title="Przenieś wybrane">
+                            <i data-lucide="folder-input" class="w-5 h-5 sm:w-6 h-6"></i>
                         </button>
-                        <button onclick="clearSelection()" class="p-2 sm:p-3 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all shrink-0" title="Anuluj zaznaczenie">
-                            <i data-lucide="x-circle" class="w-5 h-5 sm:w-5.5 h-5.5"></i>
+                        <button onclick="bulkDelete()" class="p-2.5 sm:p-3.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl sm:rounded-2xl border border-red-500/30 transition-all active:scale-90 shadow-lg shadow-red-500/10" title="Usuń wybrane">
+                            <i data-lucide="trash-2" class="w-5 h-5 sm:w-6 h-6"></i>
+                        </button>
+                        <div class="w-px h-8 bg-slate-700/50 mx-1 sm:mx-2 hidden sm:block"></div>
+                        <button onclick="clearSelection()" class="p-2 sm:p-3 text-slate-500 hover:text-white hover:bg-slate-700 rounded-xl transition-all" title="Anuluj zaznaczenie">
+                            <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
                 `;
@@ -304,6 +308,55 @@
             if (items.length === 0) return;
 
             openMoveModal(items, items.length === 1 ? 'zaznaczony element' : `${items.length} elementów`);
+        }
+
+        function bulkDelete() {
+            const items = [];
+            selectedItems.forEach(key => {
+                const [type, id] = key.split('-');
+                items.push({id, type});
+            });
+
+            if (items.length === 0) return;
+
+            showConfirmModal('Usunąć zaznaczone?', `Czy na pewno chcesz usunąć ${items.length} zaznaczonych elementów? Tej operacji nie da się cofnąć!`, () => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'index.php';
+                
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = 'csrf_token';
+                csrf.value = '<?= generate_csrf_token() ?>';
+                form.appendChild(csrf);
+
+                const action = document.createElement('input');
+                action.type = 'hidden';
+                action.name = 'action';
+                action.value = 'delete_multiple';
+                form.appendChild(action);
+
+                const folderId = document.createElement('input');
+                folderId.type = 'hidden';
+                folderId.name = 'current_folder_id';
+                folderId.value = currentFolderId;
+                form.appendChild(folderId);
+
+                const ids = document.createElement('input');
+                ids.type = 'hidden';
+                ids.name = 'item_ids';
+                ids.value = items.map(i => i.id).join(',');
+                form.appendChild(ids);
+
+                const types = document.createElement('input');
+                types.type = 'hidden';
+                types.name = 'item_types';
+                types.value = items.map(i => i.type).join(',');
+                form.appendChild(types);
+
+                document.body.appendChild(form);
+                form.submit();
+            }, 'red');
         }
 
         function openMoveModal(items, description) {
