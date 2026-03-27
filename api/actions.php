@@ -41,13 +41,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         $message = "Błąd: Niedozwolone rozszerzenie pliku.";
                     } else {
                         $unique_name = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9.\-_]/', '', basename($file['name']));
-                    if (move_uploaded_file($file['tmp_name'], $upload_dir . '/' . $unique_name)) {
-                        $stmt = $db->prepare('INSERT INTO files (folder_id, name, original_name, size, uploaded_by) VALUES (?, ?, ?, ?, ?)');
-                        $stmt->execute([$folder_id, $unique_name, $file['name'], $file['size'], $_SESSION['user_id']]);
-                        $message = "Plik został dodany.";
-                        header("Location: index.php?folder=" . $folder_id);
-                        exit;
-                    }
+                        if (move_uploaded_file($file['tmp_name'], $upload_dir . '/' . $unique_name)) {
+                            $stmt = $db->prepare('INSERT INTO files (folder_id, name, original_name, size, uploaded_by) VALUES (?, ?, ?, ?, ?)');
+                            $stmt->execute([$folder_id, $unique_name, $file['name'], $file['size'], $_SESSION['user_id']]);
+                            
+                            log_activity($db, $_SESSION['user_id'], 'UPLOAD_FILE', "Wgrano plik: " . $file['name'] . " do folderu ID: $folder_id");
+
+                            $_SESSION['toast'] = "Plik został dodany.";
+                            header("Location: index.php?folder=" . $folder_id);
+                            exit;
+                        }
                     }
                 }
             }
@@ -68,7 +71,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
              $stmt = $db->prepare("INSERT INTO folders (name, parent_id, owner_id) VALUES (?, ?, ?)");
              $stmt->execute([$name, $parent_id, $owner_id]);
-             $message = "Podfolder został utworzony.";
+             
+             log_activity($db, $_SESSION['user_id'], 'CREATE_FOLDER', "Utworzono folder: $name (nadrzędny ID: $parent_id)");
+
+             $_SESSION['toast'] = "Podfolder został utworzony.";
              header("Location: index.php?folder=" . $parent_id);
              exit;
         }
@@ -108,6 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                      $st_p = $db->prepare("SELECT parent_id FROM folders WHERE id = ?");
                      $st_p->execute([$id]);
                      $p_id = $st_p->fetchColumn();
+                     
+                     log_activity($db, $_SESSION['user_id'], 'RENAME_FOLDER', "Zmieniono nazwę folderu ID: $id na: $new_name");
+                     
                      $_SESSION['toast'] = "Nazwa folderu została zmieniona. ✔";
                      header("Location: index.php?folder=" . ($p_id ?: 0));
                      exit;
@@ -120,6 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
              if (is_admin() || is_zarzad() || is_private_tree($db, $folder_id, $_SESSION['user_id'])) {
                  $stmt = $db->prepare("UPDATE files SET original_name = ? WHERE id = ?");
                  if ($stmt->execute([$new_name, $id])) {
+                     log_activity($db, $_SESSION['user_id'], 'RENAME_FILE', "Zmieniono nazwę pliku ID: $id na: $new_name");
                      $_SESSION['toast'] = "Nazwa pliku została zmieniona. ✔";
                      header("Location: index.php?folder=" . $folder_id);
                      exit;
@@ -137,6 +147,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
              if ($can_edit_file) {
                 @unlink($upload_dir . '/' . $file_info['name']);
                 $db->prepare("DELETE FROM files WHERE id = ?")->execute([$fid]);
+                
+                log_activity($db, $_SESSION['user_id'], 'DELETE_FILE', "Usunięto plik: " . $file_info['original_name'] . " (ID: $fid)");
+
                 $_SESSION['toast'] = "Plik został usunięty.";
                 header("Location: " . ($_SERVER['HTTP_REFERER'] ?: 'index.php'));
                 exit;
@@ -152,6 +165,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         if (is_admin() || is_zarzad() || is_private_tree($db, $fid, $_SESSION['user_id'])) {
             delete_folder_recursive($db, $fid, $upload_dir);
+            
+            log_activity($db, $_SESSION['user_id'], 'DELETE_FOLDER', "Usunięto folder ID: $fid (oraz całą zawartość)");
+
             $_SESSION['toast'] = "Folder usunięty pomyślnie.";
             header("Location: index.php?folder=" . ($parent_id ?: 0));
             exit;
@@ -192,11 +208,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     // Check if folder is not the target itself or a parent of target (to avoid cycles)
                     if ($id === $new_folder_id) continue;
                     
-                    // The original code had a $stmt for parent_id, but it was not used.
-                    // If the intent was to check access for the old parent, it should be done here.
-                    // For now, we'll just check access for the folder itself.
                     if (can_user_access_folder($db, $id, $_SESSION['user_id'], $role, $group)) {
                         $db->prepare("UPDATE folders SET parent_id = ? WHERE id = ?")->execute([$new_folder_id, $id]);
+                        log_activity($db, $_SESSION['user_id'], 'MOVE_FOLDER', "Przeniesiono folder ID: $id do folderu ID: $new_folder_id");
                     }
                 } else { // type === 'file'
                     $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
@@ -205,6 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     
                     if (can_user_access_folder($db, $old_folder_id, $_SESSION['user_id'], $role, $group)) {
                         $db->prepare("UPDATE files SET folder_id = ? WHERE id = ?")->execute([$new_folder_id, $id]);
+                        log_activity($db, $_SESSION['user_id'], 'MOVE_FILE', "Przeniesiono plik ID: $id do folderu ID: $new_folder_id");
                     }
                 }
             }

@@ -127,3 +127,15 @@ function has_recent_activity($db, $folder_id) {
     $stmt->execute();
     return (int)$stmt->fetchColumn() > 0;
 }
+
+/**
+ * Log user activity
+ */
+function log_activity($db, $user_id, $action, $details = '') {
+    try {
+        $stmt = $db->prepare("INSERT INTO logs (user_id, action, details) VALUES (?, ?, ?)");
+        $stmt->execute([$user_id, $action, $details]);
+    } catch (Exception $e) {
+        // Fail silently or handle
+    }
+}

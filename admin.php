@@ -24,6 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $db->prepare('INSERT INTO users (email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, ?, ?)');
                 $stmt->execute([$email, $hash, $role, $group, $display_name]);
                 $new_user_password = $password;
+                
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_USER', "Utworzono użytkownika: $email ($role)");
+
                 $message = "Użytkownik został pomyślnie utworzony.";
             } catch (Exception $e) {
                 $message = "Błąd: " . $e->getMessage();
@@ -34,12 +37,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $db->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([$hash, $uid]);
             $new_user_password = $password;
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_RESET_PASSWORD', "Zresetowano hasło dla użytkownika ID: $uid");
+
             $message = "Hasło użytkownika zostało zresetowane.";
         } elseif ($_POST['action'] === 'add_folder') {
             $name = $_POST['name'];
             $access = $_POST['access_groups'];
             $stmt = $db->prepare('INSERT INTO folders (name, access_groups) VALUES (?, ?)');
             $stmt->execute([$name, $access]);
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_SHARED_FOLDER', "Utworzono folder udostępniony: $name");
+
             $message = "Folder dodany.";
         } elseif ($_POST['action'] === 'delete_user') {
             $uid = (int)$_POST['user_id'];
@@ -58,6 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // 2. Delete user
                 $stmt = $db->prepare('DELETE FROM users WHERE id = ?');
                 $stmt->execute([$uid]);
+                
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_DELETE_USER', "Usunięto użytkownika ID: $uid (oraz wszystkie jego pliki)");
+
                 $message = "Użytkownik oraz jego wszystkie pliki i foldery zostały usunięte.";
             } else {
                 $message = "Błąd: Nie możesz usunąć sam siebie!";
@@ -66,6 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fid = (int)$_POST['folder_id'];
             $upload_dir = __DIR__ . '/uploads';
             delete_folder_recursive($db, $fid, $upload_dir);
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_DELETE_SHARED_FOLDER', "Usunięto folder udostępniony ID: $fid");
+
             $message = "Folder i cała jego struktura zostały usunięte.";
         } elseif ($_POST['action'] === 'update_folder') {
             $fid = (int)$_POST['folder_id'];
@@ -78,6 +93,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new_name = $_POST['new_name'];
             $stmt = $db->prepare('UPDATE folders SET name = ? WHERE id = ?');
             $stmt->execute([$new_name, $fid]);
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_RENAME_FOLDER', "Zmieniono nazwę folderu ID: $fid na: $new_name");
+
             $message = "Nazwa folderu zaktualizowana.";
         } elseif ($_POST['action'] === 'update_user_role') {
             $uid = (int)$_POST['user_id'];
@@ -86,6 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $stmt = $db->prepare('UPDATE users SET role = ?, user_group = ? WHERE id = ?');
             $stmt->execute([$role, $group, $uid]);
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_UPDATE_USER_ROLE', "Zmieniono rolę użytkownika ID: $uid na: $role");
+
             $message = "Rola użytkownika zaktualizowana.";
         } elseif ($_POST['action'] === 'update_user_name') {
             $uid = (int)$_POST['user_id'];
@@ -104,6 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $users = $db->query("SELECT id, email, role, user_group, display_name, last_login FROM users")->fetchAll(PDO::FETCH_ASSOC);
 $folders = $db->query("SELECT id, name, access_groups FROM folders WHERE owner_id IS NULL AND parent_id IS NULL")->fetchAll(PDO::FETCH_ASSOC);
+
+$logs = $db->query("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.created_at DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC);
 
 // Stats
 $total_files = $db->query("SELECT COUNT(*) FROM files")->fetchColumn();
@@ -437,6 +460,55 @@ $formatted_size = $total_size > 1024*1024*1024
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Log -->
+        <div class="mt-8 bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+            <h3 class="text-lg font-bold mb-5 flex items-center border-b border-slate-700 pb-3 text-slate-100">
+                <div class="p-1.5 bg-orange-500/10 rounded-lg mr-3">
+                    <i data-lucide="activity" class="w-5 h-5 text-orange-400"></i>
+                </div>
+                Ostatnie aktywności (Logi)
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-slate-700 text-left">
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Użytkownik</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Akcja</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Szczegóły</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50">
+                        <?php if (empty($logs)): ?>
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-slate-500 italic">Brak zarejestrowanych aktywności.</td>
+                            </tr>
+                        <?php endif; ?>
+                        <?php foreach ($logs as $l): ?>
+                        <tr class="hover:bg-slate-700/30 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-slate-200"><?= htmlspecialchars($l['display_name'] ?: 'System') ?></div>
+                                <div class="text-xs text-slate-500"><?= htmlspecialchars($l['email'] ?: '-') ?></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-[10px] font-bold rounded uppercase tracking-tighter 
+                                    <?= strpos($l['action'], 'DELETE') !== false ? 'bg-red-500/10 text-red-400' : (strpos($l['action'], 'ADMIN') !== false ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400') ?>">
+                                    <?= htmlspecialchars($l['action']) ?>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-400">
+                                <?= htmlspecialchars($l['details']) ?>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">
+                                <?= date('d.m.Y H:i', strtotime($l['created_at'])) ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

@@ -46,3 +46,12 @@ $db->exec("CREATE TABLE IF NOT EXISTS files (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(folder_id) REFERENCES folders(id)
 )");
+
+$db->exec("CREATE TABLE IF NOT EXISTS logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    action TEXT,
+    details TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+)");
