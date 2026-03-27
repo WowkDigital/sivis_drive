@@ -487,6 +487,7 @@
                     const data = await response.json();
                     if (data.success) {
                         showToast("Nazwa została zmieniona! ✔");
+                        await fetchMoveTargets();
                         loadFolder(currentFolderId, 0, true);
                     } else {
                         showToast(data.error || "Błąd zmiany nazwy", "error");
@@ -512,6 +513,7 @@
                 const data = await response.json();
                 if (data.success) {
                     showToast("Folder został utworzony! 📁");
+                    await fetchMoveTargets();
                     loadFolder(currentFolderId, 0, true);
                 } else {
                     showToast(data.error || "Błąd tworzenia folderu", "error");

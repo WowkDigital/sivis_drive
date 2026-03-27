@@ -119,6 +119,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute(['Pliki ' . $name, $uid]);
 
             $message = "Nazwa wyświetlana zaktualizowana.";
+        } elseif ($_POST['action'] === 'restore_item') {
+            $id = (int)$_POST['item_id'];
+            $type = $_POST['type'];
+            if ($type === 'folder') {
+                $db->prepare("UPDATE folders SET deleted_at = NULL WHERE id = ?")->execute([$id]);
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FOLDER', "Przywrócono folder ID: $id z kosza");
+            } else {
+                $db->prepare("UPDATE files SET deleted_at = NULL WHERE id = ?")->execute([$id]);
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FILE', "Przywrócono plik ID: $id z kosza");
+            }
+            $message = "Element został przywrócony.";
+        } elseif ($_POST['action'] === 'delete_file') {
+            $fid = (int)$_POST['file_id'];
+            $stmt = $db->prepare("SELECT name, original_name FROM files WHERE id = ?");
+            $stmt->execute([$fid]);
+            $finfo = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($finfo) {
+                @unlink(__DIR__ . '/uploads/' . $finfo['name']);
+                $db->prepare("DELETE FROM files WHERE id = ?")->execute([$fid]);
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_DELETE_FILE_PERM', "Trwale usunięto plik: " . $finfo['original_name']);
+                $message = "Plik został trwale usunięty.";
+            }
         }
     }
 }
@@ -130,7 +152,7 @@ $folders = $db->query("SELECT id, name, access_groups FROM folders WHERE owner_i
 $deleted_files = $db->query("SELECT f.*, u.email as u_email FROM files f LEFT JOIN users u ON f.uploaded_by = u.id WHERE f.deleted_at IS NOT NULL ORDER BY f.deleted_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 $deleted_folders = $db->query("SELECT f.*, u.email as u_email FROM folders f LEFT JOIN users u ON f.owner_id = u.id WHERE f.deleted_at IS NOT NULL ORDER BY f.deleted_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 
-$logs = $db->query("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.created_at DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC);
+$logs = $db->query("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.created_at DESC LIMIT 15")->fetchAll(PDO::FETCH_ASSOC);
 
 // Stats
 $total_files = $db->query("SELECT COUNT(*) FROM files WHERE deleted_at IS NULL")->fetchColumn();
@@ -166,6 +188,7 @@ $formatted_size = $total_size > 1024*1024*1024
         }
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="assets/js/modals.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-200 min-h-screen">
     <nav class="bg-slate-800 shadow-lg border-b border-slate-700">
@@ -501,9 +524,26 @@ $formatted_size = $total_size > 1024*1024*1024
                                 <div class="text-xs text-slate-500"><?= htmlspecialchars($l['email'] ?: '-') ?></div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 text-[10px] font-bold rounded uppercase tracking-tighter 
-                                    <?= strpos($l['action'], 'DELETE') !== false || strpos($l['action'], 'TRASH') !== false ? 'bg-red-500/10 text-red-400' : (strpos($l['action'], 'RESTORE') !== false ? 'bg-emerald-500/10 text-emerald-400' : (strpos($l['action'], 'ADMIN') !== false ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400')) ?>">
-                                    <?= htmlspecialchars($l['action']) ?>
+                                <?php
+                                $action = $l['action'];
+                                $colorClass = 'bg-slate-500/10 text-slate-400 border border-slate-500/10';
+                                
+                                if (strpos($action, 'DELETE') !== false || strpos($action, 'TRASH') !== false) {
+                                    $colorClass = 'bg-red-500/10 text-red-100 border border-red-500/20';
+                                } elseif (strpos($action, 'RESTORE') !== false || strpos($action, 'SUCCESS') !== false) {
+                                    $colorClass = 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20';
+                                } elseif (strpos($action, 'ADMIN') !== false) {
+                                    $colorClass = 'bg-purple-500/10 text-purple-300 border border-purple-500/20';
+                                } elseif (strpos($action, 'UPLOAD') !== false || strpos($action, 'CREATE') !== false) {
+                                    $colorClass = 'bg-blue-500/10 text-blue-300 border border-blue-500/20';
+                                } elseif (strpos($action, 'MOVE') !== false || strpos($action, 'RENAME') !== false) {
+                                    $colorClass = 'bg-amber-500/10 text-amber-300 border border-amber-500/20';
+                                } elseif (strpos($action, 'LOGIN') !== false) {
+                                    $colorClass = 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20';
+                                }
+                                ?>
+                                <span class="px-2 py-1 text-[10px] font-bold rounded uppercase tracking-tighter <?= $colorClass ?>">
+                                    <?= htmlspecialchars($action) ?>
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-sm text-slate-400">
@@ -516,6 +556,12 @@ $formatted_size = $total_size > 1024*1024*1024
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+            <div class="mt-6 flex justify-center">
+                <button id="load-more-logs" onclick="loadMoreLogs()" class="flex items-center gap-2 px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl transition-all border border-slate-600/50 hover:border-slate-500 font-medium text-sm shadow-lg group">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 group-hover:rotate-180 transition-transform duration-500"></i>
+                    Załaduj kolejne 30 logów
+                </button>
             </div>
         </div>
 
@@ -568,6 +614,9 @@ $formatted_size = $total_size > 1024*1024*1024
                             <td class="px-4 py-4 text-sm text-slate-400"><?= htmlspecialchars($f['u_email'] ?: 'Nieznany') ?></td>
                             <td class="px-4 py-4 text-xs text-slate-500 font-medium"><?= date('d.m.Y H:i', strtotime($f['deleted_at'])) ?></td>
                             <td class="px-4 py-4 text-right">
+                                <a href="download.php?id=<?= $f['id'] ?>" class="p-2 hover:bg-blue-500/20 text-blue-400 rounded-lg transition-all inline-block" title="Pobierz plik">
+                                    <i data-lucide="download" class="w-5 h-5"></i>
+                                </a>
                                 <form method="post" class="inline">
                                     <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                     <input type="hidden" name="action" value="restore_item">
@@ -681,7 +730,115 @@ $formatted_size = $total_size > 1024*1024*1024
                 }, 2000);
             });
         }
+
+        let logsOffset = 15;
+        function loadMoreLogs() {
+            const btn = document.getElementById('load-more-logs');
+            const icon = btn.querySelector('i');
+            const limit = 30;
+
+            btn.disabled = true;
+            icon.classList.add('animate-spin');
+
+            fetch(`api/ajax.php?ajax_action=get_logs&offset=${logsOffset}&limit=${limit}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.logs && data.logs.length > 0) {
+                        const tbody = document.querySelector('h3:contains_activity').closest('.bg-slate-800').querySelector('tbody');
+                        // Wait, selecting by text might be tricky in pure JS efficiently without a good ID
+                        // Let's ensure the table or tbody has a unique ID in the next step or adjust selector.
+                        // I'll add an ID to the tbody.
+                        const container = document.getElementById('logs-tbody');
+                        
+                        data.logs.forEach(l => {
+                            const tr = document.createElement('tr');
+                            tr.className = 'hover:bg-slate-700/30 transition-colors opacity-0 translate-y-2';
+                            tr.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-slate-200">${l.display_name}</div>
+                                    <div class="text-xs text-slate-500">${l.email}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-[10px] font-bold rounded uppercase tracking-tighter ${l.color_class}">
+                                        ${l.action}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-slate-400">
+                                    ${l.details}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">
+                                    ${l.formatted_date}
+                                </td>
+                            `;
+                            container.appendChild(tr);
+                            // Animate in
+                            setTimeout(() => {
+                                tr.classList.remove('opacity-0', 'translate-y-2');
+                                tr.classList.add('transition-all', 'duration-500');
+                            }, 50);
+                        });
+
+                        logsOffset += data.logs.length;
+                        if (!data.has_more) {
+                            btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Wszystkie logi załadowane';
+                            btn.classList.add('opacity-50', 'cursor-default');
+                            btn.onclick = null;
+                        }
+                    } else {
+                        btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Wszystkie logi załadowane';
+                        btn.onclick = null;
+                    }
+                    lucide.createIcons();
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast('Błąd podczas ładowania logów');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    icon.classList.remove('animate-spin');
+                });
+        }
+
+        // Custom selector helper for the logs table
+        const activityH3 = Array.from(document.querySelectorAll('h3')).find(h3 => h3.textContent.includes('Ostatnie aktywności'));
+        if (activityH3) {
+            const table = activityH3.nextElementSibling.querySelector('table');
+            if (table) {
+                table.querySelector('tbody').id = 'logs-tbody';
+            }
+        }
+
         lucide.createIcons();
+    </script>
+    <?php require_once 'views/action_modal.php'; ?>
+    <script>
+        function showToast(message, type = 'success') {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.className = `transform translate-x-full opacity-0 transition-all duration-500 ease-out flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md pointer-events-auto min-w-[200px] mb-2
+                ${type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-100' : 'bg-red-500/20 border-red-500/30 text-red-100'}`;
+            const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+            toast.innerHTML = `
+                <div class="p-1.5 rounded-lg ${type === 'success' ? 'bg-emerald-500/20' : 'bg-red-500/20'}">
+                    <i data-lucide="${icon}" class="w-5 h-5"></i>
+                </div>
+                <span class="font-bold text-sm tracking-wide">${message}</span>
+            `;
+            container.appendChild(toast);
+            if(window.lucide) lucide.createIcons();
+            setTimeout(() => toast.classList.remove('translate-x-full', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
     </script>
 </body>
 </html>

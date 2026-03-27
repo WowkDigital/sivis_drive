@@ -182,3 +182,47 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_shared_folde
     echo json_encode(['error' => 'Brak uprawnień lub błąd serwera']);
     exit;
 }
+
+if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_logs') {
+    if (!is_admin()) {
+        echo json_encode(['error' => 'Brak uprawnień']);
+        exit;
+    }
+
+    $offset = (int)($_GET['offset'] ?? 0);
+    $limit = (int)($_GET['limit'] ?? 30);
+
+    $stmt = $db->prepare("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.created_at DESC LIMIT ? OFFSET ?");
+    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+    $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Format dates and prepare classes for UI
+    foreach ($logs as &$l) {
+        $l['formatted_date'] = date('d.m.Y H:i', strtotime($l['created_at']));
+        $l['display_name'] = $l['display_name'] ?: 'System';
+        $l['email'] = $l['email'] ?: '-';
+        
+        // Determine color class based on action
+        $action = $l['action'];
+        if (strpos($action, 'DELETE') !== false || strpos($action, 'TRASH') !== false) {
+            $l['color_class'] = 'bg-red-500/10 text-red-100 border border-red-500/20';
+        } elseif (strpos($action, 'RESTORE') !== false || strpos($action, 'SUCCESS') !== false) {
+            $l['color_class'] = 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20';
+        } elseif (strpos($action, 'ADMIN') !== false) {
+            $l['color_class'] = 'bg-purple-500/10 text-purple-300 border border-purple-500/20';
+        } elseif (strpos($action, 'UPLOAD') !== false || strpos($action, 'CREATE') !== false) {
+            $l['color_class'] = 'bg-blue-500/10 text-blue-300 border border-blue-500/20';
+        } elseif (strpos($action, 'MOVE') !== false || strpos($action, 'RENAME') !== false) {
+            $l['color_class'] = 'bg-amber-500/10 text-amber-300 border border-amber-500/20';
+        } elseif (strpos($action, 'LOGIN') !== false) {
+            $l['color_class'] = 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20';
+        } else {
+            $l['color_class'] = 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
+        }
+    }
+
+    echo json_encode(['logs' => $logs, 'has_more' => count($logs) === $limit]);
+    exit;
+}
