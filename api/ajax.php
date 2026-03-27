@@ -96,7 +96,8 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_move_targets') 
             $accessible[] = [
                 'id' => $f['id'],
                 'name' => $f['name'],
-                'parent_id' => $f['parent_id']
+                'parent_id' => $f['parent_id'],
+                'owner_id' => $f['owner_id']
             ];
         }
     }
