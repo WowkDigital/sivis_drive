@@ -61,7 +61,14 @@
     </nav>
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <?php if (isset($message) && $message): ?>
-            <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl relative mb-6 backdrop-blur-sm" role="alert">
-                <span class="block sm:inline"><?= htmlspecialchars($message) ?></span>
+            <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl relative mb-6 backdrop-blur-sm flex items-center" role="alert">
+                <i data-lucide="check-circle" class="w-5 h-5 mr-3"></i>
+                <span class="block sm:inline font-bold uppercase tracking-tight text-xs"><?= htmlspecialchars($message) ?></span>
+            </div>
+        <?php endif; ?>
+        <?php if (isset($error_message) && $error_message): ?>
+            <div class="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl relative mb-6 backdrop-blur-sm flex items-center" role="alert">
+                <i data-lucide="alert-circle" class="w-5 h-5 mr-3"></i>
+                <span class="block sm:inline font-bold uppercase tracking-tight text-xs"><?= htmlspecialchars($error_message) ?></span>
             </div>
         <?php endif; ?>

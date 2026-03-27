@@ -108,6 +108,10 @@ if (isset($_SESSION['toast'])) {
     $message = $_SESSION['toast'];
     unset($_SESSION['toast']);
 }
+if (isset($_SESSION['toast_error'])) {
+    $error_message = $_SESSION['toast_error'];
+    unset($_SESSION['toast_error']);
+}
 require_once 'views/header.php';
 ?>
 <div class="flex flex-col lg:flex-row gap-6">
@@ -210,9 +214,9 @@ require_once 'views/header.php';
                                 <p class="text-slate-400">lub <span class="text-blue-400 font-semibold group-hover:underline">kliknij</span>, aby wybrać dokumenty z komputera 📁</p>
                             </div>
 
-                            <input type="file" name="file" id="file-input" required class="hidden">
+                            <input type="file" name="file[]" id="file-input" multiple required class="hidden">
                             
-                            <div class="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Max: 100MB • PDF, JPG, PNG, DOCX</div>
+                            <div class="text-xs text-slate-500 mt-2 uppercase tracking-widest font-bold">Max: 100MB na plik • PDF, JPG, PNG, DOCX</div>
                         </form>
                     </div>
 
@@ -263,5 +267,7 @@ require_once 'views/header.php';
             </div>
         </div>
     </div>
+    </div>
     <?php require_once 'views/action_modal.php'; ?>
     <?php require_once 'views/footer.php'; ?>
+

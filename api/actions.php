@@ -16,29 +16,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $folder_id = (int)$_POST['folder_id'];
         $can_edit_target = is_admin() || is_zarzad() || is_private_tree($db, $folder_id, $_SESSION['user_id']);
         
+        $is_ajax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest');
+        $error_msg = null;
+
         if ($can_edit_target) {
             $file = $_FILES['file'];
+            // If it's single file in array structure (traditional form with file[])
+            if (is_array($file['name'])) {
+                $file = [
+                    'name' => $file['name'][0],
+                    'type' => $file['type'][0],
+                    'tmp_name' => $file['tmp_name'][0],
+                    'error' => $file['error'][0],
+                    'size' => $file['size'][0]
+                ];
+            }
+
             // Limit check for private folders
             if (is_private_tree($db, $folder_id, $_SESSION['user_id'])) {
                 $usage = get_private_usage($db, $_SESSION['user_id']);
                 if ($usage['count'] >= 500) {
-                    $message = "Błąd: Przekroczono limit 500 plików.";
+                    $error_msg = "Błąd: Przekroczono limit 500 plików.";
                 } elseif (($usage['size'] + $file['size']) > 500 * 1024 * 1024) {
-                    $message = "Błąd: Przekroczono limit miejsca (500MB).";
+                    $error_msg = "Błąd: Przekroczono limit miejsca (500MB).";
                 }
             }
 
-            if (empty($message)) {
+            if (empty($error_msg)) {
                 if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
                 if ($file['error'] !== UPLOAD_ERR_OK) {
-                    $message = "Błąd wysyłania (kod: " . $file['error'] . ").";
+                    $error_msg = "Błąd wysyłania (kod: " . $file['error'] . ").";
                 } elseif ($file['size'] > 100 * 1024 * 1024) {
-                    $message = "Błąd: Plik jest za duży (max 100MB).";
+                    $error_msg = "Błąd: Plik jest za duży (max 100MB).";
                 } else {
                     $forbidden_extensions = ['php', 'php3', 'php4', 'php5', 'php6', 'phtml', 'exe', 'bat', 'sh', 'cgi', 'pl', 'py', 'htaccess'];
                     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
                     if (in_array($ext, $forbidden_extensions)) {
-                        $message = "Błąd: Niedozwolone rozszerzenie pliku.";
+                        $error_msg = "Błąd: Niedozwolone rozszerzenie pliku.";
                     } else {
                         $unique_name = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9.\-_]/', '', basename($file['name']));
                         if (move_uploaded_file($file['tmp_name'], $upload_dir . '/' . $unique_name)) {
@@ -47,12 +61,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                             
                             log_activity($db, $_SESSION['user_id'], 'UPLOAD_FILE', "Wgrano plik: " . $file['name'] . " do folderu ID: $folder_id");
 
-                            $_SESSION['toast'] = "Plik został dodany.";
-                            header("Location: index.php?folder=" . $folder_id);
-                            exit;
+                            if ($is_ajax) {
+                                echo json_encode(['success' => true]);
+                                exit;
+                            } else {
+                                $_SESSION['toast'] = "Plik został dodany.";
+                                header("Location: index.php?folder=" . $folder_id);
+                                exit;
+                            }
+                        } else {
+                            $error_msg = "Błąd zapisu pliku na serwerze.";
                         }
                     }
                 }
+            }
+        } else {
+            $error_msg = "Brak uprawnień do wgrywania plików do tej lokalizacji.";
+        }
+
+        if ($error_msg) {
+            if ($is_ajax) {
+                echo json_encode(['success' => false, 'error' => $error_msg]);
+                exit;
+            } else {
+                $_SESSION['toast_error'] = $error_msg;
+                header("Location: index.php?folder=" . $folder_id);
+                exit;
             }
         }
     } elseif ($_POST['action'] === 'create_folder' && isset($_POST['name']) && isset($_POST['parent_id'])) {

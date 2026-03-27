@@ -1,8 +1,10 @@
-    <footer class="max-w-7xl mx-auto py-8 px-4 text-center">
-        <p class="text-slate-500 text-sm flex items-center justify-center gap-1.5">
+    <footer class="max-w-7xl mx-auto py-12 px-4 text-center border-t border-slate-800/60 mt-8">
+        <p class="text-slate-500 text-sm flex items-center justify-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
             Made with <i data-lucide="heart" class="w-4 h-4 text-red-500 fill-red-500"></i> by <span class="font-bold text-slate-400">WowkDigital</span>
         </p>
     </footer>
+    </div> <!-- Close the wrapper div started in header.php -->
+
 
     <style>
         @keyframes shimmer {
@@ -533,53 +535,83 @@
             overlay.classList.remove('hidden', 'opacity-0');
             overlay.classList.add('pointer-events-auto');
             
-            const formData = new FormData();
-            formData.append('csrf_token', '<?= generate_csrf_token() ?>');
-            formData.append('action', 'upload');
-            formData.append('folder_id', currentFolderId);
-            formData.append('file', files[0]); // Current app handles one file at a time
-            
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'index.php', true);
-            
-            xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    statusText.innerText = `Przesyłanie...`;
-                    progressBar.style.width = percent + '%';
-                    percentText.innerText = percent + '%';
-                }
-            };
-            
-            xhr.onload = () => {
-                if (xhr.status === 200) {
-                    statusText.innerText = 'Zakończono sukcesem! 🎉';
-                    progressBar.style.width = '100%';
-                    progressBar.classList.replace('bg-blue-500', 'bg-emerald-500');
+            let totalFiles = files.length;
+            let successFiles = 0;
+            let currentFileIndex = 0;
+
+            const uploadOneFile = (file) => {
+                return new Promise((resolve, reject) => {
+                    const formData = new FormData();
+                    formData.append('csrf_token', '<?= generate_csrf_token() ?>');
+                    formData.append('action', 'upload');
+                    formData.append('folder_id', currentFolderId);
+                    formData.append('file', file);
                     
-                    setTimeout(() => {
-                        overlay.classList.add('opacity-0');
-                        setTimeout(() => {
-                            overlay.classList.add('hidden');
-                            overlay.classList.remove('pointer-events-auto');
-                            progressBar.style.width = '0%';
-                            progressBar.classList.replace('bg-emerald-500', 'bg-blue-500');
-                            loadFolder(currentFolderId, 0, true);
-                        }, 300);
-                    }, 1000);
-                } else {
-                    showToast('Błąd podczas przesyłania pliku.', 'error');
-                    overlay.classList.add('hidden');
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', 'index.php', true);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    
+                    xhr.upload.onprogress = (e) => {
+                        if (e.lengthComputable) {
+                            const filePercent = Math.round((e.loaded / e.total) * 100);
+                            statusText.innerText = `Przesyłanie (${currentFileIndex + 1}/${totalFiles}): ${file.name}`;
+                            // Overall progress (approximate, since files might have different sizes)
+                            const overallPercent = Math.round(((currentFileIndex / totalFiles) * 100) + (filePercent / totalFiles));
+                            progressBar.style.width = overallPercent + '%';
+                            percentText.innerText = overallPercent + '%';
+                        }
+                    };
+                    
+                    xhr.onload = () => {
+                        if (xhr.status === 200) {
+                            try {
+                                const data = JSON.parse(xhr.responseText);
+                                if (data.success) {
+                                    successFiles++;
+                                    resolve();
+                                } else {
+                                    reject(data.error || `Błąd przy pliku: ${file.name}`);
+                                }
+                            } catch (e) {
+                                // If not JSON, assume success if status is 200 (backward compatibility)
+                                successFiles++;
+                                resolve();
+                            }
+                        } else {
+                            reject(`Nie udało się wysłać pliku: ${file.name} (Status: ${xhr.status})`);
+                        }
+                    };
+                    
+                    xhr.onerror = () => reject('Błąd połączenia.');
+                    xhr.send(formData);
+                });
+            };
+
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    currentFileIndex = i;
+                    await uploadOneFile(files[i]);
                 }
-            };
-            
-            xhr.onerror = () => {
-                showToast('Błąd połączenia.', 'error');
-                overlay.classList.add('hidden');
-            };
-            
-            statusText.innerText = 'Rozpoczynanie...';
-            xhr.send(formData);
+                
+                statusText.innerText = `Zakończono! Wgrano ${successFiles} plików. 🎉`;
+                progressBar.style.width = '100%';
+                progressBar.classList.replace('bg-blue-500', 'bg-emerald-500');
+                
+                setTimeout(() => {
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => {
+                        overlay.classList.add('hidden');
+                        overlay.classList.remove('pointer-events-auto');
+                        progressBar.style.width = '0%';
+                        progressBar.classList.replace('bg-emerald-500', 'bg-blue-500');
+                        loadFolder(currentFolderId, 0, true);
+                    }, 300);
+                }, 1500);
+
+            } catch (error) {
+                showToast(error, 'error');
+                overlay.classList.add('hidden', 'opacity-0');
+            }
         }
 
         async function loadFolder(folderId, offset = 0, clear = false) {

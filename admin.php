@@ -516,9 +516,9 @@ $formatted_size = $total_size > 1024*1024*1024
         </div>
     </div>
     <?php require_once 'views/action_modal.php'; ?>
-    <footer class="max-w-7xl mx-auto py-12 px-4 text-center">
-        <p class="text-slate-600 text-xs flex items-center justify-center gap-1.5">
-            Made with <i data-lucide="heart" class="w-3 h-3 text-red-500 fill-red-500"></i> by <span class="font-bold text-slate-500">WowkDigital</span>
+    <footer class="max-w-7xl mx-auto py-12 px-4 text-center border-t border-slate-800/60 mt-8">
+        <p class="text-slate-500 text-sm flex items-center justify-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+            Made with <i data-lucide="heart" class="w-4 h-4 text-red-500 fill-red-500"></i> by <span class="font-bold text-slate-400">WowkDigital</span>
         </p>
     </footer>
 
