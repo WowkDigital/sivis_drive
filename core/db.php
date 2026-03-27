@@ -42,6 +42,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS folders (
 // Migrate: Add parent_id and owner_id if missing
 try { @$db->exec("ALTER TABLE folders ADD COLUMN parent_id INTEGER DEFAULT NULL"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE folders ADD COLUMN owner_id INTEGER DEFAULT NULL"); } catch (Exception $e) {}
+try { @$db->exec("ALTER TABLE folders ADD COLUMN deleted_at DATETIME DEFAULT NULL"); } catch (Exception $e) {}
 
 $db->exec("CREATE TABLE IF NOT EXISTS files (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,8 +52,10 @@ $db->exec("CREATE TABLE IF NOT EXISTS files (
     size INTEGER,
     uploaded_by INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    deleted_at DATETIME DEFAULT NULL,
     FOREIGN KEY(folder_id) REFERENCES folders(id)
 )");
+try { @$db->exec("ALTER TABLE files ADD COLUMN deleted_at DATETIME DEFAULT NULL"); } catch (Exception $e) {}
 
 $db->exec("CREATE TABLE IF NOT EXISTS logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -172,38 +172,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     } elseif ($_POST['action'] === 'delete_file' && isset($_POST['file_id'])) {
         $fid = (int)$_POST['file_id'];
-        $stmt = $db->prepare("SELECT folder_id, name, original_name FROM files WHERE id = ?");
+        $stmt = $db->prepare("SELECT folder_id, name, original_name, deleted_at FROM files WHERE id = ?");
         $stmt->execute([$fid]);
         $file_info = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($file_info) {
              $can_edit_file = is_admin() || is_zarzad() || is_private_tree($db, $file_info['folder_id'], $_SESSION['user_id']);
              if ($can_edit_file) {
-                @unlink($upload_dir . '/' . $file_info['name']);
-                $db->prepare("DELETE FROM files WHERE id = ?")->execute([$fid]);
-                
-                log_activity($db, $_SESSION['user_id'], 'DELETE_FILE', "Usunięto plik: " . $file_info['original_name'] . " (ID: $fid)");
+                if ($file_info['deleted_at'] !== null) {
+                    // Item already in trash -> PERMANENT DELETE
+                    @unlink($upload_dir . '/' . $file_info['name']);
+                    $db->prepare("DELETE FROM files WHERE id = ?")->execute([$fid]);
+                    log_activity($db, $_SESSION['user_id'], 'DELETE_FILE_PERM', "Trwale usunięto plik z kosza: " . ($file_info['original_name'] ?? 'Nieznany') . " (ID: $fid)");
+                    $_SESSION['toast'] = "Plik został trwale usunięty.";
+                } else {
+                    // Move to trash
+                    $db->prepare("UPDATE files SET deleted_at = datetime('now') WHERE id = ?")->execute([$fid]);
+                    log_activity($db, $_SESSION['user_id'], 'TRASH_FILE', "Przeniesiono do kosza plik: " . ($file_info['original_name'] ?? 'Nieznany') . " (ID: $fid)");
+                    $_SESSION['toast'] = "Plik został przeniesiony do kosza.";
+                }
 
-                $_SESSION['toast'] = "Plik został usunięty.";
                 header("Location: " . ($_SERVER['HTTP_REFERER'] ?: 'index.php'));
                 exit;
              }
         }
     } elseif ($_POST['action'] === 'delete_folder' && isset($_POST['folder_id'])) {
         $fid = (int)$_POST['folder_id'];
-        
-        // Get parent for redirect before deleting
-        $stmt = $db->prepare("SELECT parent_id FROM folders WHERE id = ?");
+        $stmt = $db->prepare("SELECT parent_id, name, deleted_at FROM folders WHERE id = ?");
         $stmt->execute([$fid]);
-        $parent_id = $stmt->fetchColumn();
+        $folder_info = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (is_admin() || is_zarzad() || is_private_tree($db, $fid, $_SESSION['user_id'])) {
-            delete_folder_recursive($db, $fid, $upload_dir);
-            
-            log_activity($db, $_SESSION['user_id'], 'DELETE_FOLDER', "Usunięto folder ID: $fid (oraz całą zawartość)");
+        if ($folder_info && (is_admin() || is_zarzad() || is_private_tree($db, $fid, $_SESSION['user_id']))) {
+            if ($folder_info['deleted_at'] !== null) {
+                // Already in trash -> PERMANENT DELETE
+                delete_folder_recursive($db, $fid, $upload_dir);
+                log_activity($db, $_SESSION['user_id'], 'DELETE_FOLDER_PERM', "Trwale usunięto folder z kosza: " . $folder_info['name'] . " (ID: $fid)");
+                $_SESSION['toast'] = "Folder został trwale usunięty.";
+            } else {
+                // Move to trash
+                soft_delete_folder_recursive($db, $fid);
+                log_activity($db, $_SESSION['user_id'], 'TRASH_FOLDER', "Przeniesiono do kosza folder: " . $folder_info['name'] . " (ID: $fid)");
+                $_SESSION['toast'] = "Folder został przeniesiony do kosza.";
+            }
 
-            $_SESSION['toast'] = "Folder usunięty pomyślnie.";
-            header("Location: index.php?folder=" . ($parent_id ?: 0));
+            header("Location: " . ($_SERVER['HTTP_REFERER'] ?: 'index.php'));
             exit;
         }
     } elseif ($_POST['action'] === 'move_file' && isset($_POST['file_id']) && isset($_POST['new_folder_id'])) {
@@ -266,16 +278,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $item_types = explode(',', $_POST['item_types']);
         $folder_id = (int)($_POST['current_folder_id'] ?? 0);
         
-        $delete_count = 0;
+        $trash_count = 0;
         foreach ($item_ids as $index => $id) {
             $id = (int)$id;
             $type = $item_types[$index] ?? 'file';
 
             if ($type === 'folder') {
                 if (is_admin() || is_zarzad() || is_private_tree($db, $id, $_SESSION['user_id'])) {
-                    delete_folder_recursive($db, $id, $upload_dir);
-                    log_activity($db, $_SESSION['user_id'], 'DELETE_FOLDER', "Masowo usunięto folder ID: $id (oraz całą zawartość)");
-                    $delete_count++;
+                    soft_delete_folder_recursive($db, $id);
+                    log_activity($db, $_SESSION['user_id'], 'TRASH_FOLDER', "Masowo przeniesiono do kosza folder ID: $id");
+                    $trash_count++;
                 }
             } else { // type === 'file'
                 $stmt = $db->prepare("SELECT folder_id, name, original_name FROM files WHERE id = ?");
@@ -284,18 +296,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 
                 if ($file_info) {
                     if (is_admin() || is_zarzad() || is_private_tree($db, $file_info['folder_id'], $_SESSION['user_id'])) {
-                        @unlink($upload_dir . '/' . $file_info['name']);
-                        $db->prepare("DELETE FROM files WHERE id = ?")->execute([$id]);
-                        log_activity($db, $_SESSION['user_id'], 'DELETE_FILE', "Masowo usunięto plik: " . ($file_info['original_name'] ?? 'Nieznany') . " (ID: $id)");
-                        $delete_count++;
+                        $db->prepare("UPDATE files SET deleted_at = datetime('now') WHERE id = ?")->execute([$id]);
+                        log_activity($db, $_SESSION['user_id'], 'TRASH_FILE', "Masowo przeniesiono do kosza plik: " . ($file_info['original_name'] ?? 'Nieznany') . " (ID: $id)");
+                        $trash_count++;
                     }
                 }
             }
         }
-        $_SESSION['toast'] = "Pomyślnie usunięto $delete_count elementów! 🗑️";
+        $_SESSION['toast'] = "Pomyślnie przeniesiono $trash_count elementów do kosza! 🗑️";
         header("Location: index.php?folder=" . $folder_id);
         exit;
+    } elseif ($_POST['action'] === 'restore_item' && isset($_POST['item_id']) && isset($_POST['type'])) {
+        $id = (int)$_POST['item_id'];
+        $type = $_POST['type'];
+
+        if (is_admin()) {
+            if ($type === 'folder') {
+                $db->prepare("UPDATE folders SET deleted_at = NULL WHERE id = ?")->execute([$id]);
+                log_activity($db, $_SESSION['user_id'], 'RESTORE_FOLDER', "Przywrócono folder ID: $id (Kosz)");
+            } else {
+                $db->prepare("UPDATE files SET deleted_at = NULL WHERE id = ?")->execute([$id]);
+                log_activity($db, $_SESSION['user_id'], 'RESTORE_FILE', "Przywrócono plik ID: $id (Kosz)");
+            }
+            $_SESSION['toast'] = "Pomyślnie przywrócono element z kosza! ♻️";
+            header("Location: admin.php");
+            exit;
+        }
     }
 }
+
 
 ?>

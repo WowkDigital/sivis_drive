@@ -69,11 +69,56 @@ function delete_folder_recursive($db, $folder_id, $upload_dir) {
         @unlink($upload_dir . '/' . $f['name']);
     }
     
-    // Delete files from DB
+    // Delete from DB (even if soft-deleted)
     $db->prepare("DELETE FROM files WHERE folder_id = ?")->execute([$folder_id]);
-    
-    // Delete folder from DB
     $db->prepare("DELETE FROM folders WHERE id = ?")->execute([$folder_id]);
+}
+
+/**
+ * Recursively soft-delete a folder and its contents (move to Trash)
+ */
+function soft_delete_folder_recursive($db, $folder_id) {
+    $now = date('Y-m-d H:i:s');
+    
+    // Soft-delete current folder
+    $db->prepare("UPDATE folders SET deleted_at = ? WHERE id = ?")->execute([$now, $folder_id]);
+    
+    // Soft-delete files in this folder
+    $db->prepare("UPDATE files SET deleted_at = ? WHERE folder_id = ?")->execute([$now, $folder_id]);
+    
+    // Recursively soft-delete subfolders
+    $stmt = $db->prepare("SELECT id FROM folders WHERE parent_id = ?");
+    $stmt->execute([$folder_id]);
+    $children = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    foreach ($children as $child_id) {
+        soft_delete_folder_recursive($db, $child_id);
+    }
+}
+
+/**
+ * Permanently delete items from Trash older than 30 days
+ */
+function cleanup_garbage_collector($db, $upload_dir) {
+    // Clean files
+    $stmt = $db->prepare("SELECT id, name FROM files WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-30 days')");
+    $stmt->execute();
+    $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($files as $f) {
+        @unlink($upload_dir . '/' . $f['name']);
+        $db->prepare("DELETE FROM files WHERE id = ?")->execute([$f['id']]);
+        log_activity($db, 0, 'GC_CLEANUP_FILE', "Automatycznie usunięto stary plik z kosza: " . $f['name']);
+    }
+
+    // Clean folders (where deleted_at is old)
+    // We clean leaf folders first or just delete everything since we already unlinked files
+    $stmt = $db->prepare("SELECT id, name FROM folders WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-30 days')");
+    $stmt->execute();
+    $folders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($folders as $fol) {
+        $db->prepare("DELETE FROM folders WHERE id = ?")->execute([$fol['id']]);
+        log_activity($db, 0, 'GC_CLEANUP_FOLDER', "Automatycznie usunięto stary folder z kosza: " . $fol['name']);
+    }
 }
 
 /**

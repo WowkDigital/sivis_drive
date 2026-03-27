@@ -11,6 +11,10 @@ require_login();
 $message = '';
 $upload_dir = __DIR__ . '/uploads';
 
+// Garbage Collector (Cleanup trash older than 30 days)
+cleanup_garbage_collector($db, $upload_dir);
+
+
 // Ensure user has a private root folder
 $stmt = $db->prepare("SELECT id FROM folders WHERE owner_id = ? AND parent_id IS NULL");
 $stmt->execute([$_SESSION['user_id']]);

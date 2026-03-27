@@ -26,12 +26,12 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
     }
 
     // Get subfolders (with file counts)
-    $stmt = $db->prepare("SELECT f.*, (SELECT COUNT(*) FROM files WHERE folder_id = f.id) as file_count FROM folders f WHERE f.parent_id = ? ORDER BY f.name ASC");
+    $stmt = $db->prepare("SELECT f.*, (SELECT COUNT(*) FROM files WHERE folder_id = f.id AND deleted_at IS NULL) as file_count FROM folders f WHERE f.parent_id = ? AND f.deleted_at IS NULL ORDER BY f.name ASC");
     $stmt->execute([$fid]);
     $all_subfolders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Get files
-    $stmt = $db->prepare("SELECT * FROM files WHERE folder_id = ? ORDER BY created_at DESC");
+    $stmt = $db->prepare("SELECT * FROM files WHERE folder_id = ? AND deleted_at IS NULL ORDER BY created_at DESC");
     $stmt->execute([$fid]);
     $all_files = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

@@ -124,13 +124,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $users = $db->query("SELECT id, email, role, user_group, display_name, last_login FROM users")->fetchAll(PDO::FETCH_ASSOC);
-$folders = $db->query("SELECT id, name, access_groups FROM folders WHERE owner_id IS NULL AND parent_id IS NULL")->fetchAll(PDO::FETCH_ASSOC);
+$folders = $db->query("SELECT id, name, access_groups FROM folders WHERE owner_id IS NULL AND parent_id IS NULL AND deleted_at IS NULL")->fetchAll(PDO::FETCH_ASSOC);
+
+// Deleted Items (Trash)
+$deleted_files = $db->query("SELECT f.*, u.email as u_email FROM files f LEFT JOIN users u ON f.uploaded_by = u.id WHERE f.deleted_at IS NOT NULL ORDER BY f.deleted_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+$deleted_folders = $db->query("SELECT f.*, u.email as u_email FROM folders f LEFT JOIN users u ON f.owner_id = u.id WHERE f.deleted_at IS NOT NULL ORDER BY f.deleted_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 
 $logs = $db->query("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.created_at DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC);
 
 // Stats
-$total_files = $db->query("SELECT COUNT(*) FROM files")->fetchColumn();
-$total_size = $db->query("SELECT SUM(size) FROM files")->fetchColumn() ?: 0;
+$total_files = $db->query("SELECT COUNT(*) FROM files WHERE deleted_at IS NULL")->fetchColumn();
+$total_size = $db->query("SELECT SUM(size) FROM files WHERE deleted_at IS NULL")->fetchColumn() ?: 0;
 $last_admin = $db->query("SELECT MAX(last_login) FROM users WHERE role = 'admin'")->fetchColumn();
 
 $formatted_size = $total_size > 1024*1024*1024 
@@ -498,7 +502,7 @@ $formatted_size = $total_size > 1024*1024*1024
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 py-1 text-[10px] font-bold rounded uppercase tracking-tighter 
-                                    <?= strpos($l['action'], 'DELETE') !== false ? 'bg-red-500/10 text-red-400' : (strpos($l['action'], 'ADMIN') !== false ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400') ?>">
+                                    <?= strpos($l['action'], 'DELETE') !== false || strpos($l['action'], 'TRASH') !== false ? 'bg-red-500/10 text-red-400' : (strpos($l['action'], 'RESTORE') !== false ? 'bg-emerald-500/10 text-emerald-400' : (strpos($l['action'], 'ADMIN') !== false ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400')) ?>">
                                     <?= htmlspecialchars($l['action']) ?>
                                 </span>
                             </td>
@@ -507,6 +511,118 @@ $formatted_size = $total_size > 1024*1024*1024
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">
                                 <?= date('d.m.Y H:i', strtotime($l['created_at'])) ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recycle Bin (Trash) -->
+        <div id="trash" class="mt-8 bg-slate-800/80 p-6 rounded-3xl shadow-2xl border border-red-500/20 backdrop-blur-md">
+            <h3 class="text-xl font-bold mb-6 flex items-center text-white">
+                <div class="p-2.5 bg-red-500/20 rounded-xl mr-4">
+                    <i data-lucide="trash-2" class="w-6 h-6 text-red-400"></i>
+                </div>
+                Kosz (Automatyczne usuwanie po 30 dniach)
+                <span class="ml-auto text-xs font-bold bg-red-500/10 text-red-400 px-3 py-1.5 rounded-full border border-red-500/20 uppercase tracking-widest"><?= count($deleted_files) + count($deleted_folders) ?> element(ów)</span>
+            </h3>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-slate-700/50 text-left">
+                            <th class="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Nazwa / Typ</th>
+                            <th class="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Właściciel</th>
+                            <th class="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Data usunięcia</th>
+                            <th class="px-4 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-widest">Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/30">
+                        <?php if (empty($deleted_files) && empty($deleted_folders)): ?>
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center text-slate-500 italic bg-slate-900/20 rounded-xl">
+                                    <div class="flex flex-col items-center gap-3">
+                                        <i data-lucide="leaf" class="w-12 h-12 opacity-20"></i>
+                                        Kosz jest pusty. Jak widać, wszystko jest na swoim miejscu! ♻️
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+
+                        <!-- Files -->
+                        <?php foreach ($deleted_files as $f): ?>
+                        <tr class="hover:bg-slate-700/20 transition-all group">
+                            <td class="px-4 py-4">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-slate-900 rounded-lg mr-3">
+                                        <i data-lucide="file" class="w-4 h-4 text-red-400/60"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-bold text-slate-200"><?= htmlspecialchars($f['original_name']) ?></div>
+                                        <div class="text-[10px] text-slate-500 font-mono"><?= round($f['size']/1024) ?> KB</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 text-sm text-slate-400"><?= htmlspecialchars($f['u_email'] ?: 'Nieznany') ?></td>
+                            <td class="px-4 py-4 text-xs text-slate-500 font-medium"><?= date('d.m.Y H:i', strtotime($f['deleted_at'])) ?></td>
+                            <td class="px-4 py-4 text-right">
+                                <form method="post" class="inline">
+                                    <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                    <input type="hidden" name="action" value="restore_item">
+                                    <input type="hidden" name="type" value="file">
+                                    <input type="hidden" name="item_id" value="<?= $f['id'] ?>">
+                                    <button type="submit" class="p-2 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition-all" title="Przywróć">
+                                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                                    </button>
+                                </form>
+                                <form method="post" class="inline" id="perm-del-file-<?= $f['id'] ?>">
+                                    <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                    <input type="hidden" name="action" value="delete_file">
+                                    <!-- Add a hidden param to allow permanent delete in backend? 
+                                         Actually, admin case for delete_file currently ALWAYS deletes permanently if called from admin? 
+                                         Let's check actions.php -->
+                                    <input type="hidden" name="file_id" value="<?= $f['id'] ?>">
+                                    <button type="button" onclick="showConfirmModal('Trwale usunąć plik?', 'Czy na pewno chcesz usunąć ten plik bezpowrotnie z serwera?', () => document.getElementById('perm-del-file-<?= $f['id'] ?>').submit(), 'red')" class="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-all ml-1" title="Usuń trwale">
+                                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+
+                        <!-- Folders -->
+                        <?php foreach ($deleted_folders as $f): ?>
+                        <tr class="hover:bg-slate-700/20 transition-all group">
+                            <td class="px-4 py-4">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-slate-900 rounded-lg mr-3">
+                                        <i data-lucide="folder" class="w-4 h-4 text-red-400/60"></i>
+                                    </div>
+                                    <div class="text-sm font-bold text-slate-200"><?= htmlspecialchars($f['name']) ?></div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 text-sm text-slate-400"><?= htmlspecialchars($f['u_email'] ?: 'System') ?></td>
+                            <td class="px-4 py-4 text-xs text-slate-500 font-medium"><?= date('d.m.Y H:i', strtotime($f['deleted_at'])) ?></td>
+                            <td class="px-4 py-4 text-right">
+                                <form method="post" class="inline">
+                                    <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                    <input type="hidden" name="action" value="restore_item">
+                                    <input type="hidden" name="type" value="folder">
+                                    <input type="hidden" name="item_id" value="<?= $f['id'] ?>">
+                                    <button type="submit" class="p-2 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition-all" title="Przywróć">
+                                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                                    </button>
+                                </form>
+                                <form method="post" class="inline" id="perm-del-folder-<?= $f['id'] ?>">
+                                    <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                    <input type="hidden" name="action" value="delete_folder">
+                                    <input type="hidden" name="folder_id" value="<?= $f['id'] ?>">
+                                    <button type="button" onclick="showConfirmModal('Trwale usunąć folder?', 'UWAGA: Spowoduje to bezpowrotne usunięcie folderu oraz całej jego zawartości z serwera!', () => document.getElementById('perm-del-folder-<?= $f['id'] ?>').submit(), 'red')" class="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-all ml-1" title="Usuń trwale">
+                                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                         <?php endforeach; ?>
