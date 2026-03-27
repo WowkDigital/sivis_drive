@@ -104,6 +104,10 @@ require_once 'api/ajax.php';
 require_once 'api/actions.php';
 
 // --- FRONTEND ---
+if (isset($_SESSION['toast'])) {
+    $message = $_SESSION['toast'];
+    unset($_SESSION['toast']);
+}
 require_once 'views/header.php';
 ?>
 <div class="flex flex-col lg:flex-row gap-6">

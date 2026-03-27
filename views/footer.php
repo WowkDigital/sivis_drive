@@ -168,7 +168,10 @@
         function clearSelection() {
             selectedItems.clear();
             const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => cb.checked = false);
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                applyCheckboxVisual(cb, false);
+            });
             document.querySelectorAll('tr[data-key]').forEach(tr => tr.classList.remove('bg-blue-500/10', 'border-blue-500/20'));
             updateBulkActionBar();
         }
@@ -346,6 +349,7 @@
 
         function closeMoveModal() {
             const modal = document.getElementById('move-modal');
+            if (!modal) return;
             modal.classList.add('opacity-0');
             modal.querySelector('div').classList.add('scale-95');
             setTimeout(() => {
@@ -365,13 +369,23 @@
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = 'index.php';
-            form.innerHTML = `
-                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
-                <input type="hidden" name="action" value="rename_item">
-                <input type="hidden" name="item_id" value="${id}">
-                <input type="hidden" name="new_name" value="${newName}">
-                <input type="hidden" name="type" value="${type}">
-            `;
+            
+            const inputs = {
+                'csrf_token': '<?= generate_csrf_token() ?>',
+                'action': 'rename_item',
+                'item_id': id,
+                'new_name': newName,
+                'type': type
+            };
+
+            for (const [name, value] of Object.entries(inputs)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                form.appendChild(input);
+            }
+
             document.body.appendChild(form);
             form.submit();
         }
@@ -379,16 +393,20 @@
         function copyFolderLink(btn) {
             const url = window.location.href;
             navigator.clipboard.writeText(url).then(() => {
-                const icon = btn.querySelector('i');
-                const originalData = icon.getAttribute('data-lucide');
+                const icon = btn.querySelector('i') || btn.querySelector('svg');
+                if (!icon) return;
+                
+                const originalData = icon.getAttribute('data-lucide') || icon.getAttribute('data-lucide-original');
 
                 // Animate to success state
                 icon.setAttribute('data-lucide', 'check');
+                if (window.lucide) lucide.createIcons();
+                
                 btn.classList.add(
                     'text-emerald-400', 'border-emerald-500/40',
                     'bg-emerald-500/10', 'scale-110', 'shadow-[0_0_12px_rgba(52,211,153,0.3)]'
                 );
-                btn.classList.remove('text-slate-400');
+                btn.classList.remove('text-slate-400', 'border-slate-700');
                 initIcons();
 
                 showToast('Link skopiowany do schowka! 📋');
@@ -607,9 +625,17 @@
                                 <td class="px-2 sm:px-3 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1 sm:gap-2 shrink-0">
                                         ${data.can_edit ? `
-                                            <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', ${JSON.stringify(item.name)})" class="p-1.5 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all" title="Zmień nazwę">
+                                            <button onclick="event.stopPropagation(); renameItem(${item.id}, 'folder', this.getAttribute('data-name'))" data-name="${escHtml(item.name)}" class="p-1.5 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all" title="Zmień nazwę">
                                                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                                             </button>
+                                            <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten folder wraz z CAŁĄ zawartością?');" class="inline m-0 shrink-0" onclick="event.stopPropagation()">
+                                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                                <input type="hidden" name="action" value="delete_folder">
+                                                <input type="hidden" name="folder_id" value="${item.id}">
+                                                <button type="submit" title="Usuń folder" class="p-1.5 sm:p-2 text-red-500/50 hover:text-red-400 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all flex items-center justify-center">
+                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                </button>
+                                            </form>
                                         ` : ''}
                                         <a href="javascript:void(0)" class="p-1.5 sm:p-2 inline-flex items-center justify-center bg-slate-700/50 text-slate-400 hover:text-white rounded-lg transition-all">
                                             <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -639,10 +665,10 @@
                                     ${previewBtn}
                                     <a href="download.php?id=${item.id}" class="p-1.5 sm:p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all duration-200 shadow-sm" title="Pobierz"><i data-lucide="download" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i></a>
                                     ${data.can_edit ? `
-                                        <button onclick="renameItem(${item.id}, 'file', ${JSON.stringify(item.original_name)})" class="p-1.5 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-yellow-500/30" title="Zmień nazwę">
+                                        <button onclick="renameItem(${item.id}, 'file', this.getAttribute('data-name'))" data-name="${escHtml(item.original_name)}" class="p-1.5 sm:p-2 flex items-center justify-center bg-yellow-500/10 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-yellow-500/30" title="Zmień nazwę">
                                             <i data-lucide="edit-3" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
                                         </button>
-                                        <button onclick="openMoveModal(${item.id}, ${JSON.stringify(item.original_name)})" class="p-1.5 sm:p-2 flex items-center justify-center bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-purple-500/30" title="Przenieś plik">
+                                        <button onclick="openMoveModal(${item.id}, this.getAttribute('data-name'))" data-name="${escHtml(item.original_name)}" class="p-1.5 sm:p-2 flex items-center justify-center bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-all duration-200 border border-transparent hover:border-purple-500/30" title="Przenieś plik">
                                             <i data-lucide="folder-input" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
                                         </button>
                                         <form method="post" onsubmit="return confirm('Czy na pewno chcesz usunąć ten plik?');" class="inline m-0 shrink-0">

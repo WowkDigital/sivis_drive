@@ -101,23 +101,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $type = $_POST['type']; // 'file' or 'folder'
         
         if ($type === 'folder') {
-             if (is_admin() || is_zarzad() || is_private_tree($db, $id, $_SESSION['user_id'])) {
+            if (is_admin() || is_zarzad() || is_private_tree($db, $id, $_SESSION['user_id'])) {
                  $stmt = $db->prepare("UPDATE folders SET name = ? WHERE id = ?");
-                 $stmt->execute([$new_name, $id]);
-                 $message = "Folder został zmieniony.";
-                 header("Location: " . $_SERVER['HTTP_REFERER']);
-                 exit;
-             }
+                 if ($stmt->execute([$new_name, $id])) {
+                     // Get parent for better redirect
+                     $st_p = $db->prepare("SELECT parent_id FROM folders WHERE id = ?");
+                     $st_p->execute([$id]);
+                     $p_id = $st_p->fetchColumn();
+                     $_SESSION['toast'] = "Nazwa folderu została zmieniona. ✔";
+                     header("Location: index.php?folder=" . ($p_id ?: 0));
+                     exit;
+                 }
+            }
         } else {
              $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
              $stmt->execute([$id]);
              $folder_id = $stmt->fetchColumn();
              if (is_admin() || is_zarzad() || is_private_tree($db, $folder_id, $_SESSION['user_id'])) {
                  $stmt = $db->prepare("UPDATE files SET original_name = ? WHERE id = ?");
-                 $stmt->execute([$new_name, $id]);
-                 $message = "Plik został zmieniony.";
-                 header("Location: " . $_SERVER['HTTP_REFERER']);
-                 exit;
+                 if ($stmt->execute([$new_name, $id])) {
+                     $_SESSION['toast'] = "Nazwa pliku została zmieniona. ✔";
+                     header("Location: index.php?folder=" . $folder_id);
+                     exit;
+                 }
              }
         }
     } elseif ($_POST['action'] === 'delete_file' && isset($_POST['file_id'])) {
@@ -131,10 +137,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
              if ($can_edit_file) {
                 @unlink($upload_dir . '/' . $file_info['name']);
                 $db->prepare("DELETE FROM files WHERE id = ?")->execute([$fid]);
-                $message = "Plik usunięty.";
-                header("Location: " . $_SERVER['HTTP_REFERER']);
+                $_SESSION['toast'] = "Plik został usunięty.";
+                header("Location: " . ($_SERVER['HTTP_REFERER'] ?: 'index.php'));
                 exit;
              }
+        }
+    } elseif ($_POST['action'] === 'delete_folder' && isset($_POST['folder_id'])) {
+        $fid = (int)$_POST['folder_id'];
+        
+        // Get parent for redirect before deleting
+        $stmt = $db->prepare("SELECT parent_id FROM folders WHERE id = ?");
+        $stmt->execute([$fid]);
+        $parent_id = $stmt->fetchColumn();
+
+        if (is_admin() || is_zarzad() || is_private_tree($db, $fid, $_SESSION['user_id'])) {
+            delete_folder_recursive($db, $fid, $upload_dir);
+            $_SESSION['toast'] = "Folder usunięty pomyślnie.";
+            header("Location: index.php?folder=" . ($parent_id ?: 0));
+            exit;
         }
     } elseif ($_POST['action'] === 'move_file' && isset($_POST['file_id']) && isset($_POST['new_folder_id'])) {
         $fid = (int)$_POST['file_id'];
