@@ -363,8 +363,22 @@
         }
 
         function renameItem(id, type, currentName) {
-            showPromptModal('Zmień nazwę:', currentName, (newName) => {
-                if (!newName || newName === currentName) return;
+            let extension = '';
+            let displayName = currentName;
+            
+            if (type === 'file') {
+                const lastDotIndex = currentName.lastIndexOf('.');
+                if (lastDotIndex > 0) {
+                    displayName = currentName.substring(0, lastDotIndex);
+                    extension = currentName.substring(lastDotIndex);
+                }
+            }
+
+            showPromptModal('Zmień nazwę:', displayName, (newName) => {
+                if (!newName || newName === displayName) return;
+                
+                // For files, re-append extension
+                const finalName = type === 'file' ? newName + extension : newName;
                 
                 const form = document.createElement('form');
                 form.method = 'POST';
@@ -374,7 +388,7 @@
                     'csrf_token': '<?= generate_csrf_token() ?>',
                     'action': 'rename_item',
                     'item_id': id,
-                    'new_name': newName,
+                    'new_name': finalName,
                     'type': type
                 };
 

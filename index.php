@@ -260,6 +260,6 @@ require_once 'views/header.php';
                 <button onclick="closeMoveModal()" class="px-5 py-2.5 text-sm font-bold text-slate-400 hover:text-slate-200 transition-colors">Anuluj</button>
             </div>
         </div>
+    </div>
     <?php require_once 'views/action_modal.php'; ?>
-</div>
-<?php require_once 'views/footer.php'; ?>
+    <?php require_once 'views/footer.php'; ?>
