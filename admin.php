@@ -101,7 +101,8 @@ require_once 'core/admin_logic.php';
         function copyCredentialsToClipboard(btn) {
             const email = document.getElementById('generated-email').innerText;
             const password = document.getElementById('generated-password').innerText;
-            const textToCopy = `Login: ${email}\nHasło: ${password}`;
+            const loginUrl = window.location.origin + window.location.pathname.replace('admin.php', '');
+            const textToCopy = `Adres portalu: ${loginUrl}\nLogin: ${email}\nHasło: ${password}`;
             
             navigator.clipboard.writeText(textToCopy).then(() => {
                 btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Skopiowano!`;
