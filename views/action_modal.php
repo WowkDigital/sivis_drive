@@ -20,40 +20,46 @@
 </div>
 
 <!-- Preview Modal -->
-<div id="preview-modal" class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/95 backdrop-blur-xl hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-slate-800 w-full h-full flex flex-col overflow-hidden transform scale-95 transition-transform duration-300">
-        <!-- Header -->
-        <div class="px-6 py-4 border-b border-slate-700/60 bg-slate-800/80 flex items-center justify-between shrink-0">
-            <div class="flex items-center space-x-4 min-w-0">
-                <div class="p-2 bg-blue-500/10 rounded-xl hidden sm:block">
-                    <i data-lucide="eye" class="w-5 h-5 text-blue-400"></i>
-                </div>
-                <h3 id="preview-title" class="text-xl font-bold text-white truncate pr-4">Podgląd pliku</h3>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="closePreview()" class="group p-2.5 bg-slate-700/50 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-2xl transition-all border border-slate-700/50 hover:border-red-500/30">
-                    <i data-lucide="x" class="w-8 h-8 group-hover:scale-110 transition-transform"></i>
-                </button>
-            </div>
-        </div>
+<div id="preview-modal" class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl hidden opacity-0 transition-opacity duration-300">
+    <div class="w-full h-full flex flex-col overflow-hidden relative transform scale-95 transition-transform duration-300">
+
         
-        <!-- Content -->
-        <div id="preview-content" class="flex-1 overflow-auto bg-slate-950 relative">
-            <div class="flex items-center justify-center h-full">
+        <!-- Floating Close Button -->
+        <button onclick="closePreview()" class="absolute top-6 right-6 z-[130] group p-3.5 bg-slate-800/80 hover:bg-red-500/80 text-white rounded-2xl transition-all duration-300 backdrop-blur-md border border-slate-700/50 hover:border-red-500/50 shadow-2xl active:scale-90" title="Zamknij podgląd">
+            <i data-lucide="x" class="w-8 h-8 group-hover:rotate-90 transition-transform duration-300"></i>
+        </button>
+        
+        <!-- Content Area (Full Screen) -->
+        <div id="preview-content" class="flex-1 overflow-hidden relative flex items-center justify-center">
+            <div class="flex items-center justify-center">
                 <i data-lucide="loader-2" class="w-12 h-12 text-blue-500 animate-spin"></i>
             </div>
         </div>
         
-        <!-- Footer / Info -->
-        <div class="px-6 py-4 border-t border-slate-700/60 bg-slate-800/50 text-[10px] text-slate-500 uppercase font-black tracking-widest flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-6">
-                <span class="flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i> Bezpieczny podgląd</span>
-                <span class="hidden sm:inline-block opacity-20 text-slate-400">|</span>
-                <span class="hidden sm:inline-block">Sivis Drive Internal Preview</span>
+        <!-- Optimized Footer with Filename -->
+        <div class="px-8 py-5 border-t border-slate-800/60 bg-slate-900/90 backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-4 shrink-0">
+            <div class="flex items-center space-x-4 min-w-0">
+                <div class="p-2.5 bg-blue-500/10 rounded-xl">
+                    <i data-lucide="file-text" class="w-5 h-5 text-blue-400"></i>
+                </div>
+                <div class="flex flex-col min-w-0">
+                    <span id="preview-title" class="text-base font-bold text-white truncate max-w-sm md:max-w-xl">Podgląd pliku</span>
+                    <span class="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] mt-0.5">Sivis Drive Internal Secure Viewer</span>
+                </div>
             </div>
-            <div class="hidden sm:block opacity-50">Wowk Digital &copy; <?= date('Y') ?></div>
+            
+            <div class="flex items-center gap-6">
+                 <div class="hidden lg:flex items-center gap-2 text-[10px] text-slate-500 uppercase font-bold tracking-widest border-r border-slate-800 pr-6">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i>
+                    <span>Tylko do odczytu</span>
+                </div>
+                <div class="text-[10px] text-slate-400 font-medium">
+                    Wowk Digital &copy; <?= date('Y') ?>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
 
 
