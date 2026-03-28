@@ -1165,10 +1165,11 @@
             const url = `download.php?id=${id}&action=view`;
             
             if (ext === 'pdf') {
-                content.innerHTML = `<iframe src="${url}" class="w-full h-full border-0 rounded-b-2xl"></iframe>`;
+                content.innerHTML = `<iframe src="${url}" class="w-full h-full border-0"></iframe>`;
             } else {
-                content.innerHTML = `<div class="w-full h-full flex items-center justify-center p-4"><img src="${url}" class="max-w-full max-h-full object-contain rounded-xl shadow-2xl"></div>`;
+                content.innerHTML = `<div class="w-full h-full flex items-center justify-center p-4 sm:p-8"><img src="${url}" class="max-w-full max-h-full object-contain shadow-2xl"></div>`;
             }
+
             
             if (window.lucide) lucide.createIcons();
         }
