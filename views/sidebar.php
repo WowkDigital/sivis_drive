@@ -7,7 +7,7 @@
         <ul class="space-y-1.5">
             <?php foreach ($my_folders as $f): ?>
                 <li>
-                    <a href="javascript:void(0)" onclick="loadFolder(<?= $f['id'] ?>, 0, true)" id="folder-link-<?= $f['id'] ?>" class="folder-link flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 <?= $f['id'] == $active_folder_id ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium active-folder' : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' ?>">
+                    <a href="javascript:void(0)" onclick="loadFolder('<?= $f['public_id'] ?: $f['id'] ?>', 0, true)" id="folder-link-<?= $f['id'] ?>" class="folder-link flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 <?= $f['id'] == $active_folder_id ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium active-folder' : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' ?>">
                         <div class="flex items-center min-w-0">
                             <i data-lucide="user" class="w-5 h-5 mr-3 shrink-0 opacity-70"></i>
                             <span class="truncate">Mój folder</span>
@@ -62,7 +62,7 @@
                 $is_restricted = trim($f['access_groups']) === 'zarząd';
             ?>
                 <li>
-                    <a href="javascript:void(0)" onclick="loadFolder(<?= $f['id'] ?>, 0, true)" id="folder-link-<?= $f['id'] ?>" class="folder-link flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 <?= $f['id'] == $active_folder_id ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium active-folder' : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' ?>">
+                    <a href="javascript:void(0)" onclick="loadFolder('<?= $f['public_id'] ?: $f['id'] ?>', 0, true)" id="folder-link-<?= $f['id'] ?>" class="folder-link flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 <?= $f['id'] == $active_folder_id ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium active-folder' : 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' ?>">
                         <div class="flex items-center min-w-0">
                             <i data-lucide="folder" class="w-5 h-5 mr-3 shrink-0 opacity-70"></i>
                             <span class="truncate text-sm"><?= htmlspecialchars($f['name']) ?></span>
@@ -87,7 +87,7 @@
                 $has_new = has_recent_activity($db, $f['id']);
             ?>
                 <li>
-                    <a href="javascript:void(0)" onclick="loadFolder(<?= $f['id'] ?>, 0, true)" id="folder-link-<?= $f['id'] ?>" class="folder-link flex items-center justify-between px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all text-sm <?= $f['id'] == $active_folder_id ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400 font-medium active-folder' : '' ?>">
+                    <a href="javascript:void(0)" onclick="loadFolder('<?= $f['public_id'] ?: $f['id'] ?>', 0, true)" id="folder-link-<?= $f['id'] ?>" class="folder-link flex items-center justify-between px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all text-sm <?= $f['id'] == $active_folder_id ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400 font-medium active-folder' : '' ?>">
                         <div class="flex items-center truncate">
                             <i data-lucide="book-user" class="w-4 h-4 mr-3 shrink-0"></i>
                             <span class="truncate"><?= htmlspecialchars($f['name']) ?></span>

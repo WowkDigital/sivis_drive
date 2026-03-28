@@ -860,7 +860,7 @@
                         `;
 
                         if (item.is_folder) {
-                            tr.onclick = () => loadFolder(item.id, 0, true);
+                            tr.onclick = () => loadFolder(item.public_id || item.id, 0, true);
                             tr.classList.add('cursor-pointer');
                             tr.innerHTML = `
                                 ${checkboxHtml}
@@ -916,7 +916,7 @@
 
                             let previewBtn = '';
                             if (['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-                                previewBtn = `<a href="download.php?id=${item.id}&action=view" target="_blank" class="p-1.5 sm:p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Podgląd"><i data-lucide="eye" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i></a>`;
+                                previewBtn = `<a href="download.php?id=${item.public_id || item.id}&action=view" target="_blank" class="p-1.5 sm:p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Podgląd"><i data-lucide="eye" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i></a>`;
                             }
 
                             let actions = `
@@ -926,7 +926,7 @@
                                     </button>
                                     <div id="actions-${itemKey}" class="hidden sm:flex items-center gap-1 sm:gap-2 shrink-0">
                                         ${previewBtn ? previewBtn.replace('p-1.5 sm:p-2', 'p-2 sm:p-2').replace('w-4 sm:w-4.5 h-4 sm:h-4.5', 'w-4.5 h-4.5 sm:w-4 sm:h-4') : ''}
-                                        <a href="download.php?id=${item.id}" class="p-2 sm:p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-xl transition-all duration-200 shadow-sm" title="Pobierz">
+                                        <a href="download.php?id=${item.public_id || item.id}" class="p-2 sm:p-2 flex items-center justify-center bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-xl transition-all duration-200 shadow-sm" title="Pobierz">
                                             <i data-lucide="download" class="w-4.5 h-4.5 sm:w-4 sm:h-4"></i>
                                         </a>
                                         ${data.can_edit ? `
@@ -998,14 +998,14 @@
 
                 // Update sidebar active state
                 document.querySelectorAll('.folder-link').forEach(l => l.classList.remove('active-folder', 'bg-emerald-500/10', 'border-emerald-500/20', 'text-emerald-400', 'bg-blue-500/10', 'border-blue-500/20', 'text-blue-400', 'bg-purple-500/10', 'border-purple-500/20', 'text-purple-400'));
-                const activeLink = document.getElementById(`folder-link-${folderId}`);
+                const activeLink = document.getElementById(`folder-link-${data.folder_id}`);
                 if (activeLink) {
                     activeLink.classList.add('active-folder');
                     activeLink.classList.add('bg-emerald-500/10', 'text-emerald-400', 'font-medium');
                 }
 
                 // Update URL without reload
-                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?folder=' + folderId;
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?folder=' + data.active_folder_id;
                 window.history.pushState({path:newUrl},'',newUrl);
 
                 // Toggle drop-zone visibility

@@ -3,7 +3,26 @@ session_start();
 require_once 'db.php';
 
 function is_logged_in() {
-    return isset($_SESSION['user_id']);
+    if (!isset($_SESSION['user_id'])) {
+        return false;
+    }
+
+    global $db;
+    try {
+        $stmt = $db->prepare('SELECT id FROM users WHERE id = ?');
+        $stmt->execute([$_SESSION['user_id']]);
+        if (!$stmt->fetch()) {
+            $_SESSION = [];
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_destroy();
+            }
+            return false;
+        }
+    } catch (Exception $e) {
+        return false;
+    }
+
+    return true;
 }
 
 function generate_csrf_token() {

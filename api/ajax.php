@@ -4,14 +4,17 @@
  */
 
 if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content') {
-    $fid = (int)$_GET['folder_id'];
+    $fid_raw = $_GET['folder_id'];
     $offset = (int)($_GET['offset'] ?? 0);
     $limit = 10;
-
-    // Get folder info
-    $stmt = $db->prepare("SELECT * FROM folders WHERE id = ?");
-    $stmt->execute([$fid]);
+    
+    // Support both internal ID and NanoID
+    $stmt = $db->prepare("SELECT * FROM folders WHERE id = ? OR public_id = ?");
+    $stmt->execute([$fid_raw, $fid_raw]);
     $folder = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($folder) {
+        $fid = (int)$folder['id'];
+    }
 
     if (!$folder) {
         echo json_encode(['error' => 'Folder nie istnieje']);
@@ -50,11 +53,10 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
     $items = array_slice($combined, $offset, $limit);
     $has_more = $total > ($offset + $limit);
 
-    // Breadcrumbs for response
     $breadcrumbs = [];
     $curr = $folder;
     while ($curr) {
-        $breadcrumbs[] = ['id' => $curr['id'], 'name' => $curr['name']];
+        $breadcrumbs[] = ['id' => $curr['public_id'] ?: $curr['id'], 'name' => $curr['name']];
         if (!$curr['parent_id']) break;
         $stmt = $db->prepare("SELECT * FROM folders WHERE id = ?");
         $stmt->execute([$curr['parent_id']]);
@@ -80,7 +82,8 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
         'is_private_tree' => is_private_tree($db, $fid, $_SESSION['user_id']),
         'user_role' => $_SESSION['role'] ?? 'pracownik',
         'total' => $total,
-        'active_folder_id' => $fid
+        'folder_id' => $fid,
+        'active_folder_id' => $folder['public_id'] ?: $fid
     ]);
     exit;
 }
@@ -94,9 +97,9 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_move_targets') 
     foreach ($all as $f) {
         if (can_user_access_folder($db, $f['id'], $_SESSION['user_id'], $role, $group)) {
             $accessible[] = [
-                'id' => $f['id'],
+                'id' => $f['public_id'] ?: $f['id'],
                 'name' => $f['name'],
-                'parent_id' => $f['parent_id'],
+                'parent_id' => $f['parent_id'], // We might need to map this too, but for internal tree it's okay
                 'owner_id' => $f['owner_id']
             ];
         }

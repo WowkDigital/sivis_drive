@@ -22,8 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hash = password_hash($password, PASSWORD_DEFAULT);
             
             try {
-                $stmt = $db->prepare('INSERT INTO users (email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, ?, ?)');
-                $stmt->execute([$email, $hash, $role, $group, $display_name]);
+                $public_id = generate_nanoid();
+                $stmt = $db->prepare('INSERT INTO users (public_id, email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, ?, ?, ?)');
+                $stmt->execute([$public_id, $email, $hash, $role, $group, $display_name]);
                 $new_user_password = $password;
                 $new_user_email = $email;
                 
@@ -50,8 +51,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($_POST['action'] === 'add_folder') {
             $name = $_POST['name'];
             $access = $_POST['access_groups'];
-            $stmt = $db->prepare('INSERT INTO folders (name, access_groups) VALUES (?, ?)');
-            $stmt->execute([$name, $access]);
+            $public_id = generate_nanoid();
+            $stmt = $db->prepare('INSERT INTO folders (public_id, name, access_groups) VALUES (?, ?, ?)');
+            $stmt->execute([$public_id, $name, $access]);
             
             log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_SHARED_FOLDER', "Utworzono folder udostępniony: $name");
 

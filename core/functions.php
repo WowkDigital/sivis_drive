@@ -1,5 +1,17 @@
 <?php
 /**
+ * Generate a NanoID-like secure random string
+ */
+function generate_nanoid($length = 21) {
+    $alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $alphabetLength = strlen($alphabet);
+    $id = '';
+    for ($i = 0; $i < $length; $i++) {
+        $id .= $alphabet[random_int(0, $alphabetLength - 1)];
+    }
+    return $id;
+}
+/**
  * Check if a folder belongs to a user's private tree
  */
 function is_private_tree($db, $folder_id, $user_id) {

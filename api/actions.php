@@ -64,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                             $stmt_owner->execute([$current_target_folder_id]);
                             $p_owner = $stmt_owner->fetchColumn();
                             
-                            $stmt_ins = $db->prepare("INSERT INTO folders (name, parent_id, owner_id) VALUES (?, ?, ?)");
-                            $stmt_ins->execute([$part, $current_target_folder_id, $p_owner]);
+                            $stmt_ins = $db->prepare("INSERT INTO folders (public_id, name, parent_id, owner_id) VALUES (?, ?, ?, ?)");
+                            $stmt_ins->execute([generate_nanoid(), $part, $current_target_folder_id, $p_owner]);
                             $current_target_folder_id = $db->lastInsertId();
                         }
                     }
@@ -85,8 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     } else {
                         $unique_name = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9.\-_]/', '', basename($file['name']));
                         if (move_uploaded_file($file['tmp_name'], $upload_dir . '/' . $unique_name)) {
-                            $stmt = $db->prepare('INSERT INTO files (folder_id, name, original_name, size, uploaded_by) VALUES (?, ?, ?, ?, ?)');
-                            $stmt->execute([$folder_id, $unique_name, $file['name'], $file['size'], $_SESSION['user_id']]);
+                            $stmt = $db->prepare('INSERT INTO files (public_id, folder_id, name, original_name, size, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)');
+                            $stmt->execute([generate_nanoid(), $folder_id, $unique_name, $file['name'], $file['size'], $_SESSION['user_id']]);
                             
                             log_activity($db, $_SESSION['user_id'], 'UPLOAD_FILE', "Wgrano plik: " . $file['name'] . " do folderu ID: $folder_id");
 
@@ -132,8 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
              $stmt->execute([$parent_id]);
              $owner_id = $stmt->fetchColumn();
 
-             $stmt = $db->prepare("INSERT INTO folders (name, parent_id, owner_id) VALUES (?, ?, ?)");
-             $stmt->execute([$name, $parent_id, $owner_id]);
+             $stmt = $db->prepare("INSERT INTO folders (public_id, name, parent_id, owner_id) VALUES (?, ?, ?, ?)");
+             $stmt->execute([generate_nanoid(), $name, $parent_id, $owner_id]);
              
              log_activity($db, $_SESSION['user_id'], 'CREATE_FOLDER', "Utworzono folder: $name (nadrzędny ID: $parent_id)");
 
@@ -144,8 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } elseif ($_POST['action'] === 'create_shared_folder' && isset($_POST['name'])) {
         if (is_admin() || is_zarzad()) {
             $name = $_POST['name'];
-            $stmt = $db->prepare("INSERT INTO folders (name, owner_id, access_groups) VALUES (?, NULL, 'zarząd,pracownicy')");
-            $stmt->execute([$name]);
+            $stmt = $db->prepare("INSERT INTO folders (public_id, name, owner_id, access_groups) VALUES (?, ?, NULL, 'zarząd,pracownicy')");
+            $stmt->execute([generate_nanoid(), $name]);
             $message = "Nowy folder udostępniony został utworzony.";
             header("Location: index.php");
             exit;

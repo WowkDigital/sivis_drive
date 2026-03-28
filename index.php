@@ -27,8 +27,8 @@ if (!$user_private_root_id) {
         $_SESSION['display_name'] = $stmt->fetchColumn();
     }
     $name = !empty($_SESSION['display_name']) ? 'Pliki ' . $_SESSION['display_name'] : 'Moje pliki (' . $_SESSION['email'] . ')';
-    $stmt = $db->prepare("INSERT INTO folders (name, owner_id) VALUES (?, ?)");
-    $stmt->execute([$name, $_SESSION['user_id']]);
+    $stmt = $db->prepare("INSERT INTO folders (public_id, name, owner_id) VALUES (?, ?, ?)");
+    $stmt->execute([generate_nanoid(), $name, $_SESSION['user_id']]);
     $user_private_root_id = $db->lastInsertId();
 }
 
@@ -55,7 +55,16 @@ foreach ($all_root_folders as $f) {
     }
 }
 
-$active_folder_id = isset($_GET['folder']) ? (int)$_GET['folder'] : ($shared_folders[0]['id'] ?? $my_folders[0]['id'] ?? 0);
+$get_f = $_GET['folder'] ?? null;
+$active_folder_id = 0;
+if ($get_f) {
+    $stmt = $db->prepare("SELECT id FROM folders WHERE id = ? OR public_id = ?");
+    $stmt->execute([$get_f, $get_f]);
+    $active_folder_id = (int)$stmt->fetchColumn();
+} else {
+    $active_folder_id = ($shared_folders[0]['id'] ?? $my_folders[0]['id'] ?? 0);
+}
+
 $active_folder = null;
 if ($active_folder_id) {
     $role = $_SESSION['role'] ?? 'pracownik';

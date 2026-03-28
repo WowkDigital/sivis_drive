@@ -35,6 +35,7 @@ $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $db->exec("CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    public_id TEXT UNIQUE,
     email TEXT UNIQUE,
     password_hash TEXT,
     role TEXT,
@@ -44,11 +45,13 @@ $db->exec("CREATE TABLE IF NOT EXISTS users (
 )");
 
 // Migrate: Add columns if missing
+try { @$db->exec("ALTER TABLE users ADD COLUMN public_id TEXT"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE users ADD COLUMN last_login DATETIME"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE users ADD COLUMN display_name TEXT"); } catch (Exception $e) {}
 
 $db->exec("CREATE TABLE IF NOT EXISTS folders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    public_id TEXT UNIQUE,
     name TEXT,
     access_groups TEXT,
     parent_id INTEGER DEFAULT NULL,
@@ -58,7 +61,8 @@ $db->exec("CREATE TABLE IF NOT EXISTS folders (
     FOREIGN KEY(owner_id) REFERENCES users(id)
 )");
 
-// Migrate: Add parent_id and owner_id if missing
+// Migrate: Add columns if missing
+try { @$db->exec("ALTER TABLE folders ADD COLUMN public_id TEXT"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE folders ADD COLUMN parent_id INTEGER DEFAULT NULL"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE folders ADD COLUMN owner_id INTEGER DEFAULT NULL"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE folders ADD COLUMN deleted_at DATETIME DEFAULT NULL"); } catch (Exception $e) {}
@@ -66,6 +70,7 @@ try { @$db->exec("ALTER TABLE folders ADD COLUMN created_at DATETIME DEFAULT CUR
 
 $db->exec("CREATE TABLE IF NOT EXISTS files (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    public_id TEXT UNIQUE,
     folder_id INTEGER,
     name TEXT,
     original_name TEXT,
@@ -75,6 +80,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS files (
     deleted_at DATETIME DEFAULT NULL,
     FOREIGN KEY(folder_id) REFERENCES folders(id)
 )");
+try { @$db->exec("ALTER TABLE files ADD COLUMN public_id TEXT"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE files ADD COLUMN deleted_at DATETIME DEFAULT NULL"); } catch (Exception $e) {}
 
 $db->exec("CREATE TABLE IF NOT EXISTS logs (

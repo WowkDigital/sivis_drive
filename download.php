@@ -48,7 +48,7 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
         $parts = explode('-', $item_key);
         if (count($parts) === 2) {
             $type = $parts[0];
-            $id = (int)$parts[1];
+            $id = $parts[1];
         } else {
             // Fallback for old 'ids' param or unexpected format
             $type = 'file';
@@ -56,8 +56,8 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
         }
 
         if ($type === 'file') {
-            $stmt = $db->prepare("SELECT * FROM files WHERE id = ?");
-            $stmt->execute([$id]);
+            $stmt = $db->prepare("SELECT * FROM files WHERE id = ? OR public_id = ?");
+            $stmt->execute([$id, $id]);
             $file = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($file && can_user_access_folder($db, $file['folder_id'], $_SESSION['user_id'], $role, $group)) {
                 $fpath = __DIR__ . '/uploads/' . $file['name'];
@@ -66,8 +66,8 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
                 }
             }
         } elseif ($type === 'folder') {
-            $stmt = $db->prepare("SELECT * FROM folders WHERE id = ?");
-            $stmt->execute([$id]);
+            $stmt = $db->prepare("SELECT * FROM folders WHERE id = ? OR public_id = ?");
+            $stmt->execute([$id, $id]);
             $folder = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($folder && can_user_access_folder($db, $folder['id'], $_SESSION['user_id'], $role, $group)) {
                 $zip->addEmptyDir($folder['name']);
@@ -90,9 +90,9 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
     }
 
 } else {
-    $file_id = (int)$_GET['id'];
-    $stmt = $db->prepare("SELECT f.*, fol.access_groups, fol.owner_id FROM files f JOIN folders fol ON f.folder_id = fol.id WHERE f.id = ?");
-    $stmt->execute([$file_id]);
+    $file_id_raw = $_GET['id'];
+    $stmt = $db->prepare("SELECT f.* FROM files f WHERE f.id = ? OR f.public_id = ?");
+    $stmt->execute([$file_id_raw, $file_id_raw]);
     $file = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$file) {

@@ -35,8 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Create the first admin user
             $hash = password_hash($password, PASSWORD_BCRYPT);
             try {
-                $stmt = $db->prepare("INSERT INTO users (email, password_hash, role, user_group, display_name) VALUES (?, ?, 'admin', 'Zarząd', ?)");
-                $stmt->execute([$email, $hash, $display_name]);
+                $public_id = generate_nanoid();
+                $stmt = $db->prepare("INSERT INTO users (public_id, email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, 'admin', 'Zarząd', ?)");
+                $stmt->execute([$public_id, $email, $hash, $display_name]);
                 
                 // Success - redirect to login
                 header("Location: login.php?installed=1");
