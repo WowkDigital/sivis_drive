@@ -6,9 +6,21 @@ if (!is_dir($data_dir)) {
 $db_file = $data_dir . '/database.sqlite';
 
 // --- MAINTENANCE MODE ---
-if (file_exists($data_dir . '/maintenance.flag') && !isset($is_backup_script)) {
-    require_once dirname(__DIR__) . '/views/maintenance.php';
-    exit;
+// Sprawdzamy czy nie jesteśmy w trakcie backupu lub czy użytkownik nie jest adminem
+$is_login_page = strpos($_SERVER['PHP_SELF'], 'login.php') !== false;
+
+if (file_exists($data_dir . '/maintenance.flag') && !isset($is_backup_script) && !$is_login_page) {
+    // Check if session has admin role - if so, allow entry
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    $is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+    
+    if (!$is_admin) {
+        require_once dirname(__DIR__) . '/views/maintenance.php';
+        exit;
+    }
 }
 
 $is_install_page = strpos($_SERVER['PHP_SELF'], 'install.php') !== false;

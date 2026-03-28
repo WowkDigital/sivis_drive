@@ -155,10 +155,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } elseif ($_POST['action'] === 'run_backup') {
             require_once 'core/backup_logic.php';
+            // run_backup is called inside backup_logic.php only if specifically triggered
+            // But we already modified backup_logic.php to not run on include.
+            // So we call it here ONCE.
             if (run_backup($db)) {
                 $message = "Backup został pomyślnie wykonany.";
             } else {
-                $message = "Błąd podczas wykonywania backupu.";
+                $message = "Błąd: Backup jest już w toku lub wystąpił inny błąd.";
             }
         } elseif ($_POST['action'] === 'delete_backup') {
             $filename = basename($_POST['filename']);
@@ -168,6 +171,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 log_activity($db, $_SESSION['user_id'], 'ADMIN_DELETE_BACKUP', "Usunięto plik backupu: $filename");
                 $message = "Plik backupu został usunięty.";
             }
+        } elseif ($_POST['action'] === 'reset_maintenance') {
+            @unlink($data_dir . '/maintenance.flag');
+            @unlink($data_dir . '/backup.lock');
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_RESET_MAINTENANCE', "Ręcznie przerwano przerwę techniczną");
+            $message = "Przerwa techniczna została wyłączona, a blokada backupu zwolniona.";
         }
     }
 }

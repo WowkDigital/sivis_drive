@@ -22,6 +22,26 @@
             </button>
         </form>
     </div>
+    
+    <?php if (file_exists($data_dir . '/maintenance.flag')): ?>
+    <div class="px-6 py-4 bg-orange-500/10 border-b border-orange-500/20 flex items-center justify-between">
+        <div class="flex items-center gap-3 text-orange-400">
+            <div class="relative">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                <div class="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-ping"></div>
+            </div>
+            <span class="text-sm font-bold uppercase tracking-wider">System w trybie przerwy technicznej</span>
+            <span class="text-xs text-orange-400/60 font-medium">(Od: <?= date('H:i:s', filemtime($data_dir . '/maintenance.flag')) ?>)</span>
+        </div>
+        <form method="POST" onsubmit="return confirm('PAMIĘTAJ! Przerwanie aktywnego backupu może spowodować błędy w archiwum. Kontynuować?')">
+            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+            <input type="hidden" name="action" value="reset_maintenance">
+            <button type="submit" class="px-4 py-2 bg-orange-600/20 hover:bg-orange-600 text-orange-400 hover:text-white text-xs font-bold rounded-xl transition-all border border-orange-500/30 flex items-center gap-2">
+                <i data-lucide="zap-off" class="w-3.5 h-3.5"></i> Wyłącz wymuszenie
+            </button>
+        </form>
+    </div>
+    <?php endif; ?>
 
     <div class="p-6 sm:p-8">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

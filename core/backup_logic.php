@@ -11,7 +11,17 @@ function run_backup($db) {
     global $data_dir;
     $root_dir = dirname(__DIR__);
     $backup_dir = $data_dir . '/backups';
+    $lock_file = $data_dir . '/backup.lock';
     $flag_file = $data_dir . '/maintenance.flag';
+
+    // --- STEP 0: LOCK CHECK ---
+    if (file_exists($lock_file)) {
+        // Check if lock is old (> 30 mins) - maybe process crashed
+        if (time() - filemtime($lock_file) < 1800) {
+            return false; // Already running
+        }
+    }
+    file_put_contents($lock_file, getmypid());
 
     if (!is_dir($backup_dir)) {
         mkdir($backup_dir, 0777, true);
@@ -32,6 +42,7 @@ function run_backup($db) {
     if ($zip->open($zip_path, ZipArchive::CREATE) !== TRUE) {
         log_activity($db, 0, 'BACKUP_ERROR', "Nie udało się stworzyć archiwum ZIP: $zip_filename");
         @unlink($flag_file);
+        @unlink($lock_file);
         return false;
     }
 
@@ -71,6 +82,7 @@ function run_backup($db) {
 
     // --- STEP 4: DISABLE MAINTENANCE ---
     @unlink($flag_file);
+    @unlink($lock_file);
     
     log_activity($db, 0, 'BACKUP_SUCCESS', "Pomyślnie wykonano pełny backup: $zip_filename");
     
@@ -80,13 +92,19 @@ function run_backup($db) {
     return true;
 }
 
-// Logic to check if we need a backup
-$last_backup_file = $data_dir . '/backups/last_backup.txt';
-$today = date('Y-m-d');
-$last_backup = file_exists($last_backup_file) ? trim(file_get_contents($last_backup_file)) : '';
+function auto_backup_if_needed($db) {
+    global $data_dir;
+    $last_backup_file = $data_dir . '/backups/last_backup.txt';
+    $today = date('Y-m-d');
+    $last_backup = file_exists($last_backup_file) ? trim(file_get_contents($last_backup_file)) : '';
 
-if (isset($_GET['force']) || (php_sapi_name() == 'cli') || ($last_backup !== $today)) {
-    // Only run if not already running (maintenance flag check is not enough because we set it)
-    // Use a lock file if needed, but for daily it should be fine.
+    if ($last_backup !== $today) {
+        run_backup($db);
+    }
+}
+
+// Ensure run_backup is not called twice if included in admin_logic.php
+// We only run if NOT included or explicitly triggered.
+if (php_sapi_name() == 'cli' || (isset($_GET['force']) && isset($is_backup_script) && $is_backup_script)) {
     run_backup($db);
 }
