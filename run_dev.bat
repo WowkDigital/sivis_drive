@@ -20,18 +20,18 @@ echo.
 echo Przygotowywanie czystego srodowiska...
 php scripts\setup_dev.php %ADMIN_EMAIL% %ADMIN_PASS%
 
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo BLAD: Nie udalo sie przygotowac srodowiska.
-    echo Upewnij sie, ze PHP jest w zmiennej PATH i inne procesy (np. serwer) nie uzywaja bazy danych.
-    pause
-    exit /b %ERRORLEVEL%
-)
+if errorlevel 1 goto error
 
 echo.
-echo Uruchamianie serwera testowego na porcie 8000...
-start http://localhost:8000
+echo Uruchamianie serwera testowego na porcie 8001...
+start http://localhost:8001
 
-:: Uruchamia lokalny serwer PHP
-:: Ustawiamy limity w locie (100MB na plik, 110MB na cały post)
-php -d upload_max_filesize=100M -d post_max_size=110M -S localhost:8000
+:: Start local PHP server
+php -d upload_max_filesize=100M -d post_max_size=110M -S localhost:8001
+goto :EOF
+
+:error
+echo.
+echo BLAD: Nie udalo sie przygotowac srodowiska.
+pause
+exit /b 1

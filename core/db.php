@@ -23,8 +23,9 @@ if (file_exists($data_dir . '/maintenance.flag') && !isset($is_backup_script) &&
     }
 }
 
-$is_install_page = strpos($_SERVER['PHP_SELF'], 'install.php') !== false;
-if (!file_exists($db_file) && file_exists(dirname(__DIR__) . '/install.php') && !$is_install_page) {
+$is_install_page = strpos($_SERVER['PHP_SELF'] ?? '', 'install.php') !== false;
+$is_cli = php_sapi_name() === 'cli';
+if (!file_exists($db_file) && file_exists(dirname(__DIR__) . '/install.php') && !$is_install_page && !$is_cli) {
     header("Location: install.php");
     exit;
 }
