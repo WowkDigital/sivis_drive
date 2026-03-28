@@ -41,6 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             log_activity($db, $user_id, 'USER_SETUP_2FA', "Użytkownik skonfigurował 2FA");
         }
         
+        // Handle "Remember for 30 days"
+        if (isset($_POST['remember_device'])) {
+            $trust_token = bin2hex(random_bytes(32));
+            $expires = date('Y-m-d H:i:s', time() + (86400 * 30));
+            $db->prepare("INSERT INTO user_2fa_trust (user_id, token, expires_at) VALUES (?, ?, ?)")->execute([$user_id, $trust_token, $expires]);
+            setcookie('2fa_trust', $trust_token, time() + (86400 * 30), "/", "", false, true); // Secure if HTTPs but we use default for local
+        }
+        
         // Finalize login
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['email'] = $user['email'];
@@ -57,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: index.php');
         exit;
     } else {
+
         $error = 'Nieprawidłowy kod. Spróbuj ponownie.';
         log_activity($db, $user_id, 'USER_LOGIN_2FA_FAIL', "Nieudana próba logowania 2FA");
     }
@@ -159,8 +168,21 @@ if ($setup_mode) {
                            autocomplete="one-time-code"
                            autofocus>
                 </div>
+
+                <div class="flex items-center justify-center space-x-3 py-2">
+                    <label class="flex items-center cursor-pointer group">
+                        <div class="relative">
+                            <input type="checkbox" name="remember_device" value="1" class="sr-only peer" checked>
+                            <div class="w-5 h-5 bg-slate-900 border border-slate-700 rounded-md transition-all peer-checked:bg-blue-600 peer-checked:border-blue-500 group-hover:border-slate-500 flex items-center justify-center">
+                                <i data-lucide="check" class="w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                            </div>
+                        </div>
+                        <span class="ml-3 text-sm text-slate-400 group-hover:text-slate-300 transition-colors font-medium">Zapamiętaj to urządzenie przez 30 dni</span>
+                    </label>
+                </div>
                 
                 <button class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl w-full flex items-center justify-center transition-all duration-200 shadow-lg shadow-blue-500/20 active:scale-95" type="submit">
+
                     <?= $setup_mode ? 'Zweryfikuj i zapisz' : 'Zaloguj się' ?>
                 </button>
             </form>

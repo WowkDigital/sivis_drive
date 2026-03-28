@@ -25,31 +25,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $enforce_2fa = get_setting($db, 'enforce_2fa_admin', '0') === '1';
             $is_admin_or_zarzad = ($user['role'] === 'admin' || $user['role'] === 'zarząd');
             
-            if ($enforce_2fa && $is_admin_or_zarzad && $user['totp_enabled'] == 0) {
-                // First time setup - we allow them to login but they MUST set up 2FA
-                // Actually, the requirement says: "Przy poprawnym login i hasło dostają kod QR i klucz do skopiowania by ustawić TOTP"
-                // So we redirect to 2fa_setup.php or similar
-                $_SESSION['pending_2fa_user_id'] = $user['id'];
-                header('Location: 2fa.php');
-                exit;
-            } elseif ($enforce_2fa && $is_admin_or_zarzad && $user['totp_enabled'] == 1) {
-                // Must enter code
-                $_SESSION['pending_2fa_user_id'] = $user['id'];
-                header('Location: 2fa.php');
-                exit;
+            if ($enforce_2fa && $is_admin_or_zarzad) {
+                // Check if device is trusted
+                $trust_token = $_COOKIE['2fa_trust'] ?? '';
+                $is_trusted = false;
+                if (!empty($trust_token)) {
+                    $stmt_trust = $db->prepare("SELECT id FROM user_2fa_trust WHERE user_id = ? AND token = ? AND expires_at > datetime('now')");
+                    $stmt_trust->execute([$user['id'], $trust_token]);
+                    if ($stmt_trust->fetch()) {
+                        $is_trusted = true;
+                    }
+                }
+
+                if (!$is_trusted) {
+                    $_SESSION['pending_2fa_user_id'] = $user['id'];
+                    header('Location: 2fa.php');
+                    exit;
+                }
             }
 
-            // Standard login
+            // Standard login or 2FA bypassed
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['email'] = $user['email'];
             $_SESSION['display_name'] = $user['display_name'];
             $_SESSION['role'] = $user['role'];
             $_SESSION['user_group'] = $user['user_group'];
-            $_SESSION['2fa_verified'] = $is_admin_or_zarzad ? 1 : 0; // If not enforced, consider verified
+            $_SESSION['2fa_verified'] = $is_admin_or_zarzad ? 1 : 0; // If not enforced or trusted, consider verified
             $_SESSION['login_time'] = time();
             
             header('Location: index.php');
             exit;
+
         } else {
 
         $error = 'Nieprawidłowy email lub hasło.';

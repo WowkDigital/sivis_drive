@@ -101,10 +101,19 @@ $db->exec("CREATE TABLE IF NOT EXISTS settings (
     setting_value TEXT
 )");
 
+$db->exec("CREATE TABLE IF NOT EXISTS user_2fa_trust (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    token TEXT UNIQUE,
+    expires_at DATETIME,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+)");
+
 // Insert default settings if they don't exist
 $stmt = $db->prepare("INSERT OR IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)");
 $stmt->execute(['in_app_preview', '1']);
 $stmt->execute(['enforce_2fa_admin', '0']);
 $stmt->execute(['enforce_2fa_last_update', '0']);
+
 
 
