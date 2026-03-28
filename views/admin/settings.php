@@ -31,16 +31,20 @@
                     </div>
                 </div>
                 
-                <!-- Placeholder for future settings -->
-                <div class="flex items-start space-x-4 p-4 rounded-2xl bg-slate-900/10 border border-slate-700/10 opacity-50">
+                <!-- Enforce TOTP for Admin & Zarząd -->
+                <div class="flex items-start space-x-4 p-4 rounded-2xl bg-slate-900/30 border border-slate-700/30 hover:border-emerald-500/30 transition-colors">
                     <div class="pt-1">
-                        <i data-lucide="lock" class="w-5 h-5 text-slate-600"></i>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="enforce_2fa_admin" value="1" class="sr-only peer" <?= get_setting($db, 'enforce_2fa_admin', '0') == '1' ? 'checked' : '' ?>>
+                            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
                     </div>
                     <div>
-                        <span class="block text-sm font-bold text-slate-500">Więcej opcji wkrótce</span>
-                        <span class="block text-xs text-slate-600 mt-1">Tu pojawią się dodatkowe ustawienia konfiguracji systemu.</span>
+                        <span class="block text-sm font-bold text-slate-200">Wymuszaj 2FA (TOTP) dla administracji i zarządu</span>
+                        <span class="block text-xs text-slate-500 mt-1">Gdy włączone, użytkownicy o uprawnieniach administratora lub zarządu będą musieli używać 6-cyfrowego kodu przy logowaniu.</span>
                     </div>
                 </div>
+
             </div>
             
             <div class="flex justify-end pt-4 border-t border-slate-700/40">

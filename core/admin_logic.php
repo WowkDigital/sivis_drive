@@ -193,10 +193,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "Przerwa techniczna została wyłączona, a blokada backupu zwolniona.";
         } elseif ($_POST['action'] === 'update_settings') {
             $in_app_preview = isset($_POST['in_app_preview']) ? '1' : '0';
+            $enforce_2fa = isset($_POST['enforce_2fa_admin']) ? '1' : '0';
+            
+            $old_enforce = get_setting($db, 'enforce_2fa_admin', '0');
+            
             set_setting($db, 'in_app_preview', $in_app_preview);
+            set_setting($db, 'enforce_2fa_admin', $enforce_2fa);
+            
+            if ($old_enforce === '0' && $enforce_2fa === '1') {
+                // Feature was just enabled, record timestamp
+                set_setting($db, 'enforce_2fa_last_update', time());
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_ENABLE_2FA', "Włączono wymuszanie 2FA dla administracji i zarządu");
+            } elseif ($old_enforce === '1' && $enforce_2fa === '0') {
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_DISABLE_2FA', "Wyłączono wymuszanie 2FA dla administracji i zarządu");
+            }
+            
             log_activity($db, $_SESSION['user_id'], 'ADMIN_UPDATE_SETTINGS', "Zaktualizowano ustawienia systemowe");
             $message = "Ustawienia zostały zapisane.";
         }
+
 
     }
 }

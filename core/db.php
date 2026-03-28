@@ -41,13 +41,17 @@ $db->exec("CREATE TABLE IF NOT EXISTS users (
     role TEXT,
     user_group TEXT,
     display_name TEXT,
-    last_login DATETIME
+    last_login DATETIME,
+    totp_secret TEXT,
+    totp_enabled INTEGER DEFAULT 0
 )");
 
 // Migrate: Add columns if missing
 try { @$db->exec("ALTER TABLE users ADD COLUMN public_id TEXT"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE users ADD COLUMN last_login DATETIME"); } catch (Exception $e) {}
 try { @$db->exec("ALTER TABLE users ADD COLUMN display_name TEXT"); } catch (Exception $e) {}
+try { @$db->exec("ALTER TABLE users ADD COLUMN totp_secret TEXT"); } catch (Exception $e) {}
+try { @$db->exec("ALTER TABLE users ADD COLUMN totp_enabled INTEGER DEFAULT 0"); } catch (Exception $e) {}
 
 $db->exec("CREATE TABLE IF NOT EXISTS folders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -100,4 +104,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS settings (
 // Insert default settings if they don't exist
 $stmt = $db->prepare("INSERT OR IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)");
 $stmt->execute(['in_app_preview', '1']);
+$stmt->execute(['enforce_2fa_admin', '0']);
+$stmt->execute(['enforce_2fa_last_update', '0']);
+
 

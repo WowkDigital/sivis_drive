@@ -10,20 +10,38 @@ function is_logged_in() {
 
     global $db;
     try {
-        $stmt = $db->prepare('SELECT id FROM users WHERE id = ?');
+        $stmt = $db->prepare('SELECT id, role, totp_enabled FROM users WHERE id = ?');
         $stmt->execute([$_SESSION['user_id']]);
-        if (!$stmt->fetch()) {
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$user) {
             $_SESSION = [];
             if (session_status() === PHP_SESSION_ACTIVE) {
                 session_destroy();
             }
             return false;
         }
+
+        // Check 2FA enforcement
+        $enforce_2fa = get_setting($db, 'enforce_2fa_admin', '0') === '1';
+        $is_admin_or_zarzad = ($user['role'] === 'admin' || $user['role'] === 'zarząd');
+        
+        if ($enforce_2fa && $is_admin_or_zarzad) {
+            if (!isset($_SESSION['2fa_verified']) || $_SESSION['2fa_verified'] !== 1) {
+                // If they are logged in but not 2FA verified, and it's enforced, we must end session
+                $_SESSION = [];
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    session_destroy();
+                }
+                return false;
+            }
+        }
+
     } catch (Exception $e) {
         return false;
     }
 
     return true;
+
 }
 
 function generate_csrf_token() {
