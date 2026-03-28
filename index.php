@@ -3,8 +3,7 @@
  * Sivis Drive - Main Entry Point
  * Refactored modular version
  */
-require_once 'core/auth.php';
-require_once 'core/functions.php';
+require_once __DIR__ . '/core/auth.php';
 
 require_login();
 

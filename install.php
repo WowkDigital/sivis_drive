@@ -3,7 +3,7 @@
  * Sivis Drive - Installation Helper
  * Automatic installation panel for clean deployment.
  */
-require_once 'core/auth.php'; // Will include db.php and start session
+require_once __DIR__ . '/core/auth.php'; // Will include db.php, functions.php and start session
 
 // Check if database already has users
 try {
