@@ -34,6 +34,7 @@
         }
     </style>
     <script>
+        const inAppPreviewEnabled = <?= isset($in_app_preview_enabled) && $in_app_preview_enabled ? 'true' : 'false' ?>;
         let currentFolderId = <?= $active_folder_id ?: 0 ?>;
         let currentOffset = 0;
         const limit = 10;
@@ -916,7 +917,13 @@
 
                             let previewBtn = '';
                             if (['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-                                previewBtn = `<a href="download.php?id=${item.public_id || item.id}&action=view" target="_blank" class="p-1.5 sm:p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Podgląd"><i data-lucide="eye" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i></a>`;
+                                if (inAppPreviewEnabled) {
+                                    previewBtn = `<button onclick="event.stopPropagation(); openPreview('${item.public_id || item.id}', '${escHtml(item.original_name)}')" class="p-1.5 sm:p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Podgląd">
+                                        <i data-lucide="eye" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i>
+                                    </button>`;
+                                } else {
+                                    previewBtn = `<a href="download.php?id=${item.public_id || item.id}&action=view" target="_blank" class="p-1.5 sm:p-2 flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-lg transition-all duration-200 shadow-sm" title="Otwórz w nowej karcie"><i data-lucide="eye" class="w-4 sm:w-4.5 h-4 sm:h-4.5"></i></a>`;
+                                }
                             }
 
                             let actions = `
@@ -1138,6 +1145,42 @@
                     }
                 }, false);
             }
+        }
+
+        function openPreview(id, filename) {
+            const modal = document.getElementById('preview-modal');
+            const content = document.getElementById('preview-content');
+            const title = document.getElementById('preview-title');
+            
+            title.innerText = filename;
+            content.innerHTML = '<div class="flex items-center justify-center h-full"><i data-lucide="loader-2" class="w-12 h-12 text-blue-500 animate-spin"></i></div>';
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+            
+            const ext = filename.split('.').pop().toLowerCase();
+            const url = `download.php?id=${id}&action=view`;
+            
+            if (ext === 'pdf') {
+                content.innerHTML = `<iframe src="${url}" class="w-full h-full border-0 rounded-b-2xl"></iframe>`;
+            } else {
+                content.innerHTML = `<div class="w-full h-full flex items-center justify-center p-4"><img src="${url}" class="max-w-full max-h-full object-contain rounded-xl shadow-2xl"></div>`;
+            }
+            
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closePreview() {
+            const modal = document.getElementById('preview-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('preview-content').innerHTML = '';
+            }, 300);
         }
 
         document.addEventListener('DOMContentLoaded', async () => {

@@ -196,3 +196,31 @@ function log_activity($db, $user_id, $action, $details = '') {
         // Fail silently or handle
     }
 }
+
+/**
+ * Get a value from the settings table
+ */
+function get_setting($db, $key, $default = null) {
+    try {
+        $stmt = $db->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
+        $stmt->execute([$key]);
+        $val = $stmt->fetchColumn();
+        return ($val !== false) ? $val : $default;
+    } catch (Exception $e) {
+        return $default;
+    }
+}
+
+/**
+ * Update or insert a setting
+ */
+function set_setting($db, $key, $value) {
+    try {
+        $stmt = $db->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value");
+        $stmt->execute([$key, $value]);
+        return true;
+    } catch (Exception $e) {
+        return false;
+    }
+}
+

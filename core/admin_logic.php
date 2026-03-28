@@ -178,7 +178,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             @unlink($data_dir . '/backup.lock');
             log_activity($db, $_SESSION['user_id'], 'ADMIN_RESET_MAINTENANCE', "Ręcznie przerwano przerwę techniczną");
             $message = "Przerwa techniczna została wyłączona, a blokada backupu zwolniona.";
+        } elseif ($_POST['action'] === 'update_settings') {
+            $in_app_preview = isset($_POST['in_app_preview']) ? '1' : '0';
+            set_setting($db, 'in_app_preview', $in_app_preview);
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_UPDATE_SETTINGS', "Zaktualizowano ustawienia systemowe");
+            $message = "Ustawienia zostały zapisane.";
         }
+
     }
 }
 
@@ -211,3 +217,6 @@ $formatted_size = $total_size > 1024*1024*1024
     : ($total_size > 1024*1024 
         ? round($total_size/(1024*1024), 2) . ' MB' 
         : round($total_size/1024) . ' KB');
+
+$in_app_preview_enabled = get_setting($db, 'in_app_preview', '1') === '1';
+

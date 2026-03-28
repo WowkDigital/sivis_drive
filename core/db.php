@@ -91,3 +91,13 @@ $db->exec("CREATE TABLE IF NOT EXISTS logs (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
 )");
+
+$db->exec("CREATE TABLE IF NOT EXISTS settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value TEXT
+)");
+
+// Insert default settings if they don't exist
+$stmt = $db->prepare("INSERT OR IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)");
+$stmt->execute(['in_app_preview', '1']);
+
