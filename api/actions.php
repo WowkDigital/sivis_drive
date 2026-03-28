@@ -369,14 +369,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $type = $_POST['type'];
 
         if (is_admin()) {
-            if ($type === 'folder') {
-                $db->prepare("UPDATE folders SET deleted_at = NULL WHERE id = ?")->execute([$id]);
-                log_activity($db, $_SESSION['user_id'], 'RESTORE_FOLDER', "Przywrócono folder ID: $id (Kosz)");
-            } else {
-                $db->prepare("UPDATE files SET deleted_at = NULL WHERE id = ?")->execute([$id]);
-                log_activity($db, $_SESSION['user_id'], 'RESTORE_FILE', "Przywrócono plik ID: $id (Kosz)");
+            // 1. Get/Create "przywrócone" folder
+            $stmt = $db->prepare("SELECT id FROM folders WHERE name = 'przywrócone' AND parent_id IS NULL AND owner_id IS NULL LIMIT 1");
+            $stmt->execute();
+            $target_folder_id = $stmt->fetchColumn();
+            
+            if (!$target_folder_id) {
+                // Create the folder
+                $stmt = $db->prepare("INSERT INTO folders (public_id, name, parent_id, owner_id, access_groups) VALUES (?, 'przywrócone', NULL, NULL, 'zarząd')");
+                $stmt->execute([generate_nanoid()]);
+                $target_folder_id = $db->lastInsertId();
             }
-            $_SESSION['toast'] = "Pomyślnie przywrócono element z kosza! ♻️";
+
+            if ($type === 'folder') {
+                $db->prepare("UPDATE folders SET deleted_at = NULL, parent_id = ? WHERE id = ?")->execute([$target_folder_id, $id]);
+                log_activity($db, $_SESSION['user_id'], 'RESTORE_FOLDER', "Przywrócono folder ID: $id do 'przywrócone'");
+            } else {
+                $db->prepare("UPDATE files SET deleted_at = NULL, folder_id = ? WHERE id = ?")->execute([$target_folder_id, $id]);
+                log_activity($db, $_SESSION['user_id'], 'RESTORE_FILE', "Przywrócono plik ID: $id do 'przywrócone'");
+            }
+            $_SESSION['toast'] = "Pomyślnie przywrócono element do folderu 'przywrócone'! ♻️";
             header("Location: admin.php");
             exit;
         }

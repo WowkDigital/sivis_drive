@@ -136,14 +136,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($_POST['action'] === 'restore_item') {
             $id = (int)$_POST['item_id'];
             $type = $_POST['type'];
-            if ($type === 'folder') {
-                $db->prepare("UPDATE folders SET deleted_at = NULL WHERE id = ?")->execute([$id]);
-                log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FOLDER', "Przywrócono folder ID: $id z kosza");
-            } else {
-                $db->prepare("UPDATE files SET deleted_at = NULL WHERE id = ?")->execute([$id]);
-                log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FILE', "Przywrócono plik ID: $id z kosza");
+
+            // 1. Get/Create "przywrócone" folder
+            $stmt = $db->prepare("SELECT id FROM folders WHERE name = 'przywrócone' AND parent_id IS NULL AND owner_id IS NULL LIMIT 1");
+            $stmt->execute();
+            $target_folder_id = $stmt->fetchColumn();
+            
+            if (!$target_folder_id) {
+                // Create the folder
+                $stmt = $db->prepare("INSERT INTO folders (public_id, name, parent_id, owner_id, access_groups) VALUES (?, 'przywrócone', NULL, NULL, 'zarząd')");
+                $stmt->execute([generate_nanoid()]);
+                $target_folder_id = $db->lastInsertId();
             }
-            $message = "Element został przywrócony.";
+
+            if ($type === 'folder') {
+                $db->prepare("UPDATE folders SET deleted_at = NULL, parent_id = ? WHERE id = ?")->execute([$target_folder_id, $id]);
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FOLDER', "Przywrócono folder ID: $id do 'przywrócone'");
+            } else {
+                $db->prepare("UPDATE files SET deleted_at = NULL, folder_id = ? WHERE id = ?")->execute([$target_folder_id, $id]);
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FILE', "Przywrócono plik ID: $id do 'przywrócone'");
+            }
+            $message = "Element został przywrócony do folderu 'przywrócone'.";
         } elseif ($_POST['action'] === 'delete_file') {
             $fid = (int)$_POST['file_id'];
             $stmt = $db->prepare("SELECT name, original_name FROM files WHERE id = ?");

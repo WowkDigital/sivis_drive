@@ -24,7 +24,10 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
     }
 
     function addFolderToZip($db, $fid, $zip, $base_path, $user_id, $role, $group) {
-        $stmt = $db->prepare("SELECT * FROM files WHERE folder_id = ?");
+        $is_admin = ($role === 'admin');
+        
+        $sql_files = "SELECT * FROM files WHERE folder_id = ?" . ($is_admin ? "" : " AND deleted_at IS NULL");
+        $stmt = $db->prepare($sql_files);
         $stmt->execute([$fid]);
         $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($files as $f) {
@@ -33,7 +36,9 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
                 $zip->addFile($fpath, $base_path . $f['original_name']);
             }
         }
-        $stmt = $db->prepare("SELECT * FROM folders WHERE parent_id = ?");
+        
+        $sql_fol = "SELECT * FROM folders WHERE parent_id = ?" . ($is_admin ? "" : " AND deleted_at IS NULL");
+        $stmt = $db->prepare($sql_fol);
         $stmt->execute([$fid]);
         $subfolders = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($subfolders as $sf) {
@@ -60,6 +65,8 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
             $stmt->execute([$id, $id]);
             $file = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($file && can_user_access_folder($db, $file['folder_id'], $_SESSION['user_id'], $role, $group)) {
+                // If it's deleted, only admin can download it
+                if ($file['deleted_at'] !== null && !is_admin()) continue;
                 $fpath = __DIR__ . '/uploads/' . $file['name'];
                 if (file_exists($fpath)) {
                     $zip->addFile($fpath, $file['original_name']);
@@ -70,6 +77,8 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
             $stmt->execute([$id, $id]);
             $folder = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($folder && can_user_access_folder($db, $folder['id'], $_SESSION['user_id'], $role, $group)) {
+                // If it's deleted, only admin can download it
+                if ($folder['deleted_at'] !== null && !is_admin()) continue;
                 $zip->addEmptyDir($folder['name']);
                 addFolderToZip($db, $folder['id'], $zip, $folder['name'] . '/', $_SESSION['user_id'], $role, $group);
             }
@@ -102,6 +111,11 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
     // Check access
     if (!can_user_access_folder($db, $file['folder_id'], $_SESSION['user_id'], $role, $group)) {
         die("Brak dostępu do tego pliku.");
+    }
+    
+    // Check if deleted
+    if ($file['deleted_at'] !== null && !is_admin()) {
+        die("Ten plik został usunięty.");
     }
 
     $filepath = __DIR__ . '/uploads/' . $file['name'];

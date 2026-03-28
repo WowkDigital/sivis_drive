@@ -39,7 +39,7 @@ $shared_folders = [];
 $my_folders = [];
 $employees_folders = [];
 
-$all_root_folders = $db->query("SELECT * FROM folders WHERE parent_id IS NULL")->fetchAll(PDO::FETCH_ASSOC);
+$all_root_folders = $db->query("SELECT * FROM folders WHERE parent_id IS NULL AND deleted_at IS NULL")->fetchAll(PDO::FETCH_ASSOC);
 $group = get_user_group();
 
 foreach ($all_root_folders as $f) {
@@ -103,11 +103,11 @@ $can_edit = is_admin() || is_zarzad() || $is_own_private;
 $subfolders = [];
 $files = [];
 if ($active_folder) {
-    $stmt = $db->prepare("SELECT f.*, (SELECT COUNT(*) FROM files WHERE folder_id = f.id) as file_count FROM folders f WHERE f.parent_id = ? ORDER BY f.name ASC");
+    $stmt = $db->prepare("SELECT f.*, (SELECT COUNT(*) FROM files WHERE folder_id = f.id AND deleted_at IS NULL) as file_count FROM folders f WHERE f.parent_id = ? AND f.deleted_at IS NULL ORDER BY f.name ASC");
     $stmt->execute([$active_folder_id]);
     $subfolders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stmt = $db->prepare("SELECT * FROM files WHERE folder_id = ? ORDER BY created_at DESC");
+    $stmt = $db->prepare("SELECT * FROM files WHERE folder_id = ? AND deleted_at IS NULL ORDER BY created_at DESC");
     $stmt->execute([$active_folder_id]);
     $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
