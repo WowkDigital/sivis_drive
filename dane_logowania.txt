@@ -1,0 +1,28 @@
+==================================================
+DANE LOGOWANIA DLA ŚRODOWISKA TESTOWEGO
+==================================================
+
+Użytkownik: Główny Administrator
+Rola:       admin
+Grupa:      Zarząd
+Email:      admin@admin.pl
+Hasło:      admin123
+--------------------------------------------------
+Użytkownik: Administrator Pomocniczy
+Rola:       admin
+Grupa:      Zarząd
+Email:      admin2@sivis.pl
+Hasło:      admin789
+--------------------------------------------------
+Użytkownik: Kierownik Projektu
+Rola:       zarząd
+Grupa:      Zarząd
+Email:      zarzad@sivis.pl
+Hasło:      zarzad123
+--------------------------------------------------
+Użytkownik: Jan Kowalski
+Rola:       pracownik
+Grupa:      Pracownicy
+Email:      pracownik@sivis.pl
+Hasło:      pracownik123
+--------------------------------------------------

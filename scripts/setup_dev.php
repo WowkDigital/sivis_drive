@@ -54,26 +54,73 @@ try {
     exit(1);
 }
 
-// 4. Create admin user
-echo "[4/4] Tworzenie konta administratora ($email)...\n";
+// 4. Create example users
+echo "[4/4] Tworzenie kont testowych...\n";
+$users_to_create = [
+    [
+        'email' => $email,
+        'password' => $password,
+        'role' => 'admin',
+        'group' => 'Zarząd',
+        'name' => 'Główny Administrator'
+    ],
+    [
+        'email' => 'admin2@sivis.pl',
+        'password' => 'admin789',
+        'role' => 'admin',
+        'group' => 'Zarząd',
+        'name' => 'Administrator Pomocniczy'
+    ],
+    [
+        'email' => 'zarzad@sivis.pl',
+        'password' => 'zarzad123',
+        'role' => 'zarząd',
+        'group' => 'Zarząd',
+        'name' => 'Kierownik Projektu'
+    ],
+    [
+        'email' => 'pracownik@sivis.pl',
+        'password' => 'pracownik123',
+        'role' => 'pracownik',
+        'group' => 'Pracownicy',
+        'name' => 'Jan Kowalski'
+    ]
+];
+
+$login_info = "==================================================\n";
+$login_info .= "DANE LOGOWANIA DLA ŚRODOWISKA TESTOWEGO\n";
+$login_info .= "==================================================\n\n";
+
 try {
-    $hash = password_hash($password, PASSWORD_BCRYPT);
-    $public_id = generate_nanoid();
-    $stmt = $db->prepare("INSERT INTO users (public_id, email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, 'admin', 'Zarząd', ?)");
-    $stmt->execute([$public_id, $email, $hash, 'Główny Administrator']);
-    
-    // Create private root folder for admin
-    $folder_public_id = generate_nanoid();
-    $admin_user_id = $db->lastInsertId();
-    $stmt = $db->prepare("INSERT INTO folders (public_id, name, owner_id) VALUES (?, ?, ?)");
-    $stmt->execute([$folder_public_id, 'Pliki Administrator', $admin_user_id]);
+    foreach ($users_to_create as $u) {
+        $hash = password_hash($u['password'], PASSWORD_BCRYPT);
+        $public_id = generate_nanoid();
+        
+        $stmt = $db->prepare("INSERT INTO users (public_id, email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$public_id, $u['email'], $hash, $u['role'], $u['group'], $u['name']]);
+        $user_id = $db->lastInsertId();
+        
+        // Create private root folder for each user
+        $folder_public_id = generate_nanoid();
+        $stmt = $db->prepare("INSERT INTO folders (public_id, name, owner_id) VALUES (?, ?, ?)");
+        $stmt->execute([$folder_public_id, 'Pliki ' . $u['name'], $user_id]);
+        
+        $login_info .= "Użytkownik: " . $u['name'] . "\n";
+        $login_info .= "Rola:       " . $u['role'] . "\n";
+        $login_info .= "Grupa:      " . $u['group'] . "\n";
+        $login_info .= "Email:      " . $u['email'] . "\n";
+        $login_info .= "Hasło:      " . $u['password'] . "\n";
+        $login_info .= "--------------------------------------------------\n";
+    }
+
+    // Save login info to file
+    file_put_contents($base_dir . '/dane_logowania.txt', $login_info);
 
     echo "\n--------------------------------------------------\n";
     echo "SUKCES: Środowisko gotowe! 🎉\n";
-    echo "Email: $email\n";
-    echo "Hasło: $password\n";
+    echo "Dane logowania zapisano w: dane_logowania.txt\n";
     echo "--------------------------------------------------\n\n";
 } catch (Exception $e) {
-    echo "BŁĄD podczas tworzenia użytkownika: " . $e->getMessage() . "\n";
+    echo "BŁĄD podczas tworzenia użytkowników: " . $e->getMessage() . "\n";
     exit(1);
 }
