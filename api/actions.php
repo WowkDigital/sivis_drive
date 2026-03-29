@@ -13,8 +13,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     if ($_POST['action'] === 'upload' && isset($_FILES['file']) && isset($_POST['folder_id'])) {
-        $folder_id = (int)$_POST['folder_id'];
-        $can_edit_target = is_admin() || is_zarzad() || is_private_tree($db, $folder_id, $_SESSION['user_id']);
+        $role = $_SESSION['role'] ?? 'pracownik';
+        $group = get_user_group();
+        $can_edit_target = is_admin() || can_user_access_folder($db, $folder_id, $_SESSION['user_id'], $role, $group);
         
         $is_ajax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest');
         $error_msg = null;
@@ -122,9 +123,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $name = $_POST['name'];
         $parent_id = (int)$_POST['parent_id'];
         
-        // Check if user owns the parent tree or is admin/zarząd (for shared folders)
-        $is_private = is_private_tree($db, $parent_id, $_SESSION['user_id']);
-        $can_edit_parent = is_admin() || is_zarzad() || $is_private;
+        $role = $_SESSION['role'] ?? 'pracownik';
+        $group = get_user_group();
+        $can_edit_parent = is_admin() || can_user_access_folder($db, $parent_id, $_SESSION['user_id'], $role, $group);
 
         if ($can_edit_parent) {
              // Inherit owner_id from parent
@@ -168,9 +169,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $id = (int)$_POST['item_id'];
         $new_name = $_POST['new_name'];
         $type = $_POST['type']; // 'file' or 'folder'
+        $role = $_SESSION['role'] ?? 'pracownik';
+        $group = get_user_group();
         
         if ($type === 'folder') {
-            if (is_admin() || is_zarzad() || is_private_tree($db, $id, $_SESSION['user_id'])) {
+            if (is_admin() || can_user_access_folder($db, $id, $_SESSION['user_id'], $role, $group)) {
                  $stmt = $db->prepare("UPDATE folders SET name = ? WHERE id = ?");
                  if ($stmt->execute([$new_name, $id])) {
                      // Get parent for better redirect
@@ -189,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
              $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
              $stmt->execute([$id]);
              $folder_id = $stmt->fetchColumn();
-             if (is_admin() || is_zarzad() || is_private_tree($db, $folder_id, $_SESSION['user_id'])) {
+             if (is_admin() || can_user_access_folder($db, $folder_id, $_SESSION['user_id'], $role, $group)) {
                  $stmt = $db->prepare("UPDATE files SET original_name = ? WHERE id = ?");
                  if ($stmt->execute([$new_name, $id])) {
                      log_activity($db, $_SESSION['user_id'], 'RENAME_FILE', "Zmieniono nazwę pliku ID: $id na: $new_name");
@@ -206,7 +209,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $file_info = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($file_info) {
-             $can_edit_file = is_admin() || is_zarzad() || is_private_tree($db, $file_info['folder_id'], $_SESSION['user_id']);
+             $role = $_SESSION['role'] ?? 'pracownik';
+             $group = get_user_group();
+             $can_edit_file = is_admin() || can_user_access_folder($db, $file_info['folder_id'], $_SESSION['user_id'], $role, $group);
              if ($can_edit_file) {
                 if ($file_info['deleted_at'] !== null) {
                     // Item already in trash -> PERMANENT DELETE
@@ -231,7 +236,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt->execute([$fid]);
         $folder_info = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($folder_info && (is_admin() || is_zarzad() || is_private_tree($db, $fid, $_SESSION['user_id']))) {
+        $role = $_SESSION['role'] ?? 'pracownik';
+        $group = get_user_group();
+        if ($folder_info && (is_admin() || can_user_access_folder($db, $fid, $_SESSION['user_id'], $role, $group))) {
             if ($folder_info['deleted_at'] !== null) {
                 // Already in trash -> PERMANENT DELETE
                 delete_folder_recursive($db, $fid, $upload_dir);
@@ -335,6 +342,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $item_ids = explode(',', $_POST['item_ids']);
         $item_types = explode(',', $_POST['item_types']);
         $folder_id = (int)($_POST['current_folder_id'] ?? 0);
+        $role = $_SESSION['role'] ?? 'pracownik';
+        $group = get_user_group();
         
         $trash_count = 0;
         foreach ($item_ids as $index => $id) {
@@ -342,7 +351,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $type = $item_types[$index] ?? 'file';
 
             if ($type === 'folder') {
-                if (is_admin() || is_zarzad() || is_private_tree($db, $id, $_SESSION['user_id'])) {
+                if (is_admin() || can_user_access_folder($db, $id, $_SESSION['user_id'], $role, $group)) {
                     soft_delete_folder_recursive($db, $id);
                     log_activity($db, $_SESSION['user_id'], 'TRASH_FOLDER', "Masowo przeniesiono do kosza folder ID: $id");
                     $trash_count++;
@@ -353,7 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $file_info = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($file_info) {
-                    if (is_admin() || is_zarzad() || is_private_tree($db, $file_info['folder_id'], $_SESSION['user_id'])) {
+                    if (is_admin() || can_user_access_folder($db, $file_info['folder_id'], $_SESSION['user_id'], $role, $group)) {
                         $db->prepare("UPDATE files SET deleted_at = datetime('now') WHERE id = ?")->execute([$id]);
                         log_activity($db, $_SESSION['user_id'], 'TRASH_FILE', "Masowo przeniesiono do kosza plik: " . ($file_info['original_name'] ?? 'Nieznany') . " (ID: $id)");
                         $trash_count++;

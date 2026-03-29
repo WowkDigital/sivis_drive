@@ -34,18 +34,33 @@ function is_private_tree($db, $folder_id, $user_id) {
  */
 function can_user_access_folder($db, $folder_id, $user_id, $user_role, $user_group) {
     if (!$folder_id) return false;
-    if ($user_role === 'admin' || $user_role === 'zarząd') return true;
+    if ($user_role === 'admin') return true;
 
     $curr = $folder_id;
     while ($curr) {
-        $stmt = $db->prepare("SELECT parent_id, owner_id, access_groups FROM folders WHERE id = ?");
+        $stmt = $db->prepare("
+            SELECT f.parent_id, f.owner_id, f.access_groups, u.role as owner_role 
+            FROM folders f 
+            LEFT JOIN users u ON f.owner_id = u.id 
+            WHERE f.id = ?
+        ");
         $stmt->execute([$curr]);
         $folder = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$folder) return false;
 
         // Private folder check
         if ($folder['owner_id'] !== null) {
-            return ($folder['owner_id'] == $user_id);
+            // Own folder - always allow
+            if ($folder['owner_id'] == $user_id) return true;
+            
+            // Zarząd viewing someone else
+            if ($user_role === 'zarząd') {
+                // Zarząd can see Employees, but NOT other Zarząd or Admin
+                if ($folder['owner_role'] === 'pracownik') return true;
+                return false; 
+            }
+            
+            return false;
         }
 
         // Shared folder check (if restricted)

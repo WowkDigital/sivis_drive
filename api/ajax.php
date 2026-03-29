@@ -78,7 +78,7 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
         'items' => $items,
         'has_more' => $has_more,
         'breadcrumbs' => $breadcrumbs,
-        'can_edit' => (is_admin() || is_zarzad() || is_private_tree($db, $fid, $_SESSION['user_id'])),
+        'can_edit' => (is_admin() || can_user_access_folder($db, $fid, $_SESSION['user_id'], $role, $group)),
         'is_private_tree' => is_private_tree($db, $fid, $_SESSION['user_id']),
         'user_role' => $_SESSION['role'] ?? 'pracownik',
         'total' => $total,
@@ -126,7 +126,9 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'rename_item' && $_S
     }
 
     if ($type === 'folder') {
-        if (is_admin() || is_zarzad() || is_private_tree($db, $id, $_SESSION['user_id'])) {
+        $role = $_SESSION['role'] ?? 'pracownik';
+        $group = get_user_group();
+        if (is_admin() || can_user_access_folder($db, $id, $_SESSION['user_id'], $role, $group)) {
             $stmt = $db->prepare("UPDATE folders SET name = ? WHERE id = ?");
             if ($stmt->execute([$new_name, $id])) {
                 log_activity($db, $_SESSION['user_id'], 'RENAME_FOLDER', "Zmieniono nazwę folderu ID: $id na: $new_name (AJAX)");
@@ -138,7 +140,7 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'rename_item' && $_S
         $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
         $stmt->execute([$id]);
         $folder_id = $stmt->fetchColumn();
-        if (is_admin() || is_zarzad() || is_private_tree($db, $folder_id, $_SESSION['user_id'])) {
+        if (is_admin() || can_user_access_folder($db, $folder_id, $_SESSION['user_id'], $role, $group)) {
             $stmt = $db->prepare("UPDATE files SET original_name = ? WHERE id = ?");
             if ($stmt->execute([$new_name, $id])) {
                 log_activity($db, $_SESSION['user_id'], 'RENAME_FILE', "Zmieniono nazwę pliku ID: $id na: $new_name (AJAX)");
@@ -166,7 +168,9 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_folder' && $
         exit;
     }
 
-    if (is_admin() || is_zarzad() || is_private_tree($db, $parent_id, $_SESSION['user_id'])) {
+    $role = $_SESSION['role'] ?? 'pracownik';
+    $group = get_user_group();
+    if (is_admin() || can_user_access_folder($db, $parent_id, $_SESSION['user_id'], $role, $group)) {
         $stmt = $db->prepare("SELECT owner_id FROM folders WHERE id = ?");
         $stmt->execute([$parent_id]);
         $owner_id = $stmt->fetchColumn();

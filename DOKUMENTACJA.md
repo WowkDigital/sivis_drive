@@ -40,7 +40,7 @@ W Sivis Drive obowiązuje hierarchia dostępu oparta na rolach:
 | Rola | Widoczność | Uprawnienia Edycji |
 | :--- | :--- | :--- |
 | **Pracownik** | Własny folder + wybrane Udostępnione | Tylko we własnym folderze prywatnym |
-| **Zarząd** | Własny folder + Udostępnione + **Foldery Pracowników** | Pełne (wszystkie widoczne pliki i foldery) |
+| **Zarząd** | Własny folder + Udostępnione + **Foldery Pracowników** (wyłącznie) | Pełne (widzi tylko Pracowników, nie widzi innych osób z Zarządu) |
 | **Admin** | Absolutnie wszystko | Pełne + Panel Administratora (`admin.php`) |
 
 ---

@@ -39,7 +39,13 @@ $shared_folders = [];
 $my_folders = [];
 $employees_folders = [];
 
-$all_root_folders = $db->query("SELECT * FROM folders WHERE parent_id IS NULL AND deleted_at IS NULL")->fetchAll(PDO::FETCH_ASSOC);
+$all_root_folders = $db->query("
+    SELECT f.*, u.role as owner_role 
+    FROM folders f 
+    LEFT JOIN users u ON f.owner_id = u.id 
+    WHERE f.parent_id IS NULL AND f.deleted_at IS NULL
+")->fetchAll(PDO::FETCH_ASSOC);
+
 $group = get_user_group();
 
 foreach ($all_root_folders as $f) {
@@ -52,7 +58,7 @@ foreach ($all_root_folders as $f) {
         }
     } elseif ($f['owner_id'] == $_SESSION['user_id']) { // Mine
         $my_folders[] = $f;
-    } elseif (is_zarzad() || is_admin()) { // Employee (visible to Zarząd/Admin)
+    } elseif (is_admin() || (is_zarzad() && $f['owner_role'] === 'pracownik')) { // Employee (visible to Zarząd/Admin)
         $employees_folders[] = $f;
     }
 }

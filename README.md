@@ -9,7 +9,7 @@ Pełna dokumentacja techniczna dostępna w pliku: [DOKUMENTACJA.md](DOKUMENTACJA
 - **Hierarchia i Prywatność**: 
     - **Podfoldery**: Tworzenie wielopoziomowych struktur w każdym folderze.
     - **Prywatne Przestrzenie**: Każdy pracownik ma swój folder z limitem **500 plików / 500MB**.
-    - **Wgląd Zarządu**: Członkowie Zarządu widzą i mogą zarządzać folderami wszystkich pracowników.
+    - **Wgląd Zarządu**: Członkowie Zarządu widzą i mogą zarządzać folderami Pracowników (ale nie widzą folderów innych członków Zarządu ani Administratora).
 - **Intuicyjny Interfejs Plików**:
     - **Wygodny Drag & Drop**: Przeciągnij pliki bezpośrednio do przeglądarki, aby błyskawicznie je wgrać.
     - **Podgląd w Aplikacji (NOWOŚĆ)**: Błyskawiczny podgląd plików PDF oraz zdjęć (JPG, PNG, WEBP) bezpośrednio w aplikacji, w nowoczesnym oknie pełnoekranowym.
