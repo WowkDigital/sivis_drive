@@ -39,6 +39,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $db->prepare("INSERT INTO users (public_id, email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, 'admin', 'Zarząd', ?)");
                 $stmt->execute([$public_id, $email, $hash, $display_name]);
                 
+                // --- CREATE TEST USERS IF REQUESTED ---
+                if (isset($_POST['create_test_users']) && $_POST['create_test_users'] === '1') {
+                    $test_users = [
+                        ['email' => 'admin2@sivis.pl', 'pass' => 'admin789', 'role' => 'admin', 'group' => 'Zarząd', 'name' => 'Administrator Pomocniczy'],
+                        ['email' => 'zarzad@sivis.pl', 'pass' => 'zarzad123', 'role' => 'zarząd', 'group' => 'Zarząd', 'name' => 'Kierownik Projektu'],
+                        ['email' => 'pracownik@sivis.pl', 'pass' => 'pracownik123', 'role' => 'pracownik', 'group' => 'Pracownicy', 'name' => 'Jan Kowalski']
+                    ];
+
+                    foreach ($test_users as $u) {
+                        $u_hash = password_hash($u['pass'], PASSWORD_BCRYPT);
+                        $u_pid = generate_nanoid();
+                        $stmt = $db->prepare("INSERT INTO users (public_id, email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, ?, ?, ?)");
+                        $stmt->execute([$u_pid, $u['email'], $u_hash, $u['role'], $u['group'], $u['name']]);
+                    }
+                }
+                
                 // Success - redirect to login
                 header("Location: login.php?installed=1");
                 exit;
@@ -136,6 +152,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         Hasło zostanie bezpiecznie zahashowane.
                     </p>
                 </div>
+
+                <!-- Test accounts option -->
+                <div class="bg-indigo-500/5 border border-indigo-500/10 p-5 rounded-3xl group hover:border-indigo-500/20 transition-all shadow-sm">
+                    <label class="flex items-start cursor-pointer">
+                        <div class="relative flex items-center mt-1">
+                            <input type="checkbox" name="create_test_users" value="1" id="create_test_users" class="peer h-5 w-5 cursor-pointer appearance-none rounded border-2 border-slate-600 bg-slate-900 transition-all checked:border-indigo-500 checked:bg-indigo-500 focus:outline-none">
+                            <i data-lucide="check" class="absolute h-4 w-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity left-0.5 pointer-events-none"></i>
+                        </div>
+                        <div class="ml-3">
+                            <span class="block text-slate-200 font-bold text-sm mb-1 group-hover:text-indigo-400 transition-colors">Utwórz konta testowe</span>
+                            <span class="block text-slate-400 text-[11px] leading-relaxed">Dodaj automatycznie konta Administratora pomocniczego, Zarządu i Pracownika.</span>
+                        </div>
+                    </label>
+                    <div id="test_users_data" class="hidden mt-4 pt-4 border-t border-indigo-500/10 space-y-3">
+                        <div class="text-[10px] uppercase tracking-widest font-bold text-indigo-400 mb-2 flex items-center">
+                            <i data-lucide="info" class="w-3 h-3 mr-1"></i> Dane kont przykładowych:
+                        </div>
+                        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700/50">
+                            <p class="text-[11px] text-slate-400 font-mono mb-1"><span class="text-indigo-300">Admin:</span> admin2@sivis.pl | admin789</p>
+                            <p class="text-[11px] text-slate-400 font-mono mb-1"><span class="text-indigo-300">Zarząd:</span> zarzad@sivis.pl | zarzad123</p>
+                            <p class="text-[11px] text-slate-400 font-mono"><span class="text-indigo-300">Pracownik:</span> pracownik@sivis.pl | pracownik123</p>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    document.getElementById('create_test_users').addEventListener('change', function() {
+                        document.getElementById('test_users_data').classList.toggle('hidden', !this.checked);
+                    });
+                </script>
+
                 <div class="pt-4 pb-2 border-t border-slate-700/50 mt-6 text-center">
                     <button class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-2xl w-full flex items-center justify-center transition-all duration-300 shadow-xl shadow-blue-500/20 active:scale-95 group" type="submit">
                         <i data-lucide="check-circle" class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"></i>
