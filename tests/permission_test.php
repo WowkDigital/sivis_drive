@@ -38,10 +38,10 @@ function get_test_db() {
     
     // Create tables (minimal for testing)
     $db->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, public_id TEXT, email TEXT, role TEXT, user_group TEXT, display_name TEXT)");
-    $db->exec("CREATE TABLE folders (id INTEGER PRIMARY KEY, public_id TEXT, name TEXT, parent_id INTEGER, owner_id INTEGER, access_groups TEXT, deleted_at DATETIME)");
-    $db->exec("CREATE TABLE files (id INTEGER PRIMARY KEY, public_id TEXT, folder_id INTEGER, name TEXT, original_name TEXT, size INTEGER, uploaded_by INTEGER, deleted_at DATETIME)");
+    $db->exec("CREATE TABLE folders (id INTEGER PRIMARY KEY, public_id TEXT, name TEXT, parent_id INTEGER, owner_id INTEGER, access_groups TEXT, deleted_at DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    $db->exec("CREATE TABLE files (id INTEGER PRIMARY KEY, public_id TEXT, folder_id INTEGER, name TEXT, original_name TEXT, size INTEGER, uploaded_by INTEGER, deleted_at DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
     $db->exec("CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_value TEXT)");
-    $db->exec("CREATE TABLE logs (id INTEGER PRIMARY KEY, user_id INTEGER, action TEXT, details TEXT, created_at DATETIME)");
+    $db->exec("CREATE TABLE logs (id INTEGER PRIMARY KEY, user_id INTEGER, action TEXT, details TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
     
     return $db;
 }
@@ -198,6 +198,71 @@ add_test("AJAX: Move targets mapping integrity", function() use ($db) {
     }
     
     return true;
+});
+
+// --- ADVANCED USER & PERMISSION TESTS ---
+
+add_test("Permissions: Zarząd CANNOT see Admin private files", function() use ($db) {
+    // Admin (id 1), Zarząd (id 3)
+    $db->prepare("INSERT INTO folders (id, owner_id, name) VALUES (600, 1, 'Admin Files')")->execute();
+    return can_user_access_folder($db, 600, 3, 'zarząd', 'Zarząd') === false;
+});
+
+add_test("Permissions: Group-based Shared Access", function() use ($db) {
+    // Folder restricted to 'marketing' group
+    $db->prepare("INSERT INTO folders (id, owner_id, name, access_groups) VALUES (700, NULL, 'Marketing Only', 'marketing')")->execute();
+    
+    $allowed = can_user_access_folder($db, 700, 2, 'pracownik', 'marketing'); // User in marketing
+    $denied = can_user_access_folder($db, 700, 2, 'pracownik', 'pracownicy'); // User in general group
+    
+    return $allowed === true && $denied === false;
+});
+
+add_test("User: Password Hashing Logic", function() {
+    $pass = "tajnehaslo123";
+    $hash = password_hash($pass, PASSWORD_DEFAULT);
+    return password_verify($pass, $hash) === true && password_verify("zle", $hash) === false;
+});
+
+add_test("Folder: Rename Sync", function() use ($db) {
+    $db->prepare("INSERT INTO folders (id, name, owner_id) VALUES (800, 'Stara Nazwa', 2)")->execute();
+    $db->prepare("UPDATE folders SET name = 'Nowa Nazwa' WHERE id = 800")->execute();
+    $res = $db->query("SELECT name FROM folders WHERE id = 800")->fetchColumn();
+    return $res === 'Nowa Nazwa';
+});
+
+add_test("Cycle: Trash & Restore Lifecycle", function() use ($db) {
+    // 1. Setup item
+    $db->prepare("INSERT INTO folders (id, name, owner_id) VALUES (900, 'Do Kosza', 2)")->execute();
+    
+    // 2. Trash it
+    soft_delete_folder_recursive($db, 900);
+    $deleted_at = $db->query("SELECT deleted_at FROM folders WHERE id = 900")->fetchColumn();
+    if (!$deleted_at) return "Failed to soft delete";
+    
+    // 3. Restore to "przywrócone"
+    // Create "przywrócone" folder if not exists
+    $db->prepare("INSERT INTO folders (id, name) VALUES (999, 'przywrócone')")->execute();
+    $db->prepare("UPDATE folders SET deleted_at = NULL, parent_id = 999 WHERE id = 900")->execute();
+    
+    $final = $db->query("SELECT parent_id, deleted_at FROM folders WHERE id = 900")->fetch(PDO::FETCH_ASSOC);
+    return $final['deleted_at'] === null && $final['parent_id'] == 999;
+});
+
+add_test("Integrity: NanoID Uniqueness", function() {
+    $ids = [];
+    for($i=0; $i<100; $i++) {
+        $id = generate_nanoid();
+        if (in_array($id, $ids)) return "Collision detected in 100 iterations!";
+        $ids[] = $id;
+    }
+    return true;
+});
+
+add_test("Search: Recent activity detection", function() use ($db) {
+    $db->prepare("INSERT INTO folders (id, name) VALUES (1000, 'Activity Folder')")->execute();
+    $db->prepare("INSERT INTO files (folder_id, name, created_at) VALUES (1000, 'new.txt', datetime('now'))")->execute();
+    return has_recent_activity($db, 1000) === true;
 });
 
 // --- OUTPUT ---
