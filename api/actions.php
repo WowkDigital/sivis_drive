@@ -256,7 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     } elseif ($_POST['action'] === 'move_file' && isset($_POST['file_id']) && isset($_POST['new_folder_id'])) {
         $fid = (int)$_POST['file_id'];
-        $new_folder_id = (int)$_POST['new_folder_id'];
+        $new_folder_id = resolve_folder_id($db, $_POST['new_folder_id']);
         
         $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
         $stmt->execute([$fid]);
@@ -278,28 +278,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $new_name = $stmt_new->fetchColumn() ?: "Główny";
 
             $db->prepare("UPDATE files SET folder_id = ? WHERE id = ?")->execute([$new_folder_id, $fid]);
+            log_activity($db, $_SESSION['user_id'], 'MOVE_FILE', "Przeniesiono plik ID: $fid z folderu ID: $old_folder_id do $new_folder_id");
+            
             $_SESSION['toast'] = "Przeniesiono plik z folderu '$old_name' do '$new_name'! 🚀";
             header("Location: index.php?folder=" . $new_folder_id);
+            exit;
+        } else {
+            $_SESSION['toast_error'] = "Brak uprawnień do przeniesienia pliku do tej lokalizacji.";
+            header("Location: index.php?folder=" . $old_folder_id);
             exit;
         }
     } elseif ($_POST['action'] === 'move_multiple' && isset($_POST['item_ids']) && isset($_POST['item_types']) && isset($_POST['new_folder_id'])) {
         $item_ids = explode(',', $_POST['item_ids']);
         $item_types = explode(',', $_POST['item_types']);
-        $new_folder_id = (int)$_POST['new_folder_id'];
+        $new_folder_id = resolve_folder_id($db, $_POST['new_folder_id']);
         
         $role = $_SESSION['role'] ?? 'pracownik';
         $group = get_user_group();
 
-        if (can_user_access_folder($db, $new_folder_id, $_SESSION['user_id'], $role, $group)) {
+        if (can_user_edit_folder($db, $new_folder_id, $_SESSION['user_id'], $role, $group)) {
             $source_folder_name = "Nieznany";
+            $moved_count = 0;
+
             foreach ($item_ids as $index => $id) {
                 $id = (int)$id;
                 $type = $item_types[$index] ?? 'file';
 
                 if ($index === 0) {
                     if ($type === 'folder') {
-                        $stmt = $db->prepare("SELECT f.name FROM folders p JOIN folders f ON f.parent_id = p.id WHERE f.id = ?");
-                        // Wait, it should be the PARENT name
                         $stmt = $db->prepare("SELECT name FROM folders WHERE id = (SELECT parent_id FROM folders WHERE id = ?)");
                         $stmt->execute([$id]);
                         $source_folder_name = $stmt->fetchColumn() ?: "Główny";
@@ -311,21 +317,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
 
                 if ($type === 'folder') {
-                    // Check if folder is not the target itself or a parent of target (to avoid cycles)
                     if ($id === $new_folder_id) continue;
-                    
-                    if (can_user_access_folder($db, $id, $_SESSION['user_id'], $role, $group)) {
+                    if (can_user_edit_folder($db, $id, $_SESSION['user_id'], $role, $group)) {
                         $db->prepare("UPDATE folders SET parent_id = ? WHERE id = ?")->execute([$new_folder_id, $id]);
                         log_activity($db, $_SESSION['user_id'], 'MOVE_FOLDER', "Przeniesiono folder ID: $id do folderu ID: $new_folder_id");
+                        $moved_count++;
                     }
                 } else { // type === 'file'
                     $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
                     $stmt->execute([$id]);
                     $old_folder_id = $stmt->fetchColumn();
                     
-                    if (can_user_access_folder($db, $old_folder_id, $_SESSION['user_id'], $role, $group)) {
+                    if (can_user_edit_folder($db, $old_folder_id, $_SESSION['user_id'], $role, $group)) {
                         $db->prepare("UPDATE files SET folder_id = ? WHERE id = ?")->execute([$new_folder_id, $id]);
                         log_activity($db, $_SESSION['user_id'], 'MOVE_FILE', "Przeniesiono plik ID: $id do folderu ID: $new_folder_id");
+                        $moved_count++;
                     }
                 }
             }
@@ -334,8 +340,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $stmt_new->execute([$new_folder_id]);
             $new_name = $stmt_new->fetchColumn() ?: "Główny";
 
-            $_SESSION['toast'] = "Pomyślnie przeniesiono " . count($item_ids) . " elementów z folderu '$source_folder_name' do '$new_name'! 🚀";
+            $_SESSION['toast'] = "Pomyślnie przeniesiono $moved_count elementów z folderu '$source_folder_name' do '$new_name'! 🚀";
             header("Location: index.php?folder=" . $new_folder_id);
+            exit;
+        } else {
+            $_SESSION['toast_error'] = "Brak uprawnień do przeniesienia elementów do tej lokalizacji.";
+            header("Location: " . ($_SERVER['HTTP_REFERER'] ?: 'index.php'));
             exit;
         }
     } elseif ($_POST['action'] === 'delete_multiple' && isset($_POST['item_ids']) && isset($_POST['item_types'])) {

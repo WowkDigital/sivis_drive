@@ -26,6 +26,11 @@ if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
 if (!defined('ROOT_DIR')) define('ROOT_DIR', dirname(__DIR__));
 require_once ROOT_DIR . '/core/functions.php';
 
+// Save test db_file because auth.php/db.php will overwrite it
+$test_db_file = $db_file;
+require_once ROOT_DIR . '/core/auth.php';
+$db_file = $test_db_file;
+
 function get_test_db() {
     global $db_file;
     $db = new PDO("sqlite:$db_file");
@@ -133,6 +138,32 @@ add_test("Database: CRUD on logs table", function() use ($db) {
     return (int)$stmt->fetchColumn() === 1;
 });
 
+// --- MOVEMENT LOGIC TESTS ---
+
+add_test("Movement: Resolve NanoID for move target", function() use ($db) {
+    $db->prepare("INSERT INTO folders (id, public_id, name) VALUES (200, 'target-nano-99', 'Folder Docelowy')")->execute();
+    $resolved = resolve_folder_id($db, 'target-nano-99');
+    return $resolved === 200;
+});
+
+add_test("Movement: Admin can move file in Shared Folder", function() use ($db) {
+    // Setup Shared structure
+    $db->prepare("INSERT INTO folders (id, public_id, name, owner_id) VALUES (300, 'shared-root', 'Shared Root', NULL)")->execute();
+    $db->prepare("INSERT INTO folders (id, public_id, name, parent_id, owner_id) VALUES (301, 'shared-sub', 'Shared Sub', 300, NULL)")->execute();
+    
+    // Check if Admin can edit both (needed for move)
+    $can_edit_root = can_user_edit_folder($db, 300, 1, 'admin', 'Zarząd');
+    $can_edit_sub = can_user_edit_folder($db, 301, 1, 'admin', 'Zarząd');
+    
+    return $can_edit_root === true && $can_edit_sub === true;
+});
+
+add_test("Movement: Employee restricted in Shared Folder", function() use ($db) {
+    // Employee has access but NOT edit rights in Shared (id 300)
+    $can_edit = can_user_edit_folder($db, 300, 2, 'pracownik', 'Pracownicy');
+    return $can_edit === false;
+});
+
 // --- OUTPUT ---
 
 if (php_sapi_name() === 'cli') {
@@ -151,6 +182,7 @@ if (php_sapi_name() === 'cli') {
 }
 
 // Cleanup
+$db = null;
 if (file_exists($db_file)) unlink($db_file);
 $files = glob($upload_dir . '/*');
 foreach($files as $file) if(is_file($file)) unlink($file);

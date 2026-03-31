@@ -30,27 +30,64 @@ Pełna dokumentacja techniczna dostępna w pliku: [DOKUMENTACJA.md](DOKUMENTACJA
 
 ## 🛠️ Instalacja i Konfiguracja
 
-1. Prześlij pliki na serwer (PHP 8.1+).
-2. **Wymagane rozszerzenia**: Upewnij się, że w PHP włączone jest rozszerzenie **ZIP** (`extension=zip`) dla poprawnego działania kopii zapasowych.
-3. Nadaj uprawnienia zapisu dla serwera WWW (`www-data`) do katalogu projektu oraz podfolderu `data/`.
-4. System automatycznie wygeneruje bazę danych `database.sqlite` przy pierwszym uruchomieniu.
-5. Przejdź proces instalacji przez `install.php` (automatyczne wykrywanie pierwszego uruchomienia).
+### Wymagania serwerowe:
+- **PHP 8.1+**
+- **Rozszerzenia PHP**: `pdo_sqlite`, `zip` (wymagane do backupów), `curl` (opcjonalnie dla testów).
+- **Uprawnienia**: Serwer WWW musi mieć uprawnienia do zapisu w folderach `data/` oraz `uploads/`.
 
-### Dane domyślne (zmień po zalogowaniu!):
-- **Admin**: `admin@admin.com`
-- **Hasło**: `admin123`
+### Szybka Instalacja (Produkcja):
+1. Prześlij pliki na serwer.
+2. Nadaj uprawnienia zapisu dla folderu `data/` oraz `uploads/`.
+3. Wejdź na adres swojej domeny – system automatycznie przekieruje Cię do `install.php`.
+4. Postępuj zgodnie z instrukcjami instalatora, aby utworzyć konto administratora.
+5. **Ważne**: Po zakończeniu instalacji, system jest gotowy do pracy. Domyślne dane (jeśli nie zmieniono w instalatorze): `admin@admin.com` / `admin123`.
+
+---
+
+## ⚡ Tryb Deweloperski i Testy
+
+System Sivis Drive posiada wbudowane narzędzia do szybkiego prototypowania i testowania integralności danych.
+
+### 1. Uruchomienie serwera testowego (Windows)
+W katalogu głównym znajduje się skrypt `run_dev.bat`, który:
+- Czyści bazę danych i folder uploads (reset do stanu zero).
+- Tworzy zestaw kont testowych (Admin, Zarząd, Pracownik).
+- Uruchamia lokalny serwer PHP na porcie **8001**.
+- Automatycznie otwiera przeglądarkę.
+
+```bash
+run_dev.bat
+```
+
+### 2. Wykonywanie testów automatycznych
+System posiada dedykowany skrypt testowy `tests/permission_test.php`, który weryfikuje:
+- Logikę uprawnień (kto co widzi).
+- Poprawność działania kosza i automatycznego czyszczenia (GC).
+- Zabezpieczenia CSRF i integralność bazy danych.
+
+**Uruchomienie z linii komend:**
+```bash
+php tests/permission_test.php
+```
+
+**Uruchomienie przez przeglądarkę:**
+Przejdź pod adres: `http://localhost:8001/tests/permission_test.php` (zwraca wyniki w formacie JSON).
+
+---
 
 ## 📁 Struktura projektu (Modułowa)
 
 - `index.php` – Główny punkt wejściowy.
 - `api/` – Obsługa żądań AJAX i akcji systemowych.
-- `core/` – Rdzeń systemu: autoryzacja (`auth.php`), funkcje pomocnicze (`functions.php`), baza danych (`db.php`), logika backupu (`backup_logic.php`).
-- `views/` – Komponenty interfejsu (Header, Footer, Sidebar, Modale, Widoki admina).
-- `admin.php` – Panel sterowania statystykami i ustawieniami.
-- `download.php` – Bezpieczny handler serwowania i podglądu plików.
+- `core/` – Rdzeń systemu: autoryzacja (`auth.php`), funkcje (`functions.php`), baza danych (`db.php`).
+- `views/` – Komponenty interfejsu (Header, Footer, Sidebar, Modale).
+- `scripts/` – Skrypty pomocnicze (np. `setup_dev.php`).
+- `tests/` – Testy jednostkowe i systemowe.
 - `data/` – Katalog z bazą danych i kopiami zapasowymi (Backups).
 - `uploads/` – Katalog chroniony z dokumentami.
 
 ---
-*Created with ❤️ by Wowk Digital*
+**GitHub Repository:** [WowkDigital/sivis_drive](https://github.com/WowkDigital/sivis_drive)
+
+*Created with ❤️ by [Wowk Digital](https://github.com/WowkDigital)*
 
