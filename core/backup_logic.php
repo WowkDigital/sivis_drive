@@ -39,42 +39,69 @@ function run_backup($db) {
     if (file_exists($zip_path)) unlink($zip_path);
 
     if (!class_exists('ZipArchive')) {
-        log_activity($db, 0, 'BACKUP_ERROR', "Błąd: Rozszerzenie 'zip' nie jest aktywne w PHP. Skontaktuj się z administratorem serwera.");
-        @unlink($flag_file);
-        @unlink($lock_file);
-        return false;
-    }
+        $temp_backup_dir = $data_dir . '/tmp_backup_' . time();
+        
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            // --- WINDOWS FALLBACK (PowerShell + xcopy) ---
+            mkdir($temp_backup_dir, 0777, true);
+            
+            // xcopy /C continues even if errors occur (like locked files)
+            // xcopy /E /I /H /Y /C are standard flags for complete copy
+            exec("xcopy uploads \"$temp_backup_dir\\uploads\" /E /I /H /Y /C 2>&1");
+            exec("xcopy core \"$temp_backup_dir\\core\" /E /I /H /Y /C 2>&1");
+            exec("xcopy api \"$temp_backup_dir\\api\" /E /I /H /Y /C 2>&1");
+            exec("xcopy views \"$temp_backup_dir\\views\" /E /I /H /Y /C 2>&1");
+            exec("xcopy assets \"$temp_backup_dir\\assets\" /E /I /H /Y /C 2>&1");
+            @copy("data/database.sqlite", "$temp_backup_dir/database.sqlite");
+            @copy("index.php", "$temp_backup_dir/index.php");
+            @copy("admin.php", "$temp_backup_dir/admin.php");
 
-    $zip = new ZipArchive();
-    if ($zip->open($zip_path, ZipArchive::CREATE) !== TRUE) {
-        log_activity($db, 0, 'BACKUP_ERROR', "Nie udało się stworzyć archiwum ZIP: $zip_filename");
-        @unlink($flag_file);
-        @unlink($lock_file);
-        return false;
-    }
+            $cmd = "powershell -ExecutionPolicy Bypass -Command \"Compress-Archive -Path '$temp_backup_dir\\*' -DestinationPath '$zip_path'\" 2>&1";
+            exec($cmd, $output, $return_var);
+            
+            // Cleanup temp folder on Windows
+            exec("rd /s /q \"$temp_backup_dir\"");
 
-    // Files to include: /uploads, /data (excluding /data/backups), index.php etc.?
-    // If the whole project is small, best to zip the whole folder structure or at least the core state.
-    // The user asked for "pełen backup" - full backup.
-    
-    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root_dir, RecursiveDirectoryIterator::SKIP_DOTS));
-    foreach ($it as $file) {
-        if ($file->isDir()) continue;
-        
-        $filePath = $file->getRealPath();
-        $relativePath = substr($filePath, strlen($root_dir) + 1);
-        
-        // --- EXCLUSIONS ---
-        // Don't zip existing backups or the installer
-        if (strpos($relativePath, 'data/backups') === 0) continue;
-        // Don't zip git stuff or vendor/node_modules if exists
-        if (strpos($relativePath, '.git') === 0) continue;
-        if (strpos($relativePath, '.gemini') === 0) continue; // Antigravity local files
-        
-        $zip->addFile($filePath, $relativePath);
+            if ($return_var === 0 && file_exists($zip_path)) {
+                // Success
+            } else {
+                log_activity($db, 0, 'BACKUP_ERROR', "Błąd fallbacku Win (Kod: $return_var): " . implode(' ', array_slice($output, -1)));
+                @unlink($flag_file); @unlink($lock_file); return false;
+            }
+        } else {
+            // --- LINUX FALLBACK (zip command) ---
+            // On linux we can usually zip directly, even if files are open
+            $cmd = "zip -r " . escapeshellarg($zip_path) . " uploads core api views assets data/database.sqlite *.php *.md -x 'data/backups/*' 2>&1";
+            exec($cmd, $output, $return_var);
+            
+            if ($return_var === 0 && file_exists($zip_path)) {
+                // Success
+            } else {
+                log_activity($db, 0, 'BACKUP_ERROR', "Błąd fallbacku Linux (Kod: $return_var): " . implode(' ', array_slice($output, -1)));
+                @unlink($flag_file); @unlink($lock_file); return false;
+            }
+        }
+    } else {
+        // --- STANDARD ZipArchive LOGIC ---
+        $zip = new ZipArchive();
+        if ($zip->open($zip_path, ZipArchive::CREATE) !== TRUE) {
+            log_activity($db, 0, 'BACKUP_ERROR', "Nie udało się stworzyć archiwum ZIP: $zip_filename");
+            @unlink($flag_file);
+            @unlink($lock_file);
+            return false;
+        }
+        $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root_dir, RecursiveDirectoryIterator::SKIP_DOTS));
+        foreach ($it as $file) {
+            if ($file->isDir()) continue;
+            $filePath = $file->getRealPath();
+            $relativePath = substr($filePath, strlen($root_dir) + 1);
+            if (strpos($relativePath, 'data/backups') === 0) continue;
+            if (strpos($relativePath, '.git') === 0) continue;
+            if (strpos($relativePath, '.gemini') === 0) continue; 
+            $zip->addFile($filePath, $relativePath);
+        }
+        $zip->close();
     }
-    
-    $zip->close();
 
     // --- STEP 3: CLEANUP (Keep 7 days) ---
     $backups = glob($backup_dir . '/backup_*.zip');
