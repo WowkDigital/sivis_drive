@@ -4,8 +4,20 @@
  */
 
 // 1. Environment configuration
-$db_file = __DIR__ . '/test_database.sqlite';
-$upload_dir = __DIR__ . '/test_uploads';
+$data_dir = defined('ROOT_DIR') ? ROOT_DIR . '/data' : dirname(__DIR__) . '/data';
+if (!is_dir($data_dir)) {
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Brak folderu data/']);
+    exit;
+}
+if (!is_writable($data_dir)) {
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Folder data/ nie jest zapisywalny!']);
+    exit;
+}
+
+$db_file = $data_dir . '/test_database.sqlite';
+$upload_dir = $data_dir . '/test_uploads_tmp';
 
 if (file_exists($db_file)) unlink($db_file);
 if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);

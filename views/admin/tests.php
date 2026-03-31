@@ -163,7 +163,7 @@
 
         } catch (err) {
             console.error(err);
-            showToast('Błąd połączenia z serwerem testowym', 'error');
+            showToast('Błąd krytyczny: ' + err.message, 'error');
             loadingState.classList.add('hidden');
             emptyState.classList.remove('hidden');
         } finally {
