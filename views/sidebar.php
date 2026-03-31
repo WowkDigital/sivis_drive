@@ -77,12 +77,15 @@
     </div>
 
     <!-- Section: Foldery Pracowników (Zarząd) -->
-    <?php if (!empty($employees_folders)): ?>
+    <?php if (is_admin() || is_zarzad()): ?>
     <div class="bg-slate-800 shadow-xl rounded-2xl p-5 border border-slate-700">
         <h2 class="text-xs font-bold mb-4 flex items-center text-slate-500 uppercase tracking-widest leading-none">
             Foldery pracowników
         </h2>
         <ul class="space-y-1.5">
+            <?php if (empty($employees_folders)): ?>
+                <li class="text-slate-500 text-[11px] py-1 px-3">Brak aktywnych folderów pracowników.</li>
+            <?php endif; ?>
             <?php foreach ($employees_folders as $f): 
                 $has_new = has_recent_activity($db, $f['id']);
             ?>
