@@ -49,6 +49,16 @@ require_once 'core/admin_logic.php';
     </nav>
 
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <?php 
+        if (isset($_SESSION['toast'])) {
+            $message = $_SESSION['toast'];
+            unset($_SESSION['toast']);
+        }
+        if (isset($_SESSION['toast_error'])) {
+            $message = $_SESSION['toast_error']; // Reusing $message for simplicity in admin panel
+            unset($_SESSION['toast_error']);
+        }
+        ?>
         <?php if ($message): ?>
             <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-6 py-4 rounded-2xl relative mb-6 backdrop-blur-sm shadow-xl flex items-center justify-between">
                 <div class="flex items-center">

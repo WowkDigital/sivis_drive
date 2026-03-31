@@ -20,28 +20,21 @@ Pełna dokumentacja techniczna dostępna w pliku: [DOKUMENTACJA.md](DOKUMENTACJA
     - **Zarządzanie Użytkownikami**: Dodawanie kont z automatycznym przypisywaniem do grup Zarządu lub Pracowników.
     - **Aktywne Uprawnienia**: Możliwość błyskawicznej zmiany roli użytkownika bezpośrednio w tabeli administracyjnej (auto-zapis).
     - **Zarządzanie Folderami**: Tworzenie logicznych grup dokumentów z predefiniowanymi uprawnieniami.
+- **System Backups (NOWOŚĆ)**:
+    - **Pełne Archiwum**: Możliwość wykonania pełnego backupu całego systemu (baza + pliki) do formatu `.zip` jednym kliknięciem.
+    - **Automatyczna Retencja**: System przechowuje kopie z ostatnich **7 dni**, automatycznie usuwając starsze archiwa.
+    - **Tryb Konserwacji**: Podczas trwania backupu system automatycznie przechodzi w bezpieczny tryb przerwy technicznej dla użytkowników.
 - **Bezpieczeństwo i Technologia**:
-    - **NanoID Identifiers**: Zabezpieczenie przed atakami IDOR poprzez unikalne, nieodgadnione identyfikatory dla wszystkich zasobów.
-    - **Podpisywanie Pobierania**: Pliki są serwowane przez specjalny handler, uniemożliwiając bezpośredni dostęp do katalogu `uploads`.
-    - **Bezpieczne Hasłowanie**: Używamy algorytmu `PASSWORD_BCRYPT`.
-    - **Baza SQLite**: Brak konieczności konfiguracji MySQL – system działa "out of the box".
-
-## 🛡️ Bezpieczna Aktualizacja Produkcji
-
-System Sivis Drive zawiera dedykowany skrypt `update.sh` przeznaczony dla środowisk Linux, który zapewnia:
-1. **Kopię zapasową**: Automatycznie pakuje bazę danych i pliki do archiwum `.zip` przed zmianą.
-2. **Synchronizację**: Pobiera najnowsze zmiany z repozytorium GitHub.
-3. **Utrzymanie ARCHIWUM**: Skrypt przechowuje backupy przez ostatnie **7 dni**, automatycznie usuwając stare paczki.
-4. **Log zmian**: Informuje administratora w terminalu o treści ostatniej aktualizacji.
-
-*Użycie:* `./update.sh` (Pamiętaj o `chmod +x update.sh` przy pierwszej instalacji).
+    - **Obsługa błędów (NOWOŚĆ)**: Inteligentne wykrywanie brakujących rozszerzeń serwera (np. ZIP) zapobiegające awariom systemu.
+    - **Manualny Reset Blokad**: Przycisk „Wyłącz wymuszenie” w panelu administratora pozwalający na ręczne wyprowadzenie systemu z trybu konserwacji w sytuacjach awaryjnych.
 
 ## 🛠️ Instalacja i Konfiguracja
 
 1. Prześlij pliki na serwer (PHP 8.1+).
-2. Nadaj uprawnienia zapisu dla serwera WWW (`www-data`) do katalogu projektu.
-3. System automatycznie wygeneruje bazę danych `database.sqlite` przy pierwszym uruchomieniu.
-4. Przejdź proces instalacji przez `install.php` (automatyczne wykrywanie pierwszego uruchomienia).
+2. **Wymagane rozszerzenia**: Upewnij się, że w PHP włączone jest rozszerzenie **ZIP** (`extension=zip`) dla poprawnego działania kopii zapasowych.
+3. Nadaj uprawnienia zapisu dla serwera WWW (`www-data`) do katalogu projektu oraz podfolderu `data/`.
+4. System automatycznie wygeneruje bazę danych `database.sqlite` przy pierwszym uruchomieniu.
+5. Przejdź proces instalacji przez `install.php` (automatyczne wykrywanie pierwszego uruchomienia).
 
 ### Dane domyślne (zmień po zalogowaniu!):
 - **Admin**: `admin@admin.com`
@@ -51,8 +44,8 @@ System Sivis Drive zawiera dedykowany skrypt `update.sh` przeznaczony dla środo
 
 - `index.php` – Główny punkt wejściowy.
 - `api/` – Obsługa żądań AJAX i akcji systemowych.
-- `core/` – Rdzeń systemu: autoryzacja (`auth.php`), funkcje pomocnicze (`functions.php`), baza danych (`db.php`).
-- `views/` – Komponenty interfejsu (Header, Footer, Sidebar, Modale).
+- `core/` – Rdzeń systemu: autoryzacja (`auth.php`), funkcje pomocnicze (`functions.php`), baza danych (`db.php`), logika backupu (`backup_logic.php`).
+- `views/` – Komponenty interfejsu (Header, Footer, Sidebar, Modale, Widoki admina).
 - `admin.php` – Panel sterowania statystykami i ustawieniami.
 - `download.php` – Bezpieczny handler serwowania i podglądu plików.
 - `data/` – Katalog z bazą danych i kopiami zapasowymi (Backups).
@@ -60,3 +53,4 @@ System Sivis Drive zawiera dedykowany skrypt `update.sh` przeznaczony dla środo
 
 ---
 *Created with ❤️ by Wowk Digital*
+

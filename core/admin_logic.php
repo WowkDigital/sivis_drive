@@ -187,10 +187,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = "Plik backupu został usunięty.";
             }
         } elseif ($_POST['action'] === 'reset_maintenance') {
-            @unlink($data_dir . '/maintenance.flag');
-            @unlink($data_dir . '/backup.lock');
+            clearstatcache();
+            if (file_exists($data_dir . '/maintenance.flag')) @unlink($data_dir . '/maintenance.flag');
+            if (file_exists($data_dir . '/backup.lock')) @unlink($data_dir . '/backup.lock');
+            
             log_activity($db, $_SESSION['user_id'], 'ADMIN_RESET_MAINTENANCE', "Ręcznie przerwano przerwę techniczną");
-            $message = "Przerwa techniczna została wyłączona, a blokada backupu zwolniona.";
+            
+            $_SESSION['toast'] = "Blokada została zdjęta. System powinien wrócić do normy.";
+            header("Location: admin.php");
+            exit;
         } elseif ($_POST['action'] === 'update_settings') {
             $in_app_preview = isset($_POST['in_app_preview']) ? '1' : '0';
             $enforce_2fa = isset($_POST['enforce_2fa_admin']) ? '1' : '0';

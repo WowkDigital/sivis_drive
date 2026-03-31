@@ -38,6 +38,13 @@ function run_backup($db) {
     // If ZIP exists for today, keep it or overwrite? User asked for daily. Overwrite if exists.
     if (file_exists($zip_path)) unlink($zip_path);
 
+    if (!class_exists('ZipArchive')) {
+        log_activity($db, 0, 'BACKUP_ERROR', "Błąd: Rozszerzenie 'zip' nie jest aktywne w PHP. Skontaktuj się z administratorem serwera.");
+        @unlink($flag_file);
+        @unlink($lock_file);
+        return false;
+    }
+
     $zip = new ZipArchive();
     if ($zip->open($zip_path, ZipArchive::CREATE) !== TRUE) {
         log_activity($db, 0, 'BACKUP_ERROR', "Nie udało się stworzyć archiwum ZIP: $zip_filename");

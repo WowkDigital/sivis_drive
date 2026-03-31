@@ -7,9 +7,10 @@ $db_file = $data_dir . '/database.sqlite';
 
 // --- MAINTENANCE MODE ---
 // Sprawdzamy czy nie jesteśmy w trakcie backupu lub czy użytkownik nie jest adminem
-$is_login_page = strpos($_SERVER['PHP_SELF'], 'login.php') !== false;
+$is_login_page = strpos($_SERVER['PHP_SELF'] ?? '', 'login.php') !== false;
+$is_install_page = strpos($_SERVER['PHP_SELF'] ?? '', 'install.php') !== false;
 
-if (file_exists($data_dir . '/maintenance.flag') && !isset($is_backup_script) && !$is_login_page) {
+if (file_exists($data_dir . '/maintenance.flag') && file_exists($db_file) && !isset($is_backup_script) && !$is_login_page && !$is_install_page) {
     // Check if session has admin role - if so, allow entry
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -23,7 +24,6 @@ if (file_exists($data_dir . '/maintenance.flag') && !isset($is_backup_script) &&
     }
 }
 
-$is_install_page = strpos($_SERVER['PHP_SELF'] ?? '', 'install.php') !== false;
 $is_cli = php_sapi_name() === 'cli';
 if (!file_exists($db_file) && file_exists(dirname(__DIR__) . '/install.php') && !$is_install_page && !$is_cli) {
     header("Location: install.php");
