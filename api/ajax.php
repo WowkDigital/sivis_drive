@@ -78,7 +78,7 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
         'items' => $items,
         'has_more' => $has_more,
         'breadcrumbs' => $breadcrumbs,
-        'can_edit' => can_user_edit_folder($db, $fid, $_SESSION['user_id'], $role),
+        'can_edit' => can_user_edit_folder($db, $fid, $_SESSION['user_id'], $role, $group),
         'is_private_tree' => is_private_tree($db, $fid, $_SESSION['user_id']),
         'user_role' => $_SESSION['role'] ?? 'pracownik',
         'total' => $total,
@@ -168,15 +168,17 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_folder' && $
         exit;
     }
 
+    $parent_id = resolve_folder_id($db, $_POST['parent_id']);
     $role = $_SESSION['role'] ?? 'pracownik';
     $group = get_user_group();
-    if (can_user_edit_folder($db, $parent_id, $_SESSION['user_id'], $role)) {
+
+    if (can_user_edit_folder($db, $parent_id, $_SESSION['user_id'], $role, $group)) {
         $stmt = $db->prepare("SELECT owner_id FROM folders WHERE id = ?");
         $stmt->execute([$parent_id]);
         $owner_id = $stmt->fetchColumn();
 
-        $stmt = $db->prepare("INSERT INTO folders (name, parent_id, owner_id) VALUES (?, ?, ?)");
-        if ($stmt->execute([$name, $parent_id, $owner_id])) {
+        $stmt = $db->prepare("INSERT INTO folders (public_id, name, parent_id, owner_id) VALUES (?, ?, ?, ?)");
+        if ($stmt->execute([generate_nanoid(), $name, $parent_id, $owner_id])) {
             log_activity($db, $_SESSION['user_id'], 'CREATE_FOLDER', "Utworzono folder: $name (AJAX)");
             echo json_encode(['success' => true, 'new_id' => $db->lastInsertId()]);
             exit;
@@ -207,6 +209,17 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_shared_folde
         }
     }
     echo json_encode(['error' => 'Brak uprawnień lub błąd serwera']);
+    exit;
+}
+
+if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'run_tests') {
+    if (!is_admin()) {
+        echo json_encode(['error' => 'Brak uprawnień']);
+        exit;
+    }
+    
+    // The test script handles JSON output if called via web
+    require_once ROOT_DIR . '/tests/permission_test.php';
     exit;
 }
 

@@ -13,10 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     if ($_POST['action'] === 'upload' && isset($_FILES['file']) && isset($_POST['folder_id'])) {
-        $folder_id = (int)$_POST['folder_id'];
+        $folder_id = resolve_folder_id($db, $_POST['folder_id']);
         $role = $_SESSION['role'] ?? 'pracownik';
         $group = get_user_group();
-        $can_edit_target = can_user_edit_folder($db, $folder_id, $_SESSION['user_id'], $role);
+        $can_edit_target = can_user_edit_folder($db, $folder_id, $_SESSION['user_id'], $role, $group);
         
         $is_ajax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest');
         $error_msg = null;
@@ -122,11 +122,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     } elseif ($_POST['action'] === 'create_folder' && isset($_POST['name']) && isset($_POST['parent_id'])) {
         $name = $_POST['name'];
-        $parent_id = (int)$_POST['parent_id'];
-        
+        $parent_id = resolve_folder_id($db, $_POST['parent_id']);
         $role = $_SESSION['role'] ?? 'pracownik';
         $group = get_user_group();
-        $can_edit_parent = can_user_edit_folder($db, $parent_id, $_SESSION['user_id'], $role);
+        $can_edit_parent = can_user_edit_folder($db, $parent_id, $_SESSION['user_id'], $role, $group);
 
         if ($can_edit_parent) {
              // Inherit owner_id from parent
@@ -174,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $group = get_user_group();
         
         if ($type === 'folder') {
-            if (can_user_edit_folder($db, $id, $_SESSION['user_id'], $role)) {
+            if (can_user_edit_folder($db, $id, $_SESSION['user_id'], $role, $group)) {
                  $stmt = $db->prepare("UPDATE folders SET name = ? WHERE id = ?");
                  if ($stmt->execute([$new_name, $id])) {
                      // Get parent for better redirect
@@ -193,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
              $stmt = $db->prepare("SELECT folder_id FROM files WHERE id = ?");
              $stmt->execute([$id]);
              $folder_id = $stmt->fetchColumn();
-             if (can_user_edit_folder($db, $folder_id, $_SESSION['user_id'], $role)) {
+             if (can_user_edit_folder($db, $folder_id, $_SESSION['user_id'], $role, $group)) {
                  $stmt = $db->prepare("UPDATE files SET original_name = ? WHERE id = ?");
                  if ($stmt->execute([$new_name, $id])) {
                      log_activity($db, $_SESSION['user_id'], 'RENAME_FILE', "Zmieniono nazwę pliku ID: $id na: $new_name");
@@ -212,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if ($file_info) {
              $role = $_SESSION['role'] ?? 'pracownik';
              $group = get_user_group();
-             $can_edit_file = can_user_edit_folder($db, $file_info['folder_id'], $_SESSION['user_id'], $role);
+             $can_edit_file = can_user_edit_folder($db, $file_info['folder_id'], $_SESSION['user_id'], $role, $group);
              if ($can_edit_file) {
                 if ($file_info['deleted_at'] !== null) {
                     // Item already in trash -> PERMANENT DELETE
@@ -239,7 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         $role = $_SESSION['role'] ?? 'pracownik';
         $group = get_user_group();
-        if ($folder_info && can_user_edit_folder($db, $fid, $_SESSION['user_id'], $role)) {
+        if ($folder_info && can_user_edit_folder($db, $fid, $_SESSION['user_id'], $role, $group)) {
             if ($folder_info['deleted_at'] !== null) {
                 // Already in trash -> PERMANENT DELETE
                 delete_folder_recursive($db, $fid, $upload_dir);
@@ -266,8 +265,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $role = $_SESSION['role'] ?? 'pracownik';
         $group = get_user_group();
 
-        $can_move = can_user_edit_folder($db, $old_folder_id, $_SESSION['user_id'], $role) 
-                 && can_user_edit_folder($db, $new_folder_id, $_SESSION['user_id'], $role);
+        $can_move = can_user_edit_folder($db, $old_folder_id, $_SESSION['user_id'], $role, $group) 
+                 && can_user_edit_folder($db, $new_folder_id, $_SESSION['user_id'], $role, $group);
         
         if ($can_move) {
             $stmt_old = $db->prepare("SELECT name FROM folders WHERE id = ?");
@@ -352,7 +351,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $type = $item_types[$index] ?? 'file';
 
             if ($type === 'folder') {
-                if (can_user_edit_folder($db, $id, $_SESSION['user_id'], $role)) {
+                if (can_user_edit_folder($db, $id, $_SESSION['user_id'], $role, $group)) {
                     soft_delete_folder_recursive($db, $id);
                     log_activity($db, $_SESSION['user_id'], 'TRASH_FOLDER', "Masowo przeniesiono do kosza folder ID: $id");
                     $trash_count++;
@@ -363,7 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $file_info = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($file_info) {
-                    if (can_user_edit_folder($db, $file_info['folder_id'], $_SESSION['user_id'], $role)) {
+                    if (can_user_edit_folder($db, $file_info['folder_id'], $_SESSION['user_id'], $role, $group)) {
                         $db->prepare("UPDATE files SET deleted_at = datetime('now') WHERE id = ?")->execute([$id]);
                         log_activity($db, $_SESSION['user_id'], 'TRASH_FILE', "Masowo przeniesiono do kosza plik: " . ($file_info['original_name'] ?? 'Nieznany') . " (ID: $id)");
                         $trash_count++;

@@ -12,11 +12,23 @@ function generate_nanoid($length = 21) {
     return $id;
 }
 /**
+ * Resolve folder ID (handles both internal ID and public NanoID)
+ */
+function resolve_folder_id($db, $id_raw) {
+    if (!$id_raw) return 0;
+    if (is_numeric($id_raw)) return (int)$id_raw;
+
+    $stmt = $db->prepare("SELECT id FROM folders WHERE public_id = ?");
+    $stmt->execute([$id_raw]);
+    return (int)$stmt->fetchColumn() ?: 0;
+}
+
+/**
  * Check if a folder belongs to a user's private tree
  */
 function is_private_tree($db, $folder_id, $user_id) {
     if (!$folder_id) return false;
-    $curr = $folder_id;
+    $curr = (int)$folder_id;
     while ($curr) {
         $stmt = $db->prepare("SELECT parent_id, owner_id FROM folders WHERE id = ?");
         $stmt->execute([$curr]);
@@ -77,9 +89,17 @@ function can_user_access_folder($db, $folder_id, $user_id, $user_role, $user_gro
 /**
  * Check if a user can EDIT (Upload/Delete/Rename) a folder
  */
-function can_user_edit_folder($db, $folder_id, $user_id, $user_role) {
+function can_user_edit_folder($db, $folder_id, $user_id, $user_role, $user_group) {
     if (!$folder_id) return false;
-    if ($user_role === 'admin' || $user_role === 'zarząd') return true;
+    if ($user_role === 'admin') return true;
+
+    // First ensure they can even ACCESS it
+    if (!can_user_access_folder($db, $folder_id, $user_id, $user_role, $user_group)) {
+        return false;
+    }
+
+    // Zarząd can edit anything they can access (Employee trees or Shared folders)
+    if ($user_role === 'zarząd') return true;
     
     // Regular employees can only edit their own private tree
     return is_private_tree($db, $folder_id, $user_id);
