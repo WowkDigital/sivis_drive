@@ -65,14 +65,24 @@ function can_user_access_folder($db, $folder_id, $user_id, $user_role, $user_gro
 
         // Shared folder check (if restricted)
         if ($folder['access_groups'] && trim($folder['access_groups']) !== '') {
-            $allowed = array_map('trim', explode(',', $folder['access_groups']));
-            if (!in_array($user_group, $allowed)) return false;
+            $allowed = array_map(function($g) { return strtolower(trim($g)); }, explode(',', $folder['access_groups']));
+            if (!in_array(strtolower($user_group), $allowed)) return false;
         }
 
         if (!$folder['parent_id']) break;
         $curr = $folder['parent_id'];
     }
     return true; // Default allowed for public root folders
+}
+/**
+ * Check if a user can EDIT (Upload/Delete/Rename) a folder
+ */
+function can_user_edit_folder($db, $folder_id, $user_id, $user_role) {
+    if (!$folder_id) return false;
+    if ($user_role === 'admin' || $user_role === 'zarząd') return true;
+    
+    // Regular employees can only edit their own private tree
+    return is_private_tree($db, $folder_id, $user_id);
 }
 
 /**

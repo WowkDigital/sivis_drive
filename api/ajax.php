@@ -78,7 +78,7 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
         'items' => $items,
         'has_more' => $has_more,
         'breadcrumbs' => $breadcrumbs,
-        'can_edit' => (is_admin() || can_user_access_folder($db, $fid, $_SESSION['user_id'], $role, $group)),
+        'can_edit' => can_user_edit_folder($db, $fid, $_SESSION['user_id'], $role),
         'is_private_tree' => is_private_tree($db, $fid, $_SESSION['user_id']),
         'user_role' => $_SESSION['role'] ?? 'pracownik',
         'total' => $total,
@@ -170,7 +170,7 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_folder' && $
 
     $role = $_SESSION['role'] ?? 'pracownik';
     $group = get_user_group();
-    if (is_admin() || can_user_access_folder($db, $parent_id, $_SESSION['user_id'], $role, $group)) {
+    if (can_user_edit_folder($db, $parent_id, $_SESSION['user_id'], $role)) {
         $stmt = $db->prepare("SELECT owner_id FROM folders WHERE id = ?");
         $stmt->execute([$parent_id]);
         $owner_id = $stmt->fetchColumn();

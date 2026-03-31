@@ -53,8 +53,8 @@ foreach ($all_root_folders as $f) {
         if (is_admin()) {
             $shared_folders[] = $f;
         } else {
-            $access = array_map('trim', explode(',', $f['access_groups']));
-            if (in_array(trim($group), $access) || empty($f['access_groups'])) $shared_folders[] = $f;
+            $access = array_map(function($g) { return strtolower(trim($g)); }, explode(',', $f['access_groups']));
+            if (in_array(strtolower($group), $access) || empty($f['access_groups'])) $shared_folders[] = $f;
         }
     } elseif ($f['owner_id'] == $_SESSION['user_id']) { // Mine
         $my_folders[] = $f;
