@@ -2,6 +2,7 @@
 /**
  * Handle AJAX content loading
  */
+require_once dirname(__DIR__) . '/core/auth.php';
 
 if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content') {
     $fid_raw = $_GET['folder_id'];

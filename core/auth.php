@@ -1,6 +1,6 @@
 <?php
 session_start();
-define('ROOT_DIR', dirname(__DIR__));
+if (!defined('ROOT_DIR')) define('ROOT_DIR', dirname(__DIR__));
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/functions.php';
 
