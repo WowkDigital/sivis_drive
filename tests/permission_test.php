@@ -164,6 +164,42 @@ add_test("Movement: Employee restricted in Shared Folder", function() use ($db) 
     return $can_edit === false;
 });
 
+// --- INTEGRATION: AJAX INTERFACE ---
+
+add_test("AJAX: Move targets mapping integrity", function() use ($db) {
+    // 1. Create structure: Parent (500, 'nano-p') -> Child (501, 'nano-c')
+    $db->prepare("INSERT INTO folders (id, public_id, name, parent_id) VALUES (500, 'nano-p', 'Parent', NULL)")->execute();
+    $db->prepare("INSERT INTO folders (id, public_id, name, parent_id) VALUES (501, 'nano-c', 'Child', 500)")->execute();
+    
+    // 2. Simulate get_move_targets logic (from api/ajax.php)
+    $all = $db->query("SELECT * FROM folders WHERE id IN (500, 501)")->fetchAll(PDO::FETCH_ASSOC);
+    $id_map = [0 => null];
+    foreach ($all as $f) {
+        $id_map[(int)$f['id']] = $f['public_id'] ?: (int)$f['id'];
+    }
+    
+    $accessible = [];
+    foreach ($all as $f) {
+        $accessible[] = [
+            'id' => $f['public_id'] ?: $f['id'],
+            'parent_id' => $f['parent_id'] ? ($id_map[(int)$f['parent_id']] ?? null) : null
+        ];
+    }
+    
+    // 3. Find child in result
+    $child = null;
+    foreach($accessible as $item) if($item['id'] === 'nano-c') $child = $item;
+    
+    if (!$child) return "Child not found in result";
+    
+    // VERIFY: Parent ID in the JSON must be 'nano-p' (the NanoID), NOT 500 (internal ID)
+    if ($child['parent_id'] !== 'nano-p') {
+        return "Mismatch: Expected 'nano-p' (NanoID), got " . var_export($child['parent_id'], true) . " (Internal ID?)";
+    }
+    
+    return true;
+});
+
 // --- OUTPUT ---
 
 if (php_sapi_name() === 'cli') {

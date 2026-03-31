@@ -73,6 +73,19 @@
             return a.name.localeCompare(b.name);
         });
 
+        const escHtml = (str) => {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        };
+
         const renderNodes = (nodes, depth = 0) => {
             let html = '';
             nodes.forEach(n => {
@@ -91,7 +104,7 @@
 
                 html += `
                     <div class="group/folder px-2 py-1">
-                        <button onclick="confirmMove(${n.id})" 
+                        <button onclick="confirmMove('${n.id}')" 
                                 class="w-full text-left flex items-center px-4 py-3 rounded-2xl transition-all duration-200 ${bgClass}" 
                                 ${isCurrent ? 'disabled' : ''}>
                             <div class="flex items-center min-w-0" style="margin-left: ${depth * 1.5}rem">
@@ -106,7 +119,7 @@
                                 ${isCurrent ? '<span class="ml-auto text-[10px] uppercase font-bold tracking-widest opacity-50 pl-4 shrink-0">(To ten folder)</span>' : ''}
                             </div>
                         </button>
-                        ${n.children.length > 0 ? renderNodes(n.children, depth + 1) : ''}
+                        ${n.children && n.children.length > 0 ? renderNodes(n.children, depth + 1) : ''}
                     </div>
                 `;
             });

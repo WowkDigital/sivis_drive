@@ -95,12 +95,18 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_move_targets') 
     $all = $db->query("SELECT * FROM folders ORDER BY CASE WHEN owner_id IS NULL THEN 0 ELSE 1 END, name ASC")->fetchAll(PDO::FETCH_ASSOC);
     $accessible = [];
     
+    // 1. Prepare a lookup map of internal ID -> public NanoID
+    $id_map = [0 => null];
+    foreach ($all as $f) {
+        $id_map[(int)$f['id']] = $f['public_id'] ?: (int)$f['id'];
+    }
+
     foreach ($all as $f) {
         if (can_user_access_folder($db, $f['id'], $_SESSION['user_id'], $role, $group)) {
             $accessible[] = [
                 'id' => $f['public_id'] ?: $f['id'],
                 'name' => $f['name'],
-                'parent_id' => $f['parent_id'], // We might need to map this too, but for internal tree it's okay
+                'parent_id' => $f['parent_id'] ? ($id_map[(int)$f['parent_id']] ?? null) : null,
                 'owner_id' => $f['owner_id']
             ];
         }
