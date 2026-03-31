@@ -161,7 +161,7 @@
             lucide.createIcons();
             showToast(failedCount === 0 ? "Wszystkie testy zakończone sukcesem! ✔" : `Testy zakończone z błędami (${failedCount})`, failedCount === 0 ? 'success' : 'error');
 
-        } catch (e) {
+        } catch (err) {
             console.error(err);
             showToast('Błąd połączenia z serwerem testowym', 'error');
             loadingState.classList.add('hidden');
