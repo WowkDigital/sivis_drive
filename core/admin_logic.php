@@ -200,11 +200,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($_POST['action'] === 'update_settings') {
             $in_app_preview = isset($_POST['in_app_preview']) ? '1' : '0';
             $enforce_2fa = isset($_POST['enforce_2fa_admin']) ? '1' : '0';
+            $webhook_url = $_POST['admin_webhook_url'] ?? '';
+            $tg_token = $_POST['telegram_bot_token'] ?? '';
+            $tg_chat_id = $_POST['telegram_chat_id'] ?? '';
             
             $old_enforce = get_setting($db, 'enforce_2fa_admin', '0');
             
             set_setting($db, 'in_app_preview', $in_app_preview);
             set_setting($db, 'enforce_2fa_admin', $enforce_2fa);
+            set_setting($db, 'admin_webhook_url', $webhook_url);
+            set_setting($db, 'telegram_bot_token', $tg_token);
+            set_setting($db, 'telegram_chat_id', $tg_chat_id);
             
             if ($old_enforce === '0' && $enforce_2fa === '1') {
                 // Feature was just enabled, record timestamp
@@ -214,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 log_activity($db, $_SESSION['user_id'], 'ADMIN_DISABLE_2FA', "Wyłączono wymuszanie 2FA dla administracji i zarządu");
             }
             
-            log_activity($db, $_SESSION['user_id'], 'ADMIN_UPDATE_SETTINGS', "Zaktualizowano ustawienia systemowe");
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_UPDATE_SETTINGS', "Zaktualizowano ustawienia systemowe (Notyfikacje: D:" . (empty($webhook_url) ? 'N' : 'Y') . ", T:" . (empty($tg_token) ? 'N' : 'Y') . ")");
             $message = "Ustawienia zostały zapisane.";
         }
 

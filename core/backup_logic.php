@@ -32,11 +32,11 @@ function run_backup($db) {
     file_put_contents($flag_file, $now);
     
     // --- STEP 2: CREATE ZIP ---
-    $zip_filename = 'backup_' . date('Y-m-d') . '.zip';
+    // Every backup gets a unique timestamp to prevent overwriting within the same day
+    $zip_filename = 'backup_' . date('Y-m-d_H-i') . '.zip';
     $zip_path = $backup_dir . '/' . $zip_filename;
     
-    // If ZIP exists for today, keep it or overwrite? User asked for daily. Overwrite if exists.
-    if (file_exists($zip_path)) unlink($zip_path);
+    // We don't unlink existing daily backups anymore, as each has a unique time suffix.
 
     if (!class_exists('ZipArchive')) {
         $temp_backup_dir = $data_dir . '/tmp_backup_' . time();

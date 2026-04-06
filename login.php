@@ -62,6 +62,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     }
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'contact_admin') {
+    $csrf_token = $_POST['csrf_token'] ?? '';
+    if (verify_csrf_token($csrf_token)) {
+        $contact_name = $_POST['contact_name'] ?? 'Nieznany';
+        $contact_message = $_POST['contact_message'] ?? '';
+        $contact_info = $_POST['contact_info'] ?? 'Brak info';
+
+        if (!empty($contact_message)) {
+            $msg = "**Od:** $contact_name\n**Kontakt:** $contact_info\n\n**Wiadomość:**\n$contact_message";
+            send_admin_notification($db, "Nowa prośba o kontakt (Logowanie)", $msg, 'warning');
+            $success = 'Wysłano! Administrator skontaktuje się z Tobą.';
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pl" class="dark">
@@ -110,6 +125,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
 
+            <?php if (isset($success)): ?>
+                <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl relative mb-6 text-sm">
+                    <?= htmlspecialchars($success) ?>
+                </div>
+            <?php endif; ?>
+
             <?php if (isset($_GET['installed'])): ?>
                 <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl relative mb-6 text-sm flex items-center">
                     <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Instalacja zakończona pomyślnie! Możesz się zalogować.
@@ -141,6 +162,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         Zaloguj się
                     </button>
                 </div>
+                <div class="pt-2 text-center">
+                    <button type="button" onclick="showContactModal()" class="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors">
+                        Zapomniałeś hasła? Problem z zalogowaniem?
+                    </button>
+                </div>
             </form>
         </div>
         
@@ -155,8 +181,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </p>
         </footer>
     </div>
+    <!-- Contact Modal -->
+    <div id="contactModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-700/60 bg-slate-800/50 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-blue-400">
+                    <i data-lucide="help-circle" class="w-6 h-6"></i>
+                    <h3 class="text-xl font-bold text-white">Pomoc techniczna</h3>
+                </div>
+                <button onclick="hideContactModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <!-- Info Section -->
+                <div class="mb-8 flex flex-col items-center text-center">
+                    <div class="w-20 h-20 rounded-full bg-slate-700/50 flex items-center justify-center mb-4 border border-slate-600">
+                        <i data-lucide="user" class="w-10 h-10 text-slate-300"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-white">Krzysztof Wowk</h2>
+                    <p class="text-blue-400 font-medium mb-4">Główny Administrator</p>
+                    
+                    <div class="flex flex-col gap-3 w-full max-w-xs mx-auto text-sm">
+                        <a href="mailto:wowk.digital@gmail.com" class="flex items-center gap-3 px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-xl hover:border-blue-500/50 transition-all group">
+                            <i data-lucide="mail" class="w-5 h-5 text-slate-500 group-hover:text-blue-400"></i>
+                            <span class="text-slate-300">wowk.digital@gmail.com</span>
+                        </a>
+                        <a href="tel:+48664433505" class="flex items-center gap-3 px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-xl hover:border-blue-500/50 transition-all group">
+                            <i data-lucide="phone" class="w-5 h-5 text-slate-500 group-hover:text-blue-400"></i>
+                            <span class="text-slate-300">+48 664 433 505</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Contact Form Section -->
+                <div class="border-t border-slate-700/50 pt-8 mt-2">
+                    <h4 class="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4">Wyślij szybkie powiadomienie</h4>
+                    <form method="post" action="" class="space-y-4">
+                        <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                        <input type="hidden" name="action" value="contact_admin">
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Twoje Imię</label>
+                                <input name="contact_name" type="text" placeholder="Np. Jan Kowalski" class="w-full bg-slate-900/80 border border-slate-700 rounded-xl py-2.5 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Twój kontakt (Email/Tel)</label>
+                                <input name="contact_info" type="text" placeholder="Dla admina..." class="w-full bg-slate-900/80 border border-slate-700 rounded-xl py-2.5 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Wiadomość / Problem</label>
+                            <textarea name="contact_message" rows="3" placeholder="Opisz w czym problem..." class="w-full bg-slate-900/80 border border-slate-700 rounded-xl py-2.5 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" required></textarea>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-2">
+                            <i data-lucide="send" class="w-4 h-4"></i> Wyślij powiadomienie
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         lucide.createIcons();
+        
+        function showContactModal() {
+            document.getElementById('contactModal').classList.remove('hidden');
+            document.getElementById('contactModal').classList.add('flex');
+        }
+        
+        function hideContactModal() {
+            document.getElementById('contactModal').classList.remove('flex');
+            document.getElementById('contactModal').classList.add('hidden');
+        }
+
+        // Close on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') hideContactModal();
+        });
+
+        // Close on outside click
+        document.getElementById('contactModal').addEventListener('click', (e) => {
+            if (e.target.id === 'contactModal') hideContactModal();
+        });
     </script>
 </body>
 </html>

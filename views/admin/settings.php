@@ -45,6 +45,36 @@
                     </div>
                 </div>
 
+                <!-- Admin Notification Webhook -->
+                <div class="md:col-span-2 flex flex-col md:flex-row gap-6 p-6 rounded-2xl bg-slate-900/40 border border-slate-700/40">
+                    <div class="flex-1 space-y-4">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <div class="p-2 bg-indigo-500/10 rounded-lg">
+                                <i data-lucide="message-square" class="w-5 h-5 text-indigo-400"></i>
+                            </div>
+                            <span class="text-sm font-bold text-slate-200">Discord Webhook</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Wklej URL webhooka Discord, aby otrzymywać powiadomienia na kanał.</p>
+                        <input type="url" name="admin_webhook_url" value="<?= htmlspecialchars(get_setting($db, 'admin_webhook_url', '')) ?>" class="w-full bg-slate-950/50 border border-slate-700 rounded-xl py-2 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-slate-600" placeholder="https://discord.com/api/webhooks/...">
+                    </div>
+
+                    <div class="hidden md:block w-px bg-slate-700/50"></div>
+
+                    <div class="flex-1 space-y-4">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <div class="p-2 bg-sky-500/10 rounded-lg">
+                                <i data-lucide="send" class="w-5 h-5 text-sky-400"></i>
+                            </div>
+                            <span class="text-sm font-bold text-slate-200">Telegram Bot</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Otrzymuj powiadomienia przez bota Telegram (Bot Token + Chat ID).</p>
+                        <div class="grid grid-cols-1 gap-2">
+                            <input type="text" name="telegram_bot_token" value="<?= htmlspecialchars(get_setting($db, 'telegram_bot_token', '')) ?>" class="w-full bg-slate-950/50 border border-slate-700 rounded-xl py-2 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all placeholder:text-slate-600" placeholder="Bot Token (np. 12345:ABC...)">
+                            <input type="text" name="telegram_chat_id" value="<?= htmlspecialchars(get_setting($db, 'telegram_chat_id', '')) ?>" class="w-full bg-slate-950/50 border border-slate-700 rounded-xl py-2 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all placeholder:text-slate-600" placeholder="Chat ID (np. 664433505)">
+                        </div>
+                    </div>
+                </div>
+
             </div>
             
             <div class="flex justify-end pt-4 border-t border-slate-700/40">
