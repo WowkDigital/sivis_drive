@@ -270,77 +270,44 @@ function set_setting($db, $key, $value) {
 }
 
 /**
- * Send a notification to the admin via Discord or Telegram if configured
+ * Send a notification to the admin via Telegram Bot if configured
  */
 function send_admin_notification($db, $title, $message, $type = 'info') {
-    $discord_webhook = get_setting($db, 'admin_webhook_url', '');
-    $tg_token = get_setting($db, 'telegram_bot_token', '');
+    $tg_token   = get_setting($db, 'telegram_bot_token', '');
     $tg_chat_id = get_setting($db, 'telegram_chat_id', '');
-    
+
     // Always log to DB
     log_activity($db, 0, 'NOTIFICATION_SENT', "[$title] $message");
-    
-    $results = [];
 
-    // --- DISCORD ---
-    if (!empty($discord_webhook)) {
-        $color = 0x3b82f6; // Blue (info)
-        if ($type === 'error') $color = 0xef4444; // Red
-        if ($type === 'warning') $color = 0xf59e0b; // Orange
-        if ($type === 'success') $color = 0x10b981; // Green
-
-        $data = [
-            "embeds" => [
-                [
-                    "title" => "🚀 Sivis Drive: " . $title,
-                    "description" => $message,
-                    "color" => $color,
-                    "timestamp" => date("c"),
-                    "footer" => ["text" => "Sivis Drive System"]
-                ]
-            ]
-        ];
-
-        $options = [
-            'http' => [
-                'method'  => 'POST',
-                'header'  => "Content-Type: application/json\r\n",
-                'content' => json_encode($data),
-                'ignore_errors' => true
-            ]
-        ];
-        $context = stream_context_create($options);
-        $results['discord'] = @file_get_contents($discord_webhook, false, $context) !== false;
+    if (empty($tg_token) || empty($tg_chat_id)) {
+        return false;
     }
 
-    // --- TELEGRAM ---
-    if (!empty($tg_token) && !empty($tg_chat_id)) {
-        $emoji = "ℹ️";
-        if ($type === 'error') $emoji = "❌";
-        if ($type === 'warning') $emoji = "⚠️";
-        if ($type === 'success') $emoji = "✅";
+    $emoji = "ℹ️";
+    if ($type === 'error')   $emoji = "❌";
+    if ($type === 'warning') $emoji = "⚠️";
+    if ($type === 'success') $emoji = "✅";
 
-        $tg_text = "<b>$emoji Sivis Drive: $title</b>\n\n$message";
-        $url = "https://api.telegram.org/bot{$tg_token}/sendMessage";
-        
-        $post_data = [
-            'chat_id' => $tg_chat_id,
-            'text' => $tg_text,
-            'parse_mode' => 'HTML'
-        ];
+    $tg_text = "<b>$emoji Sivis Drive: $title</b>\n\n$message";
+    $url = "https://api.telegram.org/bot{$tg_token}/sendMessage";
 
-        $options = [
-            'http' => [
-                'method'  => 'POST',
-                'header'  => "Content-Type: application/json\r\n",
-                'content' => json_encode($post_data),
-                'ignore_errors' => true
-            ]
-        ];
-        $context = stream_context_create($options);
-        $results['telegram'] = @file_get_contents($url, false, $context) !== false;
-    }
-    
-    return !empty($results) && in_array(true, $results, true);
+    $post_data = [
+        'chat_id'    => $tg_chat_id,
+        'text'       => $tg_text,
+        'parse_mode' => 'HTML'
+    ];
+
+    $options = [
+        'http' => [
+            'method'        => 'POST',
+            'header'        => "Content-Type: application/json\r\n",
+            'content'       => json_encode($post_data),
+            'ignore_errors' => true
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    return @file_get_contents($url, false, $context) !== false;
 }
+
 
