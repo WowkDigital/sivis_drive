@@ -55,8 +55,8 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-700/50">
-                                <?php foreach ($users as $u): ?>
-                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                <?php foreach ($users as $idx => $u): ?>
+                                <tr class="hover:bg-slate-700/30 transition-colors <?= $idx >= 4 ? 'hidden user-row-extra opacity-0 translate-y-2' : '' ?>">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <form method="post" class="flex flex-col gap-1"><input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                             <input type="hidden" name="action" value="update_user_name">
@@ -130,5 +130,26 @@
                         </table>
                     </div>
                 </div>
+                <?php if (count($users) > 4): ?>
+                <div class="mt-6 flex justify-center border-t border-slate-700/50 pt-6">
+                    <button id="btn-show-all-users" onclick="showAllUsers(this)" class="flex items-center gap-2 px-6 py-2.5 bg-slate-700/50 hover:bg-slate-600 text-slate-300 rounded-xl transition-all border border-slate-600/50 hover:border-slate-500 font-medium text-sm shadow-lg group">
+                        <i data-lucide="users" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                        Załaduj wszystkich pracowników (<?= count($users) - 4 ?> więcej)
+                    </button>
+                    <script>
+                        function showAllUsers(btn) {
+                            const extraRows = document.querySelectorAll('.user-row-extra');
+                            extraRows.forEach((row, i) => {
+                                row.classList.remove('hidden');
+                                setTimeout(() => {
+                                    row.classList.remove('opacity-0', 'translate-y-2');
+                                    row.classList.add('transition-all', 'duration-500');
+                                }, i * 50);
+                            });
+                            btn.parentElement.remove();
+                        }
+                    </script>
+                </div>
+                <?php endif; ?>
             </div>
         </div>

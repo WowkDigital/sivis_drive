@@ -102,12 +102,14 @@ require_once 'core/admin_logic.php';
         <?php endif; ?>
 
         <?php require_once 'views/admin/stats.php'; ?>
-        <?php require_once 'views/admin/tests.php'; ?>
-        <?php require_once 'views/admin/settings.php'; ?>
         <?php require_once 'views/admin/users.php'; ?>
 
         <?php require_once 'views/admin/folders.php'; ?>
         <?php require_once 'views/admin/logs.php'; ?>
+        
+        <?php require_once 'views/admin/tests.php'; ?>
+        <?php require_once 'views/admin/settings.php'; ?>
+        
         <?php require_once 'views/admin/trash.php'; ?>
         <?php require_once 'views/admin/backups.php'; ?>
 
