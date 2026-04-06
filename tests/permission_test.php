@@ -46,6 +46,10 @@ function get_test_db() {
     return $db;
 }
 
+// 2.1 Grab live settings for external integration tests
+$live_tg_token = get_setting($db, 'telegram_bot_token', '');
+$live_tg_chat_id = get_setting($db, 'telegram_chat_id', '');
+
 $db = get_test_db();
 $results = [];
 
@@ -328,6 +332,33 @@ add_test("Upload: DataTransfer mock check (Regresja 'Single file upload')", func
         strpos($content, 'files.forEach') === false) {
         return "UWAGA: W views/footer_parts/upload.php nie znaleziono pętli iterującej po plikach. Sprawdź czy bulk upload nie jest uszkodzony!";
     }
+    return true;
+});
+
+add_test("Integracja: Połączenie z Botem Telegram", function() use ($live_tg_token, $live_tg_chat_id) {
+    if (empty($live_tg_token)) return "Brak skonfigurowanego tokenu bota.";
+    
+    $url = "https://api.telegram.org/bot{$live_tg_token}/getMe";
+    $options = [
+        'http' => [
+            'method' => 'GET',
+            'timeout' => 5,
+            'ignore_errors' => true
+        ]
+    ];
+    $context = stream_context_create($options);
+    $response = @file_get_contents($url, false, $context);
+    
+    if ($response === false) return "Błąd połączenia z serwerami Telegram (Timeout lub brak internetu).";
+    
+    $data = json_decode($response, true);
+    if (!isset($data['ok']) || $data['ok'] !== true) {
+        $err = $data['description'] ?? 'Nieznany błąd';
+        return "Telegram API zwróciło błąd: " . $err;
+    }
+    
+    if (empty($live_tg_chat_id)) return "Token poprawny (@" . $data['result']['username'] . "), ale brak Chat ID.";
+    
     return true;
 });
 

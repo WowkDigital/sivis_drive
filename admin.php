@@ -154,11 +154,11 @@ require_once 'core/admin_logic.php';
         let logsOffset = 15;
         function loadMoreLogs() {
             const btn = document.getElementById('load-more-logs');
-            const icon = btn.querySelector('i');
+            const icon = btn.querySelector('.lucide, i, svg');
             const limit = 30;
 
             btn.disabled = true;
-            icon.classList.add('animate-spin');
+            if (icon) icon.classList.add('animate-spin');
 
             fetch(`api/ajax.php?ajax_action=get_logs&offset=${logsOffset}&limit=${limit}`)
                 .then(res => res.json())
@@ -212,7 +212,7 @@ require_once 'core/admin_logic.php';
                 })
                 .finally(() => {
                     btn.disabled = false;
-                    icon.classList.remove('animate-spin');
+                    if (icon) icon.classList.remove('animate-spin');
                 });
         }
 
