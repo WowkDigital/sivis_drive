@@ -43,7 +43,7 @@
                 data.breadcrumbs.forEach((bc, i) => {
                     if (i > 0) bcHtml += '<i data-lucide="chevron-right" class="w-3.5 h-3.5 mx-1.5 opacity-50"></i>';
                     const isLast = i === data.breadcrumbs.length - 1;
-                    bcHtml += `<a href="javascript:void(0)" onclick="loadFolder(${bc.id}, 0, true)" class="hover:text-blue-400 transition-colors ${isLast ? 'text-blue-300 font-bold bg-blue-500/10 px-2 py-0.5 rounded' : ''}">${escHtml(bc.name)}</a>`;
+                    bcHtml += `<a href="javascript:void(0)" onclick="loadFolder('${bc.id}', 0, true)" class="hover:text-blue-400 transition-colors ${isLast ? 'text-blue-300 font-bold bg-blue-500/10 px-2 py-0.5 rounded' : ''}">${escHtml(bc.name)}</a>`;
                 });
                 bcContainer.innerHTML = bcHtml;
             }

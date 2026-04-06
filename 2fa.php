@@ -109,7 +109,7 @@ if ($setup_mode) {
             }
         }
     </script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.418.0/dist/umd/lucide.min.js"></script>
 </head>
 <body class="bg-slate-900 flex items-center justify-center min-h-screen p-4">
     <div class="w-full max-w-md text-center">

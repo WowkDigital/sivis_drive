@@ -10,7 +10,7 @@
                 <i data-lucide="home" class="w-4 h-4 mr-2 text-blue-400"></i>
                 <?php foreach ($breadcrumbs as $i => $bc): ?>
                     <?php if ($i > 0): ?><i data-lucide="chevron-right" class="w-3.5 h-3.5 mx-1.5 opacity-50"></i><?php endif; ?>
-                    <a href="javascript:void(0)" onclick="loadFolder(<?= $bc['id'] ?>, 0, true)" class="hover:text-blue-400 transition-colors <?= $i === count($breadcrumbs)-1 ? 'text-blue-300 font-bold bg-blue-500/10 px-2 py-0.5 rounded' : '' ?>">
+                    <a href="javascript:void(0)" onclick="loadFolder('<?= $bc['id'] ?>', 0, true)" class="hover:text-blue-400 transition-colors <?= $i === count($breadcrumbs)-1 ? 'text-blue-300 font-bold bg-blue-500/10 px-2 py-0.5 rounded' : '' ?>">
                         <?= htmlspecialchars($bc['name']) ?>
                     </a>
                 <?php endforeach; ?>

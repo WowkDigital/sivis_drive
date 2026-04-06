@@ -23,7 +23,7 @@ require_once 'core/admin_logic.php';
             }
         }
     </script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.418.0/dist/umd/lucide.min.js"></script>
     <script src="assets/js/modals.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-200 min-h-screen">
