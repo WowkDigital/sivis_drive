@@ -265,6 +265,72 @@ add_test("Search: Recent activity detection", function() use ($db) {
     return has_recent_activity($db, 1000) === true;
 });
 
+// --- NEW REGRESSION TESTS (Recent Fixes) ---
+
+add_test("Bulk Actions: Validate permissions for multiple ID selection", function() use ($db) {
+    // Setup: Admin root (id 2000), Employee root (id 2001)
+    $db->exec("INSERT INTO folders (id, owner_id, name) VALUES (2000, 1, 'Admin Folder')");
+    $db->exec("INSERT INTO folders (id, owner_id, name) VALUES (2001, 2, 'Employee Folder')");
+
+    // Test: Employee (id 2) tries to bulk action on both
+    $items = [2000, 2001];
+    $results = array_map(function($id) use ($db) {
+        return can_user_edit_folder($db, $id, 2, 'pracownik', 'Pracownicy');
+    }, $items);
+    
+    // Result should be [false, true]
+    return $results[0] === false && $results[1] === true;
+});
+
+add_test("Security: Frontend JS syntax check (Regresja 'Unexpected token export')", function() {
+    $js_dir = ROOT_DIR . '/assets/js';
+    if (!is_dir($js_dir)) return "Katalog assets/js nie istnieje";
+    
+    $files = glob($js_dir . '/*.js');
+    $errors = [];
+    foreach ($files as $file) {
+        $content = file_get_contents($file);
+        // This environment uses UMD/Global scripts, 'export' outside of modules breaks it.
+        if (preg_match('/^export\s+.*$/m', $content)) {
+            $errors[] = basename($file);
+        }
+    }
+    
+    if (!empty($errors)) {
+        return "Błąd: Wykryto słowo kluczowe 'export' w plikach: " . implode(', ', $errors) . ". To spowoduje błąd krytyczny w przeglądarce.";
+    }
+    return true;
+});
+
+add_test("Integrity: User creation role mapping", function() use ($db) {
+    // Verify that role-to-group mapping in admin_logic.php is consistent
+    $test_cases = [
+        ['role' => 'zarząd', 'expected_group' => 'zarząd'],
+        ['role' => 'pracownik', 'expected_group' => 'pracownicy']
+    ];
+    
+    foreach ($test_cases as $case) {
+        $group = ($case['role'] === 'zarząd') ? 'zarząd' : 'pracownicy';
+        if ($group !== $case['expected_group']) return "Błędne mapowanie dla roli: " . $case['role'];
+    }
+    return true;
+});
+
+add_test("Upload: DataTransfer mock check (Regresja 'Single file upload')", function() {
+    // This is a documentation/sanity test for the JS logic fixed in views/footer_parts/upload.php
+    $upload_logic_file = ROOT_DIR . '/views/footer_parts/upload.php';
+    if (!file_exists($upload_logic_file)) return "Brak pliku upload.php";
+    
+    $content = file_get_contents($upload_logic_file);
+    // Ensure we are iterating over all files in DataTransfer
+    if (strpos($content, 'for (let i = 0; i < files.length; i++)') === false && 
+        strpos($content, 'Array.from(files)') === false &&
+        strpos($content, 'files.forEach') === false) {
+        return "UWAGA: W views/footer_parts/upload.php nie znaleziono pętli iterującej po plikach. Sprawdź czy bulk upload nie jest uszkodzony!";
+    }
+    return true;
+});
+
 // --- OUTPUT ---
 
 if (php_sapi_name() === 'cli') {

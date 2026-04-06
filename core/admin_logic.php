@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$public_id, $email, $hash, $role, $group, $display_name]);
                 $new_user_password = $password;
                 $new_user_email = $email;
+                $new_user_role = $role;
                 
                 log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_USER', "Utworzono użytkownika: $email ($role)");
 

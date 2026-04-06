@@ -89,6 +89,10 @@ require_once 'core/admin_logic.php';
                             <span class="text-slate-400 text-sm font-medium">Hasło:</span>
                             <code class="px-2 py-1 bg-slate-800 text-sm font-mono text-blue-400 tracking-wider rounded border border-slate-700" id="generated-password"><?= htmlspecialchars($new_user_password) ?></code>
                         </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <span class="text-slate-400 text-sm font-medium">Uprawnienia:</span>
+                            <code class="px-2 py-1 bg-slate-800 text-[10px] uppercase font-black tracking-widest text-emerald-400 rounded border border-slate-700" id="generated-role"><?= htmlspecialchars($new_user_role) ?></code>
+                        </div>
                         <button onclick="copyCredentialsToClipboard(this)" class="mt-2 w-full flex justify-center items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-lg transition-all shadow-lg shadow-blue-500/20 active:scale-95 group" title="Kopiuj dane logowania">
                             <i data-lucide="copy" class="w-4 h-4 group-active:scale-90 transition-transform"></i> Skopiuj dane
                         </button>
@@ -126,8 +130,9 @@ require_once 'core/admin_logic.php';
         function copyCredentialsToClipboard(btn) {
             const email = document.getElementById('generated-email').innerText;
             const password = document.getElementById('generated-password').innerText;
+            const role = document.getElementById('generated-role').innerText;
             const loginUrl = window.location.origin + window.location.pathname.replace('admin.php', '');
-            const textToCopy = `Adres portalu: ${loginUrl}\nLogin: ${email}\nHasło: ${password}`;
+            const textToCopy = `Adres portalu: ${loginUrl}\nLogin: ${email}\nHasło: ${password}\nUprawnienia: ${role}`;
             
             navigator.clipboard.writeText(textToCopy).then(() => {
                 btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Skopiowano!`;
