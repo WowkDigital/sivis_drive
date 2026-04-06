@@ -69,10 +69,10 @@
                     <button onclick="bulkDownload()" class="p-2.5 sm:p-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl sm:rounded-2xl transition-all active:scale-90 shadow-lg shadow-blue-600/20" title="Pobierz wybrane">
                         <i data-lucide="download" class="w-5 h-5 sm:w-6 h-6"></i>
                     </button>
-                    <button onclick="bulkMove()" class="p-2.5 sm:p-3.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl sm:rounded-2xl border border-slate-600 transition-all active:scale-90" title="Przenieś wybrane">
+                    <button id="bulk-move-btn" onclick="bulkMove()" class="p-2.5 sm:p-3.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl sm:rounded-2xl border border-slate-600 transition-all active:scale-90" title="Przenieś wybrane">
                         <i data-lucide="folder-input" class="w-5 h-5 sm:w-6 h-6"></i>
                     </button>
-                    <button onclick="bulkDelete()" class="p-2.5 sm:p-3.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl sm:rounded-2xl border border-red-500/30 transition-all active:scale-90 shadow-lg shadow-red-500/10" title="Usuń wybrane">
+                    <button id="bulk-delete-btn" onclick="bulkDelete()" class="p-2.5 sm:p-3.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl sm:rounded-2xl border border-red-500/30 transition-all active:scale-90 shadow-lg shadow-red-500/10" title="Usuń wybrane">
                         <i data-lucide="trash-2" class="w-5 h-5 sm:w-6 h-6"></i>
                     </button>
                     <div class="w-px h-8 bg-slate-700/50 mx-1 sm:mx-2 hidden sm:block"></div>
@@ -88,6 +88,11 @@
         const count = selectedItems.size;
         const countEl = document.getElementById('bulk-count');
         if (countEl) countEl.innerText = count;
+
+        const moveBtn = document.getElementById('bulk-move-btn');
+        const deleteBtn = document.getElementById('bulk-delete-btn');
+        if (moveBtn) moveBtn.classList.toggle('hidden', !canEditCurrentFolder);
+        if (deleteBtn) deleteBtn.classList.toggle('hidden', !canEditCurrentFolder);
 
         if (count > 0) {
             bar.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');

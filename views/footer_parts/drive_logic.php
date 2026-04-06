@@ -19,6 +19,7 @@
             }
 
             currentFolderId = folderId;
+            canEditCurrentFolder = !!data.can_edit;
             currentOffset = offset;
             
             // Update folder name and badge
