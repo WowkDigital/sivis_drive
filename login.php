@@ -6,7 +6,7 @@ if (is_logged_in()) {
 }
 
 $error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
     $csrf_token = $_POST['csrf_token'] ?? '';
     if (!verify_csrf_token($csrf_token)) {
         $error = 'Błąd weryfikacji tokenu CSRF.';
@@ -14,9 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
 
-    $stmt = $db->prepare('SELECT * FROM users WHERE email = ?');
-    $stmt->execute([$email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $db->prepare('SELECT * FROM users WHERE email = ?');
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password_hash'])) {
             $db->prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?')->execute([$user['id']]);
@@ -57,9 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
 
         } else {
-
-        $error = 'Nieprawidłowy email lub hasło.';
-    }
+            $error = 'Nieprawidłowy email lub hasło.';
+        }
     }
 }
 
@@ -68,10 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (verify_csrf_token($csrf_token)) {
         $contact_name = $_POST['contact_name'] ?? 'Nieznany';
         $contact_message = $_POST['contact_message'] ?? '';
-        $contact_info = $_POST['contact_info'] ?? 'Brak info';
+        $contact_email = $_POST['contact_email'] ?? 'Nie podano';
+        $contact_phone = $_POST['contact_phone'] ?? 'Nie podano';
 
         if (!empty($contact_message)) {
-            $msg = "**Od:** $contact_name\n**Kontakt:** $contact_info\n\n**Wiadomość:**\n$contact_message";
+            $msg = "**Od:** $contact_name\n**Email:** $contact_email\n**Tel:** $contact_phone\n\n**Wiadomość:**\n$contact_message";
             send_admin_notification($db, "Nowa prośba o kontakt (Logowanie)", $msg, 'warning');
             $success = 'Wysłano! Administrator skontaktuje się z Tobą.';
         }
@@ -226,12 +226,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Twoje Imię</label>
-                                <input name="contact_name" type="text" placeholder="Np. Jan Kowalski" class="w-full bg-slate-900/80 border border-slate-700 rounded-xl py-2.5 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" required>
+                                <input name="contact_name" type="text" placeholder="Jan Kowalski" class="w-full bg-slate-900/80 border border-slate-700 rounded-xl py-2.5 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all" required>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Twój kontakt (Email/Tel)</label>
-                                <input name="contact_info" type="text" placeholder="Dla admina..." class="w-full bg-slate-900/80 border border-slate-700 rounded-xl py-2.5 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50" required>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Twój Email</label>
+                                <input name="contact_email" type="email" placeholder="jan@przyklad.pl" class="w-full bg-slate-900/80 border border-slate-700 rounded-xl py-2.5 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all" required>
                             </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Numer Telefonu (Opcjonalnie)</label>
+                            <input name="contact_phone" type="tel" placeholder="+48 000 000 000" class="w-full bg-slate-900/80 border border-slate-700 rounded-xl py-2.5 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all">
                         </div>
                         
                         <div>
