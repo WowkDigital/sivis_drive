@@ -200,6 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($_POST['action'] === 'update_settings') {
             $in_app_preview = isset($_POST['in_app_preview']) ? '1' : '0';
             $enforce_2fa = isset($_POST['enforce_2fa_admin']) ? '1' : '0';
+            $enable_contact_form = isset($_POST['enable_contact_form']) ? '1' : '0';
             $tg_token = $_POST['telegram_bot_token'] ?? '';
             $tg_chat_id = $_POST['telegram_chat_id'] ?? '';
             
@@ -207,6 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             set_setting($db, 'in_app_preview', $in_app_preview);
             set_setting($db, 'enforce_2fa_admin', $enforce_2fa);
+            set_setting($db, 'enable_contact_form', $enable_contact_form);
             set_setting($db, 'telegram_bot_token', $tg_token);
             set_setting($db, 'telegram_chat_id', $tg_chat_id);
             
@@ -217,8 +219,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 log_activity($db, $_SESSION['user_id'], 'ADMIN_DISABLE_2FA', "Wyłączono wymuszanie 2FA dla administracji i zarządu");
             }
             
-            log_activity($db, $_SESSION['user_id'], 'ADMIN_UPDATE_SETTINGS', "Zaktualizowano ustawienia (Telegram: " . (empty($tg_token) ? 'brak' : 'skonfigurowano') . ")");
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_UPDATE_SETTINGS', "Zaktualizowano ustawienia (Telegram: " . (empty($tg_token) ? 'brak' : 'skonfigurowano') . ", Formularz: " . ($enable_contact_form ? 'ON' : 'OFF') . ")");
             $message = "Ustawienia zostały zapisane.";
+        } elseif ($_POST['action'] === 'test_telegram') {
+            // First save the current values from the form
+            $tg_token = $_POST['telegram_bot_token'] ?? '';
+            $tg_chat_id = $_POST['telegram_chat_id'] ?? '';
+            $in_app_preview = isset($_POST['in_app_preview']) ? '1' : '0';
+            $enforce_2fa = isset($_POST['enforce_2fa_admin']) ? '1' : '0';
+            $enable_contact_form = isset($_POST['enable_contact_form']) ? '1' : '0';
+
+            set_setting($db, 'telegram_bot_token', $tg_token);
+            set_setting($db, 'telegram_chat_id', $tg_chat_id);
+            set_setting($db, 'in_app_preview', $in_app_preview);
+            set_setting($db, 'enforce_2fa_admin', $enforce_2fa);
+            set_setting($db, 'enable_contact_form', $enable_contact_form);
+
+            $test_message = "Cześć! To jest wiadomość testowa z systemu <b>Sivis Drive</b>. Jeśli ją widzisz, Twój bot jest skonfigurowany poprawnie! 🚀";
+            $success = send_admin_notification($db, "Test Połączenia", $test_message, 'success');
+
+            if ($success) {
+                $_SESSION['toast'] = "Wiadomość testowa została wysłana! Sprawdź Telegrama.";
+            } else {
+                $_SESSION['toast_error'] = "Błąd: Nie udało się wysłać wiadomości. Sprawdź Token/Chat ID.";
+            }
+            header("Location: admin.php");
+            exit;
         }
 
 

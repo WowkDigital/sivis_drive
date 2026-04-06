@@ -216,6 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 </div>
 
                 <!-- Contact Form Section -->
+                <?php if (get_setting($db, 'enable_contact_form', '0') == '1'): ?>
                 <div class="border-t border-slate-700/50 pt-8 mt-2">
                     <h4 class="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4">Wyślij szybkie powiadomienie</h4>
                     <form method="post" action="" class="space-y-4">
@@ -243,6 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         </button>
                     </form>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

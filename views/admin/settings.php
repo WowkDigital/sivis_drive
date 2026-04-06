@@ -51,8 +51,16 @@
                         <i data-lucide="send" class="w-6 h-6 text-sky-400"></i>
                     </div>
                     <div class="flex-1">
-                        <span class="block text-sm font-bold text-slate-200 mb-1">Powiadomienia Telegram</span>
-                        <span class="block text-xs text-slate-500 mb-4">Otrzymuj natychmiastowe powiadomienia na Telegramie gdy ktoś prosi o pomoc z poziomu ekranu logowania.</span>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <span class="block text-sm font-bold text-slate-200">Powiadomienia Telegram</span>
+                                <span class="block text-xs text-slate-500">Otrzymuj natychmiastowe powiadomienia na Telegramie gdy ktoś prosi o pomoc.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="enable_contact_form" value="1" class="sr-only peer" <?= get_setting($db, 'enable_contact_form', '0') == '1' ? 'checked' : '' ?>>
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+                            </label>
+                        </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Bot Token</label>
@@ -62,6 +70,12 @@
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Chat ID</label>
                                 <input type="text" name="telegram_chat_id" value="<?= htmlspecialchars(get_setting($db, 'telegram_chat_id', '')) ?>" class="w-full bg-slate-950/50 border border-slate-700 rounded-xl py-2 px-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all placeholder:text-slate-600" placeholder="np. 664433505">
                             </div>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" name="action" value="test_telegram" class="inline-flex items-center space-x-2 px-4 py-2 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 rounded-xl font-bold text-xs transition-all border border-sky-500/20 active:scale-95">
+                                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                                <span>Wyślij wiadomość testową</span>
+                            </button>
                         </div>
                     </div>
                 </div>
