@@ -180,12 +180,16 @@
             dropZone.addEventListener('drop', async (e) => {
                 const items = e.dataTransfer.items;
                 if (items && items.length > 0) {
-                    let allFiles = [];
+                    // Extract entries synchronously into an array first
+                    const entries = [];
                     for (let i = 0; i < items.length; i++) {
                         let item = items[i].webkitGetAsEntry();
-                        if (item) {
-                            allFiles = allFiles.concat(await traverseFileTree(item));
-                        }
+                        if (item) entries.push(item);
+                    }
+                    
+                    let allFiles = [];
+                    for (const entry of entries) {
+                        allFiles = allFiles.concat(await traverseFileTree(entry));
                     }
                     if (allFiles.length > 0) handleFileUpload(allFiles);
                 } else {
