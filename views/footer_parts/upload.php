@@ -103,6 +103,7 @@
                         progressBar.classList.replace('bg-red-500', 'bg-blue-500');
                     }
                     loadFolder(currentFolderId, 0, true);
+                    if (window.refreshUsage) refreshUsage();
                     const fi = document.getElementById('file-input'); if(fi) fi.value = "";
                     const foi = document.getElementById('folder-input'); if(foi) foi.value = "";
                     if (successFiles > 0) showToast(`Wgrano ${successFiles} plików! 🎉`);

@@ -25,20 +25,20 @@
         <div class="mt-6 pt-4 border-t border-slate-700/50 space-y-3">
             <div>
                 <div class="flex justify-between text-[10px] uppercase font-bold text-slate-500 mb-1">
-                    <span>Pliki (<?= $usage['count'] ?>/500)</span>
-                    <span><?= $perc_p ?>%</span>
+                    <span id="usage-count">Pliki (<?= $usage['count'] ?>/500)</span>
+                    <span id="usage-count-perc"><?= $perc_p ?>%</span>
                 </div>
                 <div class="h-1 w-full bg-slate-900 rounded-full overflow-hidden">
-                    <div class="h-full bg-blue-500" style="width: <?= $perc_p ?>%"></div>
+                    <div id="usage-count-bar" class="h-full bg-blue-500 transition-all duration-700" style="width: <?= $perc_p ?>%"></div>
                 </div>
             </div>
             <div>
                 <div class="flex justify-between text-[10px] uppercase font-bold text-slate-500 mb-1">
-                    <span>Miejsce (<?= round($usage['size']/(1024*1024), 1) ?>MB/500MB)</span>
-                    <span><?= $perc_s ?>%</span>
+                    <span id="usage-size">Miejsce (<?= round($usage['size']/(1024*1024), 1) ?>MB/500MB)</span>
+                    <span id="usage-size-perc"><?= $perc_s ?>%</span>
                 </div>
                 <div class="h-1 w-full bg-slate-900 rounded-full overflow-hidden">
-                    <div class="h-full bg-emerald-500" style="width: <?= $perc_s ?>%"></div>
+                    <div id="usage-size-bar" class="h-full bg-emerald-500 transition-all duration-700" style="width: <?= $perc_s ?>%"></div>
                 </div>
             </div>
         </div>

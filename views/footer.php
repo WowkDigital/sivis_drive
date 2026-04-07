@@ -67,6 +67,36 @@
                 console.error('Error fetching targets:', e);
             }
         }
+
+        async function refreshUsage() {
+            try {
+                const res = await fetch('api/ajax.php?ajax_action=get_usage');
+                const usage = await res.json();
+                
+                const count = usage.count || 0;
+                const size = usage.size || 0;
+                const perc_p = Math.min(100, Math.round((count / 500) * 100));
+                const perc_s = Math.min(100, Math.round((size / (500 * 1024 * 1024)) * 100));
+                
+                const elCount = document.getElementById('usage-count');
+                const elCountPerc = document.getElementById('usage-count-perc');
+                const elCountBar = document.getElementById('usage-count-bar');
+                const elSize = document.getElementById('usage-size');
+                const elSizePerc = document.getElementById('usage-size-perc');
+                const elSizeBar = document.getElementById('usage-size-bar');
+                
+                if (elCount) elCount.innerText = `Pliki (${count}/500)`;
+                if (elCountPerc) elCountPerc.innerText = `${perc_p}%`;
+                if (elCountBar) elCountBar.style.width = `${perc_p}%`;
+                
+                const mb = (size / (1024 * 1024)).toFixed(1);
+                if (elSize) elSize.innerText = `Miejsce (${mb}MB/500MB)`;
+                if (elSizePerc) elSizePerc.innerText = `${perc_s}%`;
+                if (elSizeBar) elSizeBar.style.width = `${perc_s}%`;
+            } catch (e) {
+                console.error('Error refreshing usage:', e);
+            }
+        }
     </script>
 
     <?php 

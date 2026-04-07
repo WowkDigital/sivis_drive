@@ -243,6 +243,57 @@ require_once 'core/admin_logic.php';
             }, 3000);
         }
 
+        let maxLogId = <?= !empty($logs) ? max(array_column($logs, 'id')) : 0 ?>;
+        
+        function pollLogs() {
+            fetch(`api/ajax.php?ajax_action=get_logs&after_id=${maxLogId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.logs && data.logs.length > 0) {
+                        const container = document.getElementById('logs-tbody');
+                        // Sort by ID ascending to prepend in correct order
+                        data.logs.sort((a,b) => a.id - b.id).forEach(l => {
+                            if (l.id > maxLogId) maxLogId = l.id;
+                            
+                            const tr = document.createElement('tr');
+                            tr.className = 'hover:bg-slate-700/30 transition-colors bg-emerald-500/5 opacity-0 -translate-y-4';
+                            tr.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-slate-200">${l.display_name}</div>
+                                    <div class="text-xs text-slate-500">${l.email}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-[10px] font-bold rounded uppercase tracking-tighter ${l.color_class}">
+                                        ${l.action}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-slate-400">
+                                    ${l.details}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-500">
+                                    ${l.formatted_date}
+                                </td>
+                            `;
+                            if (container.firstChild) {
+                                container.insertBefore(tr, container.firstChild);
+                            } else {
+                                container.appendChild(tr);
+                            }
+                            
+                            setTimeout(() => {
+                                tr.classList.remove('opacity-0', '-translate-y-4');
+                                tr.classList.add('transition-all', 'duration-700');
+                                setTimeout(() => tr.classList.remove('bg-emerald-500/5'), 2000);
+                            }, 10);
+                        });
+                        if (window.lucide) lucide.createIcons();
+                    }
+                })
+                .catch(err => console.error("Poll error:", err));
+        }
+
+        setInterval(pollLogs, 5000); // Check every 5 seconds for better "immediate" feel
+
         lucide.createIcons();
     </script>
 </body>

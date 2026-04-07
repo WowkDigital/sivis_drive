@@ -239,9 +239,15 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_logs') {
     $offset = (int)($_GET['offset'] ?? 0);
     $limit = (int)($_GET['limit'] ?? 30);
 
-    $stmt = $db->prepare("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.created_at DESC LIMIT ? OFFSET ?");
-    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
-    $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+    if (isset($_GET['after_id'])) {
+        $after_id = (int)$_GET['after_id'];
+        $stmt = $db->prepare("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN users u ON l.user_id = u.id WHERE l.id > ? ORDER BY l.created_at DESC");
+        $stmt->bindValue(1, $after_id, PDO::PARAM_INT);
+    } else {
+        $stmt = $db->prepare("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.created_at DESC LIMIT ? OFFSET ?");
+        $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+        $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+    }
     $stmt->execute();
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -292,7 +298,7 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_trash') {
                   FROM folders f LEFT JOIN users u ON f.owner_id = u.id 
                   WHERE f.deleted_at IS NOT NULL";
 
-    $stmt = $db->prepare("($q_files) UNION ALL ($q_folders) ORDER BY deleted_at DESC LIMIT ? OFFSET ?");
+    $stmt = $db->prepare("$q_files UNION ALL $q_folders ORDER BY deleted_at DESC LIMIT ? OFFSET ?");
     $stmt->bindValue(1, $limit, PDO::PARAM_INT);
     $stmt->bindValue(2, $offset, PDO::PARAM_INT);
     $stmt->execute();
@@ -306,5 +312,11 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_trash') {
     }
 
     echo json_encode(['items' => $items, 'has_more' => count($items) === $limit]);
+    exit;
+}
+
+if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_usage') {
+    $usage = get_private_usage($db, $_SESSION['user_id']);
+    echo json_encode($usage);
     exit;
 }
