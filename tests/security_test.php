@@ -16,39 +16,43 @@ if (!defined('ROOT_DIR')) define('ROOT_DIR', dirname(__DIR__));
 require_once ROOT_DIR . '/core/functions.php';
 
 // Mock DB session
-function get_test_db() {
-    global $db_file;
-    $db = new PDO("sqlite:$db_file");
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    $db->exec("DROP TABLE IF EXISTS users");
-    $db->exec("DROP TABLE IF EXISTS folders");
-    $db->exec("DROP TABLE IF EXISTS logs");
-    
-    $db->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT, display_name TEXT, role TEXT)");
-    $db->exec("CREATE TABLE folders (id INTEGER PRIMARY KEY, public_id TEXT, name TEXT, parent_id INTEGER, owner_id INTEGER, deleted_at DATETIME)");
-    $db->exec("CREATE TABLE logs (id INTEGER PRIMARY KEY, user_id INTEGER, action TEXT, details TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    
-    return $db;
+if (!function_exists('get_security_test_db')) {
+    function get_security_test_db() {
+        global $db_file;
+        $db = new PDO("sqlite:$db_file");
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        $db->exec("DROP TABLE IF EXISTS users");
+        $db->exec("DROP TABLE IF EXISTS folders");
+        $db->exec("DROP TABLE IF EXISTS logs");
+        
+        $db->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT, display_name TEXT, role TEXT)");
+        $db->exec("CREATE TABLE folders (id INTEGER PRIMARY KEY, public_id TEXT, name TEXT, parent_id INTEGER, owner_id INTEGER, deleted_at DATETIME)");
+        $db->exec("CREATE TABLE logs (id INTEGER PRIMARY KEY, user_id INTEGER, action TEXT, details TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        
+        return $db;
+    }
 }
 
-$db = get_test_db();
+$db = get_security_test_db();
 $results = [];
 
-function add_test($name, $callback) {
-    global $results;
-    try {
-        $start = microtime(true);
-        $res = $callback();
-        $duration = round((microtime(true) - $start) * 1000, 2);
-        
-        if ($res === true) {
-            $results[] = ['name' => $name, 'status' => 'PASS', 'duration' => $duration];
-        } else {
-            $results[] = ['name' => $name, 'status' => 'FAIL', 'duration' => $duration, 'message' => is_string($res) ? $res : 'Zwrócono false'];
+if (!function_exists('add_test')) {
+    function add_test($name, $callback) {
+        global $results;
+        try {
+            $start = microtime(true);
+            $res = $callback();
+            $duration = round((microtime(true) - $start) * 1000, 2);
+            
+            if ($res === true) {
+                $results[] = ['name' => $name, 'status' => 'PASS', 'duration' => $duration];
+            } else {
+                $results[] = ['name' => $name, 'status' => 'FAIL', 'duration' => $duration, 'message' => is_string($res) ? $res : 'Zwrócono false'];
+            }
+        } catch (Exception $e) {
+            $results[] = ['name' => $name, 'status' => 'ERROR', 'duration' => 0, 'message' => $e->getMessage()];
         }
-    } catch (Exception $e) {
-        $results[] = ['name' => $name, 'status' => 'ERROR', 'duration' => 0, 'message' => $e->getMessage()];
     }
 }
 
@@ -105,7 +109,7 @@ add_test("Test Activity Logs", function() use ($db) {
 });
 
 // --- OUTPUT ---
-if (php_sapi_name() === 'cli') {
+if (php_sapi_name() === 'cli' && !defined('TEST_RUNNER')) {
     echo "\nSivis Drive Security Test Report\n";
     echo "===================================\n";
     foreach ($results as $r) {

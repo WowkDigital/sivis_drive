@@ -241,24 +241,36 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'run_tests') {
         exit;
     }
     
-    // We want to run both: permission_test.php and security_test.php
-    // Since they both have exit; at the end when called via web, we need to bypass it or run them individually.
+    // Use output buffering to prevent accidental echoes/warnings from breaking JSON
+    ob_start();
     
     $full_results = [];
+    if (!defined('TEST_RUNNER')) define('TEST_RUNNER', true);
 
-    // Run permission tests
+    // 1. Run permission tests
     $results = []; 
-    define('TEST_RUNNER', true); // Custom flag to prevent exit in test files
-    require_once ROOT_DIR . '/tests/permission_test.php';
-    if (isset($results)) $full_results = array_merge($full_results, $results);
+    // We use a fresh variable to avoid accidental usage of global $db in tests
+    // although tests will overwrite it.
+    if (file_exists(ROOT_DIR . '/tests/permission_test.php')) {
+        require_once ROOT_DIR . '/tests/permission_test.php';
+        if (isset($results) && is_array($results)) {
+            $full_results = array_merge($full_results, $results);
+        }
+    }
 
-    // Run security tests
+    // 2. Run security tests
     $results = [];
     if (file_exists(ROOT_DIR . '/tests/security_test.php')) {
         require_once ROOT_DIR . '/tests/security_test.php';
-        if (isset($results)) $full_results = array_merge($full_results, $results);
+        if (isset($results) && is_array($results)) {
+            $full_results = array_merge($full_results, $results);
+        }
     }
     
+    // Clean any accidental output (whitespace, warnings, etc.)
+    ob_end_clean();
+    
+    header('Content-Type: application/json');
     echo json_encode($full_results);
     exit;
 }

@@ -31,6 +31,7 @@ $test_db_file = $db_file;
 require_once ROOT_DIR . '/core/auth.php';
 $db_file = $test_db_file;
 
+if (!function_exists('get_test_db')) {
 function get_test_db() {
     global $db_file;
     $db = new PDO("sqlite:$db_file");
@@ -45,6 +46,7 @@ function get_test_db() {
     
     return $db;
 }
+}
 
 // 2.1 Grab live settings for external integration tests
 $live_tg_token = get_setting($db, 'telegram_bot_token', '');
@@ -53,6 +55,7 @@ $live_tg_chat_id = get_setting($db, 'telegram_chat_id', '');
 $db = get_test_db();
 $results = [];
 
+if (!function_exists('add_test')) {
 function add_test($name, $callback) {
     global $results;
     try {
@@ -68,6 +71,7 @@ function add_test($name, $callback) {
     } catch (Exception $e) {
         $results[] = ['name' => $name, 'status' => 'ERROR', 'duration' => 0, 'message' => $e->getMessage()];
     }
+}
 }
 
 // --- PREPARE DATA ---
