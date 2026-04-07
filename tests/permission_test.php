@@ -41,7 +41,7 @@ function get_test_db() {
     $db->exec("CREATE TABLE folders (id INTEGER PRIMARY KEY, public_id TEXT, name TEXT, parent_id INTEGER, owner_id INTEGER, access_groups TEXT, deleted_at DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
     $db->exec("CREATE TABLE files (id INTEGER PRIMARY KEY, public_id TEXT, folder_id INTEGER, name TEXT, original_name TEXT, size INTEGER, uploaded_by INTEGER, deleted_at DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
     $db->exec("CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_value TEXT)");
-    $db->exec("CREATE TABLE logs (id INTEGER PRIMARY KEY, user_id INTEGER, action TEXT, details TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    $db->exec("CREATE TABLE logs (id INTEGER PRIMARY KEY, user_id INTEGER, action TEXT, details TEXT, ip_address TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
     
     return $db;
 }
