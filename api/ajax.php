@@ -133,6 +133,11 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'rename_item' && $_S
         exit;
     }
 
+    if (!is_valid_name($new_name)) {
+        echo json_encode(['error' => 'Nazwa zawiera niedozwolone znaki specjalne']);
+        exit;
+    }
+
     if ($type === 'folder') {
         $role = $_SESSION['role'] ?? 'pracownik';
         $group = get_user_group();
@@ -176,6 +181,11 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_folder' && $
         exit;
     }
 
+    if (!is_valid_name($name)) {
+        echo json_encode(['error' => 'Nazwa folderu zawiera niedozwolone znaki specjalne']);
+        exit;
+    }
+
     $parent_id = resolve_folder_id($db, $_POST['parent_id']);
     $role = $_SESSION['role'] ?? 'pracownik';
     $group = get_user_group();
@@ -207,6 +217,11 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'create_shared_folde
         $name = $_POST['name'];
         if (empty($name)) {
             echo json_encode(['error' => 'Nazwa nie może być pusta']);
+            exit;
+        }
+
+        if (!is_valid_name($name)) {
+            echo json_encode(['error' => 'Nazwa folderu zawiera niedozwolone znaki specjalne']);
             exit;
         }
         $stmt = $db->prepare("INSERT INTO folders (name, owner_id, access_groups) VALUES (?, NULL, 'zarząd,pracownicy')");

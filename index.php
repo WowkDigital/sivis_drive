@@ -29,6 +29,7 @@ if (!$user_private_root_id) {
         $_SESSION['display_name'] = $stmt->fetchColumn();
     }
     $name = !empty($_SESSION['display_name']) ? 'Pliki ' . $_SESSION['display_name'] : 'Moje pliki (' . $_SESSION['email'] . ')';
+    $name = sanitize_name($name);
     $stmt = $db->prepare("INSERT INTO folders (public_id, name, owner_id) VALUES (?, ?, ?)");
     $stmt->execute([generate_nanoid(), $name, $_SESSION['user_id']]);
     $user_private_root_id = $db->lastInsertId();

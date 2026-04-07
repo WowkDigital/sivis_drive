@@ -16,24 +16,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($_POST['action'] === 'add_user') {
             $email = $_POST['email'];
             $display_name = $_POST['display_name'];
-            $role = $_POST['role'];
-            $group = ($role === 'zarząd') ? 'zarząd' : 'pracownicy';
-            $password = generate_random_password(16);
-            $hash = password_hash($password, PASSWORD_DEFAULT);
-            
-            try {
-                $public_id = generate_nanoid();
-                $stmt = $db->prepare('INSERT INTO users (public_id, email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, ?, ?, ?)');
-                $stmt->execute([$public_id, $email, $hash, $role, $group, $display_name]);
-                $new_user_password = $password;
-                $new_user_email = $email;
-                $new_user_role = $role;
+            if (!is_valid_name($display_name)) {
+                $message = "Błąd: Nazwa wyświetlana zawiera niedozwolone znaki.";
+            } else {
+                $role = $_POST['role'];
+                $group = ($role === 'zarząd') ? 'zarząd' : 'pracownicy';
+                $password = generate_random_password(16);
+                $hash = password_hash($password, PASSWORD_DEFAULT);
                 
-                log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_USER', "Utworzono użytkownika: $email ($role)");
-
-                $message = "Użytkownik został pomyślnie utworzony.";
-            } catch (Exception $e) {
-                $message = "Błąd: " . $e->getMessage();
+                try {
+                    $public_id = generate_nanoid();
+                    $stmt = $db->prepare('INSERT INTO users (public_id, email, password_hash, role, user_group, display_name) VALUES (?, ?, ?, ?, ?, ?)');
+                    $stmt->execute([$public_id, $email, $hash, $role, $group, $display_name]);
+                    $new_user_password = $password;
+                    $new_user_email = $email;
+                    $new_user_role = $role;
+                    
+                    log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_USER', "Utworzono użytkownika: $email ($role)");
+                    $message = "Użytkownik został pomyślnie utworzony.";
+                } catch (Exception $e) {
+                    $message = "Błąd: " . $e->getMessage();
+                }
             }
         } elseif ($_POST['action'] === 'reset_password' && isset($_POST['user_id'])) {
             $uid = (int)$_POST['user_id'];
@@ -51,14 +54,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "Hasło użytkownika zostało zresetowane.";
         } elseif ($_POST['action'] === 'add_folder') {
             $name = $_POST['name'];
-            $access = $_POST['access_groups'];
-            $public_id = generate_nanoid();
-            $stmt = $db->prepare('INSERT INTO folders (public_id, name, access_groups) VALUES (?, ?, ?)');
-            $stmt->execute([$public_id, $name, $access]);
-            
-            log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_SHARED_FOLDER', "Utworzono folder udostępniony: $name");
-
-            $message = "Folder dodany.";
+            if (!is_valid_name($name)) {
+                $message = "Błąd: Nazwa folderu zawiera niedozwolone znaki.";
+            } else {
+                $access = $_POST['access_groups'];
+                $public_id = generate_nanoid();
+                $stmt = $db->prepare('INSERT INTO folders (public_id, name, access_groups) VALUES (?, ?, ?)');
+                $stmt->execute([$public_id, $name, $access]);
+                
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_ADD_SHARED_FOLDER', "Utworzono folder udostępniony: $name");
+                $message = "Folder dodany.";
+            }
         } elseif ($_POST['action'] === 'delete_user') {
             $uid = (int)$_POST['user_id'];
             if ($uid === 1) {
@@ -102,12 +108,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($_POST['action'] === 'rename_folder') {
             $fid = (int)$_POST['folder_id'];
             $new_name = $_POST['new_name'];
-            $stmt = $db->prepare('UPDATE folders SET name = ? WHERE id = ?');
-            $stmt->execute([$new_name, $fid]);
-            
-            log_activity($db, $_SESSION['user_id'], 'ADMIN_RENAME_FOLDER', "Zmieniono nazwę folderu ID: $fid na: $new_name");
-
-            $message = "Nazwa folderu zaktualizowana.";
+            if (!is_valid_name($new_name)) {
+                $message = "Błąd: Nazwa folderu zawiera niedozwolone znaki.";
+            } else {
+                $stmt = $db->prepare('UPDATE folders SET name = ? WHERE id = ?');
+                $stmt->execute([$new_name, $fid]);
+                
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_RENAME_FOLDER', "Zmieniono nazwę folderu ID: $fid na: $new_name");
+                $message = "Nazwa folderu zaktualizowana.";
+            }
         } elseif ($_POST['action'] === 'update_user_role') {
             $uid = (int)$_POST['user_id'];
             if ($uid === 1) {
@@ -126,14 +135,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($_POST['action'] === 'update_user_name') {
             $uid = (int)$_POST['user_id'];
             $name = $_POST['display_name'];
-            $stmt = $db->prepare('UPDATE users SET display_name = ? WHERE id = ?');
-            $stmt->execute([$name, $uid]);
-            
-            // Sync private root folder name
-            $stmt = $db->prepare("UPDATE folders SET name = ? WHERE owner_id = ? AND parent_id IS NULL");
-            $stmt->execute(['Pliki ' . $name, $uid]);
+            if (!is_valid_name($name)) {
+                $message = "Błąd: Nazwa wyświetlana zawiera niedozwolone znaki.";
+            } else {
+                $stmt = $db->prepare('UPDATE users SET display_name = ? WHERE id = ?');
+                $stmt->execute([$name, $uid]);
+                
+                // Sync private root folder name
+                $stmt = $db->prepare("UPDATE folders SET name = ? WHERE owner_id = ? AND parent_id IS NULL");
+                $stmt->execute(['Pliki ' . $name, $uid]);
 
-            $message = "Nazwa wyświetlana zaktualizowana.";
+                $message = "Nazwa wyświetlana zaktualizowana.";
+            }
         } elseif ($_POST['action'] === 'restore_item') {
             $id = (int)$_POST['item_id'];
             $type = $_POST['type'];

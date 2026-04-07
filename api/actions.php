@@ -48,11 +48,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 // Handle relative path (folder upload)
                 $current_target_folder_id = $folder_id;
                 if (!empty($_POST['relative_path'])) {
-                    $path_parts = explode('/', $_POST['relative_path']);
+                    // Sanitize path for security
+                    $raw_path = str_replace('\\', '/', $_POST['relative_path']);
+                    $path_parts = explode('/', $raw_path);
                     array_pop($path_parts); // Remove the filename from path
                     
                     foreach ($path_parts as $part) {
                         $part = trim($part);
+                        if ($part === '') continue;
+                        
+                        // Sanitize each part of the folder path
+                        $part = sanitize_name($part);
                         if ($part === '') continue;
                         
                         $stmt_find = $db->prepare("SELECT id FROM folders WHERE name = ? AND parent_id = ?");
@@ -86,9 +92,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         $error_msg = "Błąd: Niedozwolone rozszerzenie pliku.";
                     } else {
                         $unique_name = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9.\-_]/', '', basename($file['name']));
+                        $sanitized_original_name = sanitize_name($file['name']);
+                        if (empty($sanitized_original_name)) $sanitized_original_name = 'unnamed_file';
+
                         if (move_uploaded_file($file['tmp_name'], $upload_dir . '/' . $unique_name)) {
                             $stmt = $db->prepare('INSERT INTO files (public_id, folder_id, name, original_name, size, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)');
-                            $stmt->execute([generate_nanoid(), $folder_id, $unique_name, $file['name'], $file['size'], $_SESSION['user_id']]);
+                            $stmt->execute([generate_nanoid(), $folder_id, $unique_name, $sanitized_original_name, $file['size'], $_SESSION['user_id']]);
                             
                             log_activity($db, $_SESSION['user_id'], 'UPLOAD_FILE', "Wgrano plik: " . $file['name'] . " do folderu ID: $folder_id");
 
@@ -128,6 +137,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $can_edit_parent = can_user_edit_folder($db, $parent_id, $_SESSION['user_id'], $role, $group);
 
         if ($can_edit_parent) {
+             if (!is_valid_name($name)) {
+                 $_SESSION['toast_error'] = "Nazwa folderu zawiera niedozwolone znaki.";
+                 header("Location: index.php?folder=" . $parent_id);
+                 exit;
+             }
              // Inherit owner_id from parent
              $stmt = $db->prepare("SELECT owner_id FROM folders WHERE id = ?");
              $stmt->execute([$parent_id]);
@@ -145,6 +159,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } elseif ($_POST['action'] === 'create_shared_folder' && isset($_POST['name'])) {
         if (is_admin() || is_zarzad()) {
             $name = $_POST['name'];
+            if (!is_valid_name($name)) {
+                $_SESSION['toast_error'] = "Nazwa folderu zawiera niedozwolone znaki.";
+                header("Location: index.php");
+                exit;
+            }
             $stmt = $db->prepare("INSERT INTO folders (public_id, name, owner_id, access_groups) VALUES (?, ?, NULL, 'zarząd,pracownicy')");
             $stmt->execute([generate_nanoid(), $name]);
             $message = "Nowy folder udostępniony został utworzony.";
@@ -153,6 +172,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     } elseif ($_POST['action'] === 'update_my_name' && isset($_POST['display_name'])) {
         $name = $_POST['display_name'];
+        if (!is_valid_name($name)) {
+            $_SESSION['toast_error'] = "Twoja nazwa zawiera niedozwolone znaki.";
+            header("Location: " . ($_SERVER['HTTP_REFERER'] ?: 'index.php'));
+            exit;
+        }
         $uid = $_SESSION['user_id'];
         
         $stmt = $db->prepare('UPDATE users SET display_name = ? WHERE id = ?');
@@ -168,6 +192,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } elseif ($_POST['action'] === 'rename_item' && isset($_POST['item_id']) && isset($_POST['new_name']) && isset($_POST['type'])) {
         $id = (int)$_POST['item_id'];
         $new_name = $_POST['new_name'];
+        if (!is_valid_name($new_name)) {
+            $_SESSION['toast_error'] = "Nowa nazwa zawiera niedozwolone znaki.";
+            header("Location: " . ($_SERVER['HTTP_REFERER'] ?: 'index.php'));
+            exit;
+        }
         $type = $_POST['type']; // 'file' or 'folder'
         $role = $_SESSION['role'] ?? 'pracownik';
         $group = get_user_group();

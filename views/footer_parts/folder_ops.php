@@ -1,4 +1,13 @@
 <script>
+    function isValidName(name) {
+        if (!name || name.trim() === '') return false;
+        const dangerous = ['<', '>', ':', '"', '/', '\\', '|', '?', '*'];
+        for (const char of dangerous) {
+            if (name.includes(char)) return false;
+        }
+        return true;
+    }
+
     function renameItem(id, type, currentName) {
         let extension = '';
         let displayName = currentName;
@@ -13,6 +22,11 @@
 
         showPromptModal('Zmień nazwę:', displayName, async (newName) => {
             if (!newName || newName === displayName) return;
+            
+            if (!isValidName(newName)) {
+                showToast("Nazwa zawiera niedozwolone znaki specjalne", "error");
+                return;
+            }
             
             const finalName = type === 'file' ? newName + extension : newName;
             
@@ -43,6 +57,10 @@
 
     async function createNewFolder(name) {
         if (!name) return;
+        if (!isValidName(name)) {
+            showToast("Nazwa folderu zawiera niedozwolone znaki specjalne", "error");
+            return;
+        }
         const formData = new FormData();
         formData.append('name', name);
         formData.append('parent_id', currentFolderId);
@@ -68,6 +86,10 @@
 
     async function createSharedFolder(name) {
         if (!name) return;
+        if (!isValidName(name)) {
+            showToast("Nazwa folderu zawiera niedozwolone znaki specjalne", "error");
+            return;
+        }
         const formData = new FormData();
         formData.append('name', name);
         formData.append('csrf_token', '<?= generate_csrf_token() ?>');

@@ -11,6 +11,49 @@ function generate_nanoid($length = 21) {
     }
     return $id;
 }
+
+/**
+ * Validate if a name (user, folder, file) contains only allowed characters.
+ * Allows: Alphanumeric (including Polish), spaces, dots, underscores, dashes.
+ * Disallows: HTML tags, scripts, path traversal, Windows-forbidden chars.
+ */
+function is_valid_name($name) {
+    if (empty(trim($name))) return false;
+    
+    // Disallow path traversal and dangerous characters
+    $dangerous = ['<', '>', ':', '"', '/', '\\', '|', '?', '*', chr(0)];
+    foreach ($dangerous as $char) {
+        if (strpos($name, $char) !== false) return false;
+    }
+    
+    if (strpos($name, '..') !== false) return false;
+
+    // Must contain at least one letter or number
+    if (!preg_match('/[\p{L}\p{N}]/u', $name)) {
+        return false;
+    }
+
+    // Restrict to a whitelist: letters, numbers, spaces, dots, underscores, dashes
+    if (!preg_match('/^[\p{L}\p{N}\s._-]+$/u', $name)) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Sanitize a string for use in filenames or display names.
+ * Useful for automatic fixes during upload or automated root folder creation.
+ */
+function sanitize_name($name) {
+    // Remove HTML tags
+    $name = strip_tags($name);
+    // Remove characters that are NOT allowed: alphanumeric, spaces, dots, underscores, dashes
+    $name = preg_replace('/[^\p{L}\p{N}\s._-]/u', '', $name);
+    // Remove path traversal and multiple dots
+    $name = preg_replace('/\.+/', '.', $name);
+    return trim($name);
+}
 /**
  * Resolve folder ID (handles both internal ID and public NanoID)
  */
