@@ -275,3 +275,36 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_logs') {
     echo json_encode(['logs' => $logs, 'has_more' => count($logs) === $limit]);
     exit;
 }
+
+if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_trash') {
+    if (!is_admin()) {
+        echo json_encode(['error' => 'Brak uprawnień']);
+        exit;
+    }
+
+    $offset = (int)($_GET['offset'] ?? 0);
+    $limit = (int)($_GET['limit'] ?? 5);
+
+    $q_files = "SELECT f.id, f.original_name as name, f.size, f.deleted_at, u.email as u_email, 'file' as type 
+                FROM files f LEFT JOIN users u ON f.uploaded_by = u.id 
+                WHERE f.deleted_at IS NOT NULL";
+    $q_folders = "SELECT f.id, f.name, 0 as size, f.deleted_at, u.email as u_email, 'folder' as type 
+                  FROM folders f LEFT JOIN users u ON f.owner_id = u.id 
+                  WHERE f.deleted_at IS NOT NULL";
+
+    $stmt = $db->prepare("($q_files) UNION ALL ($q_folders) ORDER BY deleted_at DESC LIMIT ? OFFSET ?");
+    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+    $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($items as &$item) {
+        $item['formatted_date'] = date('d.m.Y H:i', strtotime($item['deleted_at']));
+        $item['formatted_size'] = $item['type'] === 'file' ? round($item['size'] / 1024) . ' KB' : '-';
+        $item['u_email'] = htmlspecialchars($item['u_email'] ?: ($item['type'] === 'folder' ? 'System' : 'Nieznany'));
+        $item['name'] = htmlspecialchars($item['name']);
+    }
+
+    echo json_encode(['items' => $items, 'has_more' => count($items) === $limit]);
+    exit;
+}

@@ -200,7 +200,7 @@ function get_private_usage($db, $user_id) {
     if (empty($folder_ids)) return ['count' => 0, 'size' => 0];
     
     $ids_str = implode(',', $folder_ids);
-    $stats = $db->query("SELECT COUNT(*) as count, SUM(size) as size FROM files WHERE folder_id IN ($ids_str)")->fetch(PDO::FETCH_ASSOC);
+    $stats = $db->query("SELECT COUNT(*) as count, SUM(size) as size FROM files WHERE folder_id IN ($ids_str) AND deleted_at IS NULL")->fetch(PDO::FETCH_ASSOC);
     return ['count' => (int)$stats['count'], 'size' => (int)$stats['size']];
 }
 

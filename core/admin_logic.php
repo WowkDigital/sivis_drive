@@ -169,6 +169,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 log_activity($db, $_SESSION['user_id'], 'ADMIN_DELETE_FILE_PERM', "Trwale usunięto plik: " . $finfo['original_name']);
                 $message = "Plik został trwale usunięty.";
             }
+        } elseif ($_POST['action'] === 'empty_trash') {
+            $upload_dir = __DIR__ . '/../uploads';
+            
+            // 1. Delete all folders in trash (recursive)
+            $stmt = $db->query("SELECT id FROM folders WHERE deleted_at IS NOT NULL");
+            $trash_folders = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($trash_folders as $fid) {
+                // Check if it's a root trash folder (parent not in trash or no parent)
+                $stmt_p = $db->prepare("SELECT parent_id FROM folders WHERE id = ?");
+                $stmt_p->execute([$fid]);
+                $pid = $stmt_p->fetchColumn();
+                
+                $is_root_in_trash = true;
+                if ($pid) {
+                    $stmt_cp = $db->prepare("SELECT deleted_at FROM folders WHERE id = ?");
+                    $stmt_cp->execute([$pid]);
+                    if ($stmt_cp->fetchColumn()) $is_root_in_trash = false;
+                }
+                
+                if ($is_root_in_trash) {
+                    delete_folder_recursive($db, $fid, $upload_dir);
+                }
+            }
+            
+            // 2. Delete all remaining files in trash (e.g. from shared folders)
+            $stmt = $db->query("SELECT id, name, original_name FROM files WHERE deleted_at IS NOT NULL");
+            $trash_files = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($trash_files as $f) {
+                @unlink($upload_dir . '/' . $f['name']);
+                $db->prepare("DELETE FROM files WHERE id = ?")->execute([$f['id']]);
+            }
+            
+            log_activity($db, $_SESSION['user_id'], 'ADMIN_EMPTY_TRASH', "Opróżniono kosz systemowy");
+            $message = "Kosz został opróżniony.";
         } elseif ($_POST['action'] === 'run_backup') {
             require_once 'core/backup_logic.php';
             // run_backup is called inside backup_logic.php only if specifically triggered
@@ -254,8 +288,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Data Fetching
 $users = $db->query("SELECT id, email, role, user_group, display_name, last_login FROM users")->fetchAll(PDO::FETCH_ASSOC);
 $folders = $db->query("SELECT id, name, access_groups FROM folders WHERE owner_id IS NULL AND parent_id IS NULL AND deleted_at IS NULL")->fetchAll(PDO::FETCH_ASSOC);
-$deleted_files = $db->query("SELECT f.*, u.email as u_email FROM files f LEFT JOIN users u ON f.uploaded_by = u.id WHERE f.deleted_at IS NOT NULL ORDER BY f.deleted_at DESC")->fetchAll(PDO::FETCH_ASSOC);
-$deleted_folders = $db->query("SELECT f.*, u.email as u_email FROM folders f LEFT JOIN users u ON f.owner_id = u.id WHERE f.deleted_at IS NOT NULL ORDER BY f.deleted_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+
+// Combined Trash Items with Pagination
+$trash_limit = 5;
+$q_files = "SELECT f.id, f.original_name as name, f.size, f.deleted_at, u.email as u_email, 'file' as type 
+            FROM files f LEFT JOIN users u ON f.uploaded_by = u.id 
+            WHERE f.deleted_at IS NOT NULL";
+$q_folders = "SELECT f.id, f.name, 0 as size, f.deleted_at, u.email as u_email, 'folder' as type 
+              FROM folders f LEFT JOIN users u ON f.owner_id = u.id 
+              WHERE f.deleted_at IS NOT NULL";
+
+$total_trash = $db->query("SELECT (SELECT COUNT(*) FROM files WHERE deleted_at IS NOT NULL) + (SELECT COUNT(*) FROM folders WHERE deleted_at IS NOT NULL)")->fetchColumn();
+$deleted_items = $db->query("$q_files UNION ALL $q_folders ORDER BY deleted_at DESC LIMIT $trash_limit")->fetchAll(PDO::FETCH_ASSOC);
+
 $logs = $db->query("SELECT l.*, u.email, u.display_name FROM logs l LEFT JOIN users u ON l.user_id = u.id ORDER BY l.created_at DESC LIMIT 15")->fetchAll(PDO::FETCH_ASSOC);
 
 // Stats
