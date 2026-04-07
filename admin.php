@@ -208,8 +208,8 @@ require_once 'core/admin_logic.php';
                 })
                 .catch(err => {
                     console.error(err);
+                    showToast('Błąd podczas ładowania logów', 'error');
                 })
-                showToast('Błąd podczas ładowania logów', 'error');
                 .finally(() => {
                     btn.disabled = false;
                     if (icon) icon.classList.remove('animate-spin');
