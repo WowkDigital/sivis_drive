@@ -4,6 +4,24 @@ if (!defined('ROOT_DIR')) define('ROOT_DIR', dirname(__DIR__));
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/functions.php';
 
+// Global error & exception handlers to catch application problems
+set_exception_handler(function($e) use ($db) {
+    $msg = "Wyjątek: " . $e->getMessage() . " w " . $e->getFile() . ":" . $e->getLine();
+    log_activity($db, $_SESSION['user_id'] ?? 0, 'SYSTEM_ERROR', $msg);
+    if (ini_get('display_errors')) {
+        echo "Błąd Systemowy: " . $e->getMessage();
+    } else {
+        die("Wystąpił błąd systemowy. Administrator został powiadomiony.");
+    }
+});
+
+set_error_handler(function($errno, $errstr, $errfile, $errline) use ($db) {
+    if (!(error_reporting() & $errno)) return false;
+    $msg = "Error [$errno]: $errstr w $errfile:$errline";
+    log_activity($db, $_SESSION['user_id'] ?? 0, 'SYSTEM_ERROR', $msg);
+    return false; // Let standard PHP error handler continue
+});
+
 function is_logged_in() {
     if (!isset($_SESSION['user_id'])) {
         return false;
@@ -29,6 +47,7 @@ function is_logged_in() {
         if ($enforce_2fa && $is_admin_or_zarzad) {
             if (!isset($_SESSION['2fa_verified']) || $_SESSION['2fa_verified'] !== 1) {
                 // If they are logged in but not 2FA verified, and it's enforced, we must end session
+                log_activity($db, $_SESSION['user_id'], 'AUTH_ERROR', 'Próba pominięcia wymuszonego 2FA.');
                 $_SESSION = [];
                 if (session_status() === PHP_SESSION_ACTIVE) {
                     session_destroy();
@@ -53,7 +72,13 @@ function generate_csrf_token() {
 }
 
 function verify_csrf_token($token) {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    $valid = isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    if (!$valid && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        global $db;
+        $user_id = $_SESSION['user_id'] ?? 0;
+        log_activity($db, $user_id, 'CSRF_ERROR', 'Błąd weryfikacji tokenu CSRF.');
+    }
+    return $valid;
 }
 
 function is_admin() {

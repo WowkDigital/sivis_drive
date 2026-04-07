@@ -110,6 +110,7 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
 
     // Check access
     if (!can_user_access_folder($db, $file['folder_id'], $_SESSION['user_id'], $role, $group)) {
+        log_activity($db, $_SESSION['user_id'], 'SECURITY_ALERT', "Nieautoryzowana próba pobrania pliku ID: $file_id_raw");
         die("Brak dostępu do tego pliku.");
     }
     

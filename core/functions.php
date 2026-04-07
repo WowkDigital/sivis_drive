@@ -235,8 +235,52 @@ function has_recent_activity($db, $folder_id) {
  */
 function log_activity($db, $user_id, $action, $details = '') {
     try {
-        $stmt = $db->prepare("INSERT INTO logs (user_id, action, details) VALUES (?, ?, ?)");
-        $stmt->execute([$user_id, $action, $details]);
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $stmt = $db->prepare("INSERT INTO logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$user_id, $action, $details, $ip]);
+
+        // --- NATYCHMIASTOWE POWIADOMIENIA O BŁĘDACH ---
+        $is_urgent = (strpos($action, 'ERROR') !== false || strpos($action, 'FAIL') !== false || strpos($action, 'ALERT') !== false);
+        if ($is_urgent) {
+            $msg = "⚡ <b>ALARM SYSTEMOWY</b>\n";
+            $msg .= "Akcja: <code>$action</code>\n";
+            $msg .= "Szczegóły: $details\n";
+            $msg .= "IP: <code>$ip</code>\n";
+            $msg .= "Czas: " . date('H:i:s');
+            send_admin_notification($db, "Zdarzenie Systemowe", $msg, 'error');
+        }
+
+        // --- WYKRYWANIE PODEJRZANYCH ZACHOWAŃ ---
+        
+        // 1. Wykrywanie Brute-Force (logowanie)
+        if ($action === 'LOGIN_FAILED') {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM logs WHERE action = 'LOGIN_FAILED' AND ip_address = ? AND created_at > datetime('now', '-5 minutes')");
+            $stmt->execute([$ip]);
+            $failed_count = $stmt->fetchColumn();
+            
+            if ($failed_count >= 5) {
+                $alert = "🚨 <b>WYKRYTO POTENCJALNY BRUTE-FORCE!</b>\n";
+                $alert .= "Adres IP <code>$ip</code> zaliczył <b>$failed_count</b> nieudanych logowań w ostatnich 5 min.";
+                send_admin_notification($db, "Zagrożenie Bezpieczeństwa", $alert, 'warning');
+            }
+        }
+
+        // 2. Wykrywanie masowego usuwania plików
+        if ($action === 'TRASH_FILE' || $action === 'DELETE_FILE_PERM' || $action === 'TRASH_FOLDER') {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM logs WHERE (action = 'TRASH_FILE' OR action = 'DELETE_FILE_PERM' OR action = 'TRASH_FOLDER') AND user_id = ? AND created_at > datetime('now', '-1 minute')");
+            $stmt->execute([$user_id]);
+            $mass_action_count = $stmt->fetchColumn();
+
+            if ($mass_action_count >= 20) {
+                $alert = "☢️ <b>UWAGA: MASOWE USUWANIE!</b>\n";
+                $user_info = "Użytkownik ID: $user_id";
+                if (isset($_SESSION['email'])) $user_info = $_SESSION['email'];
+                
+                $alert .= "Użytkownik <b>$user_info</b> usunął <b>$mass_action_count</b> elementów w ciągu ostatniej minuty.";
+                send_admin_notification($db, "Podejrzane Zachowanie", $alert, 'warning');
+            }
+        }
+
     } catch (Exception $e) {
         // Fail silently or handle
     }

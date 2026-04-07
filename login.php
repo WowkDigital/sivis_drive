@@ -60,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
 
         } else {
             $error = 'Nieprawidłowy email lub hasło.';
+            log_activity($db, 0, 'LOGIN_FAILED', "Próba logowania na email: $email");
         }
     }
 }

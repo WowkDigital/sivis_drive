@@ -93,9 +93,11 @@ $db->exec("CREATE TABLE IF NOT EXISTS logs (
     user_id INTEGER,
     action TEXT,
     details TEXT,
+    ip_address TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
 )");
+try { @$db->exec("ALTER TABLE logs ADD COLUMN ip_address TEXT"); } catch (Exception $e) {}
 
 $db->exec("CREATE TABLE IF NOT EXISTS settings (
     setting_key TEXT PRIMARY KEY,
