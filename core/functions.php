@@ -310,4 +310,63 @@ function send_admin_notification($db, $title, $message, $type = 'info') {
     return @file_get_contents($url, false, $context) !== false;
 }
 
+/**
+ * Format bytes to human readable size
+ */
+function get_formatted_size($bytes) {
+    if ($bytes <= 0) return '0 B';
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    $i = floor(log($bytes, 1024));
+    return round($bytes / pow(1024, $i), 2) . ' ' . $units[$i];
+}
+
+/**
+ * Run periodic tasks like sending daily reports
+ */
+function run_periodic_tasks($db) {
+    $last_report = (int)get_setting($db, 'last_report_sent', 0);
+    $now = time();
+
+    // Check if 24 hours (86400 seconds) have passed
+    if ($now - $last_report >= 86400) {
+        // Update timestamp immediately to avoid double runs
+        set_setting($db, 'last_report_sent', (string)$now);
+
+        // 1. Gather Stats
+        // Logins (last 24h)
+        $stmt = $db->prepare("SELECT COUNT(*) FROM logs WHERE (action = 'LOGIN_SUCCESS' OR action = 'USER_LOGIN_2FA') AND created_at > datetime('now', '-1 day')");
+        $stmt->execute();
+        $logins = $stmt->fetchColumn();
+
+        // File Operations (last 24h)
+        // Includes: UPLOAD, DELETE, TRASH, MOVE, RENAME
+        $stmt = $db->prepare("SELECT COUNT(*) FROM logs WHERE (action LIKE 'UPLOAD%' OR action LIKE 'DELETE%' OR action LIKE 'TRASH%' OR action LIKE 'MOVE%' OR action LIKE 'RENAME%') AND created_at > datetime('now', '-1 day')");
+        $stmt->execute();
+        $file_ops = $stmt->fetchColumn();
+
+        // Total Files
+        $stmt = $db->prepare("SELECT COUNT(*) FROM files WHERE deleted_at IS NULL");
+        $stmt->execute();
+        $total_files = $stmt->fetchColumn();
+
+        // Occupied Space
+        $stmt = $db->prepare("SELECT SUM(size) FROM files WHERE deleted_at IS NULL");
+        $stmt->execute();
+        $total_size = (int)$stmt->fetchColumn();
+        $formatted_size = get_formatted_size($total_size);
+
+        // 2. Prepare Report
+        $report = "🤖 <b>Bot działa poprawnie!</b>\n\n";
+        $report .= "📊 <b>Raport z ostatnich 24h:</b>\n";
+        $report .= "• Logowania: <b>$logins</b>\n";
+        $report .= "• Operacje na plikach: <b>$file_ops</b>\n\n";
+        $report .= "📈 <b>Stan ogólny:</b>\n";
+        $report .= "• Łącznie plików: <b>$total_files</b>\n";
+        $report .= "• Zajęte miejsce: <b>$formatted_size</b>";
+
+        // 3. Send Notification
+        send_admin_notification($db, "Raport Dobowy", $report, 'success');
+    }
+}
+
 

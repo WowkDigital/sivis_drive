@@ -53,6 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
             $_SESSION['2fa_verified'] = $is_admin_or_zarzad ? 1 : 0; // If not enforced or trusted, consider verified
             $_SESSION['login_time'] = time();
             
+            log_activity($db, $user['id'], 'LOGIN_SUCCESS', 'Zalogowano poprawnie.');
+
             header('Location: index.php');
             exit;
 

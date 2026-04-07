@@ -101,4 +101,8 @@ function generate_random_password($length = 16) {
     }
     return $password;
 }
+/**
+ * Run periodic tasks (Daily Report etc)
+ */
+run_periodic_tasks($db);
 ?>
