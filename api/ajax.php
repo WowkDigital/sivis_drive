@@ -226,8 +226,25 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'run_tests') {
         exit;
     }
     
-    // The test script handles JSON output if called via web
+    // We want to run both: permission_test.php and security_test.php
+    // Since they both have exit; at the end when called via web, we need to bypass it or run them individually.
+    
+    $full_results = [];
+
+    // Run permission tests
+    $results = []; 
+    define('TEST_RUNNER', true); // Custom flag to prevent exit in test files
     require_once ROOT_DIR . '/tests/permission_test.php';
+    if (isset($results)) $full_results = array_merge($full_results, $results);
+
+    // Run security tests
+    $results = [];
+    if (file_exists(ROOT_DIR . '/tests/security_test.php')) {
+        require_once ROOT_DIR . '/tests/security_test.php';
+        if (isset($results)) $full_results = array_merge($full_results, $results);
+    }
+    
+    echo json_encode($full_results);
     exit;
 }
 

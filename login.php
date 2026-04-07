@@ -45,6 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
             }
 
             // Standard login or 2FA bypassed
+            session_regenerate_id(true); // Prevent session fixation
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // New token after ID change
+            
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['email'] = $user['email'];
             $_SESSION['display_name'] = $user['display_name'];

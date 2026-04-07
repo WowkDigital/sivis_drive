@@ -1,5 +1,15 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => isset($_SERVER['HTTPS']),
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    session_start();
+}
 if (!defined('ROOT_DIR')) define('ROOT_DIR', dirname(__DIR__));
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/functions.php';
@@ -69,6 +79,11 @@ function generate_csrf_token() {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
     return $_SESSION['csrf_token'];
+}
+
+// Auto-generate token if missing to avoid timing issues on first-time actions
+if (isset($_SESSION['user_id']) && empty($_SESSION['csrf_token'])) {
+    generate_csrf_token();
 }
 
 function verify_csrf_token($token) {

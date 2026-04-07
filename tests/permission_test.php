@@ -373,10 +373,11 @@ if (php_sapi_name() === 'cli') {
         if (isset($r['message'])) echo "      - Message: " . $r['message'] . "\n";
     }
     echo "===================================\n";
-} else {
-    // Web request - return JSON
+} elseif (!defined('TEST_RUNNER')) {
+    // Web request - return JSON (only if NOT running via runner)
     header('Content-Type: application/json');
     echo json_encode($results);
+    exit;
 }
 
 // Cleanup
