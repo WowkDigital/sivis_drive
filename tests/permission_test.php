@@ -366,6 +366,27 @@ add_test("Integracja: Połączenie z Botem Telegram", function() use ($live_tg_t
     return true;
 });
 
+add_test("Security: Telegram HTML Injection Prevention (tg_escape)", function() {
+    $input = '<script>alert("XSS")</script> & "quotes"';
+    $expected = '&lt;script&gt;alert("XSS")&lt;/script&gt; &amp; "quotes"';
+    $output = tg_escape($input);
+    
+    if ($output !== $expected) {
+        return "Mismatch: Expected '$expected', got '$output'";
+    }
+    
+    // Test nested structure (how it's used in notifications)
+    $title = "URGENT <alert>";
+    $msg = "User: <script>";
+    $final_text = "<b>" . tg_escape($title) . "</b>\n" . tg_escape($msg);
+    
+    if (strpos($final_text, '<script>') !== false || strpos($final_text, '<alert>') !== false) {
+        return "Vulnerability detected: Unescaped tags found in final message.";
+    }
+    
+    return true;
+});
+
 // --- OUTPUT ---
 
 if (php_sapi_name() === 'cli') {
