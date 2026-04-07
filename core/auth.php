@@ -115,6 +115,14 @@ function require_login() {
     }
 }
 
+function require_ajax_login() {
+    if (!is_logged_in()) {
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Sesja wygasła. Proszę zalogować się ponownie.']);
+        exit;
+    }
+}
+
 function require_admin() {
     require_login();
     if (!is_admin()) {

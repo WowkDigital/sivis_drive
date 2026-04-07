@@ -15,14 +15,7 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
     
     if (empty($items_raw)) die("Brak wybranych plików.");
 
-    $zip = new ZipArchive();
-    $zip_name = 'SivisDrive_' . date('Y-m-d_H-i-s') . '.zip';
-    $zip_path = sys_get_temp_dir() . '/' . $zip_name;
-
-    if ($zip->open($zip_path, ZipArchive::CREATE) !== TRUE) {
-        die("Błąd przy tworzeniu ZIP.");
-    }
-
+    // Help Function (Keep it here or move up)
     function addFolderToZip($db, $fid, $zip, $base_path, $user_id, $role, $group) {
         $is_admin = ($role === 'admin');
         
@@ -49,27 +42,20 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
         }
     }
 
+    // Step 1: Collect valid items and verify access
+    $valid_items = [];
     foreach ($items_raw as $item_key) {
         $parts = explode('-', $item_key);
-        if (count($parts) === 2) {
-            $type = $parts[0];
-            $id = $parts[1];
-        } else {
-            // Fallback for old 'ids' param or unexpected format
-            $type = 'file';
-            $id = (int)$item_key;
-        }
+        $type = (count($parts) === 2) ? $parts[0] : 'file';
+        $id = (count($parts) === 2) ? $parts[1] : (int)$item_key;
 
         if ($type === 'file') {
             $stmt = $db->prepare("SELECT * FROM files WHERE id = ? OR public_id = ?");
             $stmt->execute([$id, $id]);
             $file = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($file && can_user_access_folder($db, $file['folder_id'], $_SESSION['user_id'], $role, $group)) {
-                // If it's deleted, only admin can download it
-                if ($file['deleted_at'] !== null && !is_admin()) continue;
-                $fpath = __DIR__ . '/uploads/' . $file['name'];
-                if (file_exists($fpath)) {
-                    $zip->addFile($fpath, $file['original_name']);
+                if ($file['deleted_at'] === null || is_admin()) {
+                    $valid_items[] = ['type' => 'file', 'data' => $file];
                 }
             }
         } elseif ($type === 'folder') {
@@ -77,11 +63,37 @@ if (isset($_GET['ids']) || isset($_GET['items'])) {
             $stmt->execute([$id, $id]);
             $folder = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($folder && can_user_access_folder($db, $folder['id'], $_SESSION['user_id'], $role, $group)) {
-                // If it's deleted, only admin can download it
-                if ($folder['deleted_at'] !== null && !is_admin()) continue;
-                $zip->addEmptyDir($folder['name']);
-                addFolderToZip($db, $folder['id'], $zip, $folder['name'] . '/', $_SESSION['user_id'], $role, $group);
+                if ($folder['deleted_at'] === null || is_admin()) {
+                    $valid_items[] = ['type' => 'folder', 'data' => $folder];
+                }
             }
+        }
+    }
+
+    if (empty($valid_items)) {
+        die("Brak dostępu do wybranych plików lub pliki nie istnieją.");
+    }
+
+    // Step 2: Only now create the ZIP file
+    $zip = new ZipArchive();
+    $zip_name = 'SivisDrive_' . date('Y-m-d_H-i-s') . '.zip';
+    $zip_path = sys_get_temp_dir() . '/' . $zip_name;
+
+    if ($zip->open($zip_path, ZipArchive::CREATE) !== TRUE) {
+        die("Błąd przy tworzeniu ZIP.");
+    }
+
+    foreach ($valid_items as $vi) {
+        if ($vi['type'] === 'file') {
+            $file = $vi['data'];
+            $fpath = __DIR__ . '/uploads/' . $file['name'];
+            if (file_exists($fpath)) {
+                $zip->addFile($fpath, $file['original_name']);
+            }
+        } else {
+            $folder = $vi['data'];
+            $zip->addEmptyDir($folder['name']);
+            addFolderToZip($db, $folder['id'], $zip, $folder['name'] . '/', $_SESSION['user_id'], $role, $group);
         }
     }
 

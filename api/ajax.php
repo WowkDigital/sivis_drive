@@ -3,6 +3,7 @@
  * Handle AJAX content loading
  */
 require_once dirname(__DIR__) . '/core/auth.php';
+require_ajax_login();
 
 if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content') {
     $fid_raw = $_GET['folder_id'];
@@ -18,15 +19,15 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
     }
 
     if (!$folder) {
-        echo json_encode(['error' => 'Folder nie istnieje']);
+        echo json_encode(['error' => 'Brak uprawnień lub folder nie istnieje']);
         exit;
     }
 
     $role = $_SESSION['role'] ?? 'pracownik';
     $group = get_user_group();
     if (!can_user_access_folder($db, $fid, $_SESSION['user_id'], $role, $group)) {
-         echo json_encode(['error' => 'Brak uprawnień']);
-         exit;
+        echo json_encode(['error' => 'Brak uprawnień lub folder nie istnieje']);
+        exit;
     }
 
     // Get subfolders (with file counts)
@@ -361,7 +362,7 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_trash') {
 }
 
 if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_usage') {
-    $usage = get_private_usage($db, $_SESSION['user_id']);
+    $usage = get_private_usage($db, $_SESSION['user_id'] ?? 0);
     echo json_encode($usage);
     exit;
 }

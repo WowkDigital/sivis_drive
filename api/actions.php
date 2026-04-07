@@ -3,6 +3,10 @@
  * Handle POST actions (Uploads, Deletions, Folders)
  */
 
+if (basename($_SERVER['PHP_SELF']) === 'actions.php') {
+    die("Bezpośredni dostęp zabroniony.");
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     
     // Weryfikacja CSRF
