@@ -21,6 +21,21 @@
             currentFolderId = folderId;
             canEditCurrentFolder = !!data.can_edit;
             currentOffset = offset;
+
+            // Update container border color
+            const containerMain = document.getElementById('main-drive-container');
+            if (containerMain) {
+                containerMain.classList.remove('border-slate-700', 'border-emerald-500/40', 'border-blue-500/40', 'border-purple-500/30');
+                containerMain.classList.remove('shadow-[0_0_20px_rgba(16,185,129,0.05)]', 'shadow-[0_0_20px_rgba(59,130,246,0.05)]', 'shadow-[0_0_20px_rgba(168,85,247,0.05)]');
+
+                if (data.root_owner_id === null) {
+                    containerMain.classList.add('border-emerald-500/40', 'shadow-[0_0_20px_rgba(16,185,129,0.05)]');
+                } else if (data.root_owner_id == currentUserId) {
+                    containerMain.classList.add('border-blue-500/40', 'shadow-[0_0_20px_rgba(59,130,246,0.05)]');
+                } else {
+                    containerMain.classList.add('border-purple-500/30', 'shadow-[0_0_20px_rgba(168,85,247,0.05)]');
+                }
+            }
             
             // Update folder name and badge
             const folderNameEl = document.getElementById('current-folder-name');

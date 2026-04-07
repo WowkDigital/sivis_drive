@@ -17,6 +17,7 @@
          * Sivis Drive Core Configuration
          */
         const inAppPreviewEnabled = <?= isset($in_app_preview_enabled) && $in_app_preview_enabled ? 'true' : 'false' ?>;
+        const currentUserId = <?= (int)$_SESSION['user_id'] ?>;
         let canEditCurrentFolder = <?= isset($can_edit) && $can_edit ? 'true' : 'false' ?>;
         let currentFolderId = <?= $active_folder_id ?: 0 ?>;
         let currentOffset = 0;

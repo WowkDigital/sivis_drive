@@ -99,6 +99,7 @@ if ($active_folder) {
         $curr = $stmt->fetch(PDO::FETCH_ASSOC);
     }
     $breadcrumbs = array_reverse($breadcrumbs);
+    $active_root_folder = $curr; // Store the root of the current branch
 }
 
 // Check permissions for current folder

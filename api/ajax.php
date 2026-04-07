@@ -84,7 +84,8 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'get_folder_content'
         'user_role' => $_SESSION['role'] ?? 'pracownik',
         'total' => $total,
         'folder_id' => $fid,
-        'active_folder_id' => $folder['public_id'] ?: $fid
+        'active_folder_id' => $folder['public_id'] ?: $fid,
+        'root_owner_id' => $curr['owner_id'] ?? null
     ]);
     exit;
 }

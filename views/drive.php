@@ -1,9 +1,19 @@
-<?php
-/**
- * Widok dysku z plikami
- */
+<?php 
+    $border_class = 'border-slate-700'; // Default
+    if (isset($active_root_folder)) {
+        if ($active_root_folder['owner_id'] === null) {
+            // Public/Shared - Green
+            $border_class = 'border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.05)]';
+        } elseif ($active_root_folder['owner_id'] == $_SESSION['user_id']) {
+            // My Folder - Blue
+            $border_class = 'border-blue-500/40 shadow-[0_0_20px_rgba(59,130,246,0.05)]';
+        } else {
+            // Employee Folder - Maybe Purple or default slate
+            $border_class = 'border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.05)]';
+        }
+    }
 ?>
-<div class="bg-slate-800 shadow-xl rounded-2xl p-5 sm:p-6 border border-slate-700 min-h-[500px]">
+<div id="main-drive-container" class="bg-slate-800 shadow-xl rounded-2xl p-5 sm:p-6 border-2 <?= $border_class ?> min-h-[500px] transition-colors duration-500">
     <div id="folder-content-wrapper">
         <?php if ($active_folder): ?>
             <div id="breadcrumbs-container" class="mb-4 flex flex-wrap items-center text-sm text-slate-400 bg-slate-800/80 p-3 rounded-xl border border-slate-600/50 shadow-inner">
