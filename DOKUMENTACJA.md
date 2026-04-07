@@ -67,6 +67,7 @@ W Sivis Drive obowiązuje hierarchia dostępu oparta na rolach:
 
 ### 5. System Powiadomień i Alertów (Telegram)
 - **Raporty Dobowe**: System co 24h generuje raport statystyczny (logowania, operacje na plikach, zajęte miejsce) i wysyła go do bota Telegram.
+- **Bezpieczeństwo**: Wszystkie wiadomości wychodzące na Telegram są automatycznie filtrowane przez funkcję `tg_escape()`, co uniemożliwia wstrzykiwanie złośliwego kodu HTML (HTML Injection).
 - **Monitoring w Czasie Rzeczywistym**: Każdy krytyczny błąd systemu (`SYSTEM_ERROR`), błąd podczas backupu czy nieautoryzowana próba dostępu jest natychmiastowo zgłaszana administratorowi.
 - **Globalna Obsługa Błędów**: System posiada własne procedury `set_error_handler` i `set_exception_handler`, które przekazują błędy PHP bezpośrednio do bota.
 

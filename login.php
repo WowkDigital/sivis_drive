@@ -77,7 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $contact_phone = $_POST['contact_phone'] ?? 'Nie podano';
 
         if (!empty($contact_message)) {
-            $msg = "**Od:** $contact_name\n**Email:** $contact_email\n**Tel:** $contact_phone\n\n**Wiadomość:**\n$contact_message";
+            $msg = "👤 <b>Od:</b> " . tg_escape($contact_name) . "\n";
+            $msg .= "📧 <b>Email:</b> " . tg_escape($contact_email) . "\n";
+            $msg .= "📞 <b>Tel:</b> " . tg_escape($contact_phone) . "\n\n";
+            $msg .= "💬 <b>Wiadomość:</b>\n" . tg_escape($contact_message);
+            
             send_admin_notification($db, "Nowa prośba o kontakt (Logowanie)", $msg, 'warning');
             $success = 'Wysłano! Administrator skontaktuje się z Tobą.';
         }

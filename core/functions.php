@@ -286,9 +286,9 @@ function log_activity($db, $user_id, $action, $details = '') {
         $is_urgent = (strpos($action, 'ERROR') !== false || strpos($action, 'FAIL') !== false || strpos($action, 'ALERT') !== false);
         if ($is_urgent) {
             $msg = "⚡ <b>ALARM SYSTEMOWY</b>\n";
-            $msg .= "Akcja: <code>$action</code>\n";
-            $msg .= "Szczegóły: $details\n";
-            $msg .= "IP: <code>$ip</code>\n";
+            $msg .= "Akcja: <code>" . tg_escape($action) . "</code>\n";
+            $msg .= "Szczegóły: " . tg_escape($details) . "\n";
+            $msg .= "IP: <code>" . tg_escape($ip) . "</code>\n";
             $msg .= "Czas: " . date('H:i:s');
             send_admin_notification($db, "Zdarzenie Systemowe", $msg, 'error');
         }
@@ -303,7 +303,7 @@ function log_activity($db, $user_id, $action, $details = '') {
             
             if ($failed_count >= 5) {
                 $alert = "🚨 <b>WYKRYTO POTENCJALNY BRUTE-FORCE!</b>\n";
-                $alert .= "Adres IP <code>$ip</code> zaliczył <b>$failed_count</b> nieudanych logowań w ostatnich 5 min.";
+                $alert .= "Adres IP <code>" . tg_escape($ip) . "</code> zaliczył <b>$failed_count</b> nieudanych logowań w ostatnich 5 min.";
                 send_admin_notification($db, "Zagrożenie Bezpieczeństwa", $alert, 'warning');
             }
         }
@@ -316,8 +316,8 @@ function log_activity($db, $user_id, $action, $details = '') {
 
             if ($mass_action_count >= 20) {
                 $alert = "☢️ <b>UWAGA: MASOWE USUWANIE!</b>\n";
-                $user_info = "Użytkownik ID: $user_id";
-                if (isset($_SESSION['email'])) $user_info = $_SESSION['email'];
+                $user_info = "Użytkownik ID: " . tg_escape($user_id);
+                if (isset($_SESSION['email'])) $user_info = tg_escape($_SESSION['email']);
                 
                 $alert .= "Użytkownik <b>$user_info</b> usunął <b>$mass_action_count</b> elementów w ciągu ostatniej minuty.";
                 send_admin_notification($db, "Podejrzane Zachowanie", $alert, 'warning');
@@ -357,6 +357,14 @@ function set_setting($db, $key, $value) {
 }
 
 /**
+ * Escape Special Characters for Telegram HTML Parse Mode
+ */
+function tg_escape($text) {
+    if ($text === null) return '';
+    return str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], (string)$text);
+}
+
+/**
  * Send a notification to the admin via Telegram Bot if configured
  */
 function send_admin_notification($db, $title, $message, $type = 'info') {
@@ -375,7 +383,7 @@ function send_admin_notification($db, $title, $message, $type = 'info') {
     if ($type === 'warning') $emoji = "⚠️";
     if ($type === 'success') $emoji = "✅";
 
-    $tg_text = "<b>$emoji Sivis Drive: $title</b>\n\n$message";
+    $tg_text = "<b>$emoji Sivis Drive: " . tg_escape($title) . "</b>\n\n$message";
     $url = "https://api.telegram.org/bot{$tg_token}/sendMessage";
 
     $post_data = [
