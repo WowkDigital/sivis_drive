@@ -20,13 +20,15 @@ Pełna dokumentacja techniczna dostępna w pliku: [DOKUMENTACJA.md](DOKUMENTACJA
     - **Zarządzanie Użytkownikami**: Dodawanie kont z automatycznym przypisywaniem do grup Zarządu lub Pracowników.
     - **Aktywne Uprawnienia**: Możliwość błyskawicznej zmiany roli użytkownika bezpośrednio w tabeli administracyjnej (auto-zapis).
     - **Zarządzanie Folderami**: Tworzenie logicznych grup dokumentów z predefiniowanymi uprawnieniami.
-- **System Backups (NOWOŚĆ)**:
+- **System Backups**:
     - **Pełne Archiwum**: Możliwość wykonania pełnego backupu całego systemu (baza + pliki) do formatu `.zip` jednym kliknięciem.
     - **Automatyczna Retencja**: System przechowuje kopie z ostatnich **7 dni**, automatycznie usuwając starsze archiwa.
     - **Tryb Konserwacji**: Podczas trwania backupu system automatycznie przechodzi w bezpieczny tryb przerwy technicznej dla użytkowników.
-- **Bezpieczeństwo i Technologia**:
-    - **Obsługa błędów (NOWOŚĆ)**: Inteligentne wykrywanie brakujących rozszerzeń serwera (np. ZIP) zapobiegające awariom systemu.
-    - **Manualny Reset Blokad**: Przycisk „Wyłącz wymuszenie” w panelu administratora pozwalający na ręczne wyprowadzenie systemu z trybu konserwacji w sytuacjach awaryjnych.
+    - **Automatyzacja CRON (NOWOŚĆ)**: Możliwość pełnej automatyzacji kopii zapasowych poprzez systemowy harmonogram zadań.
+- **Powiadomienia Telegram & Bezpieczeństwo (NOWOŚĆ)**:
+    - **Raporty Dobowe**: Automatyczny raport co 24h wysyłany na Telegram (statystyki logowań, operacji i zajętego miejsca).
+    - **Aktywny IDS**: System wykrywa próby ataków Brute-Force oraz masowe usuwanie plików, natychmiastowo alarmując administratora.
+    - **Logowanie Błędów**: Każdy błąd krytyczny aplikacji (np. błąd bazy czy PHP) jest natychmiastowo przesyłany do bota Telegram wraz ze szczegółami.
 
 ## 🛠️ Instalacja i Konfiguracja
 
@@ -72,6 +74,33 @@ php tests/permission_test.php
 
 **Uruchomienie przez przeglądarkę:**
 Przejdź pod adres: `http://localhost:8001/tests/permission_test.php` (zwraca wyniki w formacie JSON).
+
+---
+
+## 🕒 Automatyzacja Backupów (CRON)
+
+Aby zapewnić regularne kopie zapasowe, zaleca się dodanie zadania do systemowego harmonogramu (CRON). System Sivis Drive posiada dedykowany skrypt CLI do tego celu.
+
+**Komenda do uruchomienia ręcznego:**
+```bash
+php core/backup_logic.php
+```
+
+**Przykładowy wpis w CRONTAB (codziennie o 3:00 rano):**
+```bash
+0 3 * * * php /sciezka/do/aplikacji/core/backup_logic.php > /dev/null 2>&1
+```
+
+---
+
+## 🤖 Konfiguracja Bota Telegram
+
+Powiadomienia i raporty dobowe wymagają skonfigurowania danych bota w panelu administracyjnym (**Ustawienia Systemowe**).
+
+1. Stwórz bota przez [@BotFather](https://t.me/botfather).
+2. Uzyskaj swój `Chat ID` (np. przez [@userinfobot](https://t.me/userinfobot)).
+3. Wprowadź dane w panelu Sivis Drive.
+4. System automatycznie zacznie wysyłać raporty oraz alarmy bezpieczeństwa.
 
 ---
 

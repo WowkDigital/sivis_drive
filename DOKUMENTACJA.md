@@ -65,6 +65,16 @@ W Sivis Drive obowiązuje hierarchia dostępu oparta na rolach:
 ### 4. Optymalizacja Mobilna
 - **Mobile Actions Menu**: Na urządzeniach mobilnych akcje pliku są schowane pod przyciskiem "Więcej", co zapobiega przeładowaniu UI i ułatwia obsługę dotykiem.
 
+### 5. System Powiadomień i Alertów (Telegram)
+- **Raporty Dobowe**: System co 24h generuje raport statystyczny (logowania, operacje na plikach, zajęte miejsce) i wysyła go do bota Telegram.
+- **Monitoring w Czasie Rzeczywistym**: Każdy krytyczny błąd systemu (`SYSTEM_ERROR`), błąd podczas backupu czy nieautoryzowana próba dostępu jest natychmiastowo zgłaszana administratorowi.
+- **Globalna Obsługa Błędów**: System posiada własne procedury `set_error_handler` i `set_exception_handler`, które przekazują błędy PHP bezpośrednio do bota.
+
+### 6. System Wykrywania Zagrożeń (Simple IDS)
+- **Ochrona przed Brute-Force**: Wykrywanie wielokrotnych nieudanych logowań z jednego adresu IP w krótkim czasie.
+- **Monitorowanie Masowych Działań**: Automatyczny alert przy próbie masowego usuwania plików (np. przez złośliwy skrypt lub włamanie na konto).
+- **Weryfikacja CSRF**: Każda próba żądania POST bez poprawnego tokenu jest blokowana i logowana jako incydent bezpieczeństwa.
+
 ---
 
 ## 📝 Logi i Audyt
@@ -72,6 +82,7 @@ W Sivis Drive obowiązuje hierarchia dostępu oparta na rolach:
 Każda istotna akcja w systemie jest rejestrowana w tabeli `logs`:
 - Wgrywanie, pobieranie, usuwanie, przenoszenie, zmiana nazw plików.
 - Logowania i błędy autoryzacji.
+- **Adres IP**: Każdy wpis w logach zawiera adres IP sprawcy/zdarzenia.
 - Automatyczne czyszczenie kosza (jako użytkownik `System`).
 
 ---
@@ -84,6 +95,11 @@ Dla każdego drzewa prywatnego użytkownika obowiązują twarde limity:
 - **Pojemność:** Maksymalnie **500 MB**.
 - **Pojedynczy plik:** Maksymalnie **100 MB** (zalecane ustawienie `upload_max_filesize` w PHP).
 
+### Automatyzacja Backupów (CLI/CRON)
+- Pełny proces kopii zapasowej można wywołać z poziomu terminala: `php core/backup_logic.php`.
+- Skrypt automatycznie zarządza retencją (7 dni) i trybem konserwacji.
+- Zalecane uruchamianie przez systemowy harmonogram zadań (CRONTAB/Task Scheduler).
+
 ---
 
 ## 🏗 Technologia
@@ -94,5 +110,5 @@ Dla każdego drzewa prywatnego użytkownika obowiązują twarde limity:
 - **Bezpieczeństwo:** `CSRF Protection`, `password_hash` (BCRYPT), blokada bezpośredniego dostępu do `/uploads`.
 
 ---
-*Dokumentacja aktualna na dzień: 27.03.2026*
+*Dokumentacja aktualna na dzień: 07.04.2026*
 *Autor: Wowk Digital / Antigraviti Condes*

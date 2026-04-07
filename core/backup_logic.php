@@ -2,10 +2,9 @@
 /**
  * Sivis Drive - Backup Logic
  */
+$is_backup_script = true; // Bypasses maintenance exit in db.php
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/functions.php';
-
-$is_backup_script = true; // Bypasses maintenance exit in db.php
 
 function run_backup($db) {
     global $data_dir;
