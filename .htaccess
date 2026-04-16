@@ -7,7 +7,9 @@ Options -Indexes
 </FilesMatch>
 
 # Specifically block core folders (for servers that don't support above logic correctly)
-RedirectMatch 403 ^/(core|api|views|data|uploads)/.*\.php$
+# We allow ajax.php and actions.php in the api folder as they are entry points
+RedirectMatch 403 ^/(core|views|data|uploads)/.*\.php$
+RedirectMatch 403 ^/api/(?!(ajax|actions)\.php$).*\.php$
 
 # Allow access to assets (CSS, JS, images)
 <Directory "assets">
