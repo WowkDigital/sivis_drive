@@ -7,7 +7,7 @@ require_admin();
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $csrf_token = $_POST['csrf_token'] ?? '';
+    $csrf_token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     if (!verify_csrf_token($csrf_token)) {
         die("Błąd weryfikacji CSRF. Powrót <a href='admin.php'>tutaj</a>");
     }
@@ -164,8 +164,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($type === 'folder') {
-                $db->prepare("UPDATE folders SET deleted_at = NULL, parent_id = ? WHERE id = ?")->execute([$target_folder_id, $id]);
-                log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FOLDER', "Przywrócono folder ID: $id do 'przywrócone'");
+                restore_folder_recursive($db, $id);
+                $db->prepare("UPDATE folders SET parent_id = ? WHERE id = ?")->execute([$target_folder_id, $id]);
+                log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FOLDER', "Przywrócono folder ID: $id do 'przywrócone' (wraz z zawartością)");
             } else {
                 $db->prepare("UPDATE files SET deleted_at = NULL, folder_id = ? WHERE id = ?")->execute([$target_folder_id, $id]);
                 log_activity($db, $_SESSION['user_id'], 'ADMIN_RESTORE_FILE', "Przywrócono plik ID: $id do 'przywrócone'");

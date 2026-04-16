@@ -434,8 +434,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
 
             if ($type === 'folder') {
-                $db->prepare("UPDATE folders SET deleted_at = NULL, parent_id = ? WHERE id = ?")->execute([$target_folder_id, $id]);
-                log_activity($db, $_SESSION['user_id'], 'RESTORE_FOLDER', "Przywrócono folder ID: $id do 'przywrócone'");
+                restore_folder_recursive($db, $id);
+                $db->prepare("UPDATE folders SET parent_id = ? WHERE id = ?")->execute([$target_folder_id, $id]);
+                log_activity($db, $_SESSION['user_id'], 'RESTORE_FOLDER', "Przywrócono folder ID: $id do 'przywrócone' (wraz z zawartością)");
             } else {
                 $db->prepare("UPDATE files SET deleted_at = NULL, folder_id = ? WHERE id = ?")->execute([$target_folder_id, $id]);
                 log_activity($db, $_SESSION['user_id'], 'RESTORE_FILE', "Przywrócono plik ID: $id do 'przywrócone'");

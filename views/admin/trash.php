@@ -112,6 +112,7 @@
                 const btn = document.getElementById('load-more-trash');
                 const icon = btn.querySelector('.lucide');
                 const limit = 10;
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
                 btn.disabled = true;
                 if (icon) icon.classList.add('animate-spin');
@@ -150,7 +151,7 @@
                                         <div class="flex items-center justify-end gap-1">
                                             ${downloadBtn}
                                             <form method="post" class="inline">
-                                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                                <input type="hidden" name="csrf_token" value="${csrfToken}">
                                                 <input type="hidden" name="action" value="restore_item">
                                                 <input type="hidden" name="type" value="${item.type}">
                                                 <input type="hidden" name="item_id" value="${item.id}">
@@ -159,7 +160,7 @@
                                                 </button>
                                             </form>
                                             <form method="post" class="inline" id="perm-del-item-${item.type}-${item.id}">
-                                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                                <input type="hidden" name="csrf_token" value="${csrfToken}">
                                                 <input type="hidden" name="action" value="${item.type === 'file' ? 'delete_file' : 'delete_folder'}">
                                                 <input type="hidden" name="${item.type}_id" value="${item.id}">
                                                 <button type="button" onclick="showConfirmModal('Trwale usunąć?', 'Czy na pewno chcesz usunąć ten element bezpowrotnie z serwera?', () => document.getElementById('perm-del-item-${item.type}-${item.id}').submit(), 'red')" class="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-all" title="Usuń trwale">

@@ -91,7 +91,9 @@ function verify_csrf_token($token) {
     if (!$valid && $_SERVER['REQUEST_METHOD'] === 'POST') {
         global $db;
         $user_id = $_SESSION['user_id'] ?? 0;
-        log_activity($db, $user_id, 'CSRF_ERROR', 'Błąd weryfikacji tokenu CSRF.');
+        $reason = !isset($_SESSION['csrf_token']) ? 'Brak tokenu w sesji' : ($token === '' ? 'Brak tokenu w żądaniu' : 'Niezgodność tokenów');
+        $url = $_SERVER['REQUEST_URI'] ?? 'unknown';
+        log_activity($db, $user_id, 'CSRF_ERROR', "Błąd weryfikacji CSRF: $reason. URL: $url");
     }
     return $valid;
 }

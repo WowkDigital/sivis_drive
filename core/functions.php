@@ -197,6 +197,26 @@ function soft_delete_folder_recursive($db, $folder_id) {
 }
 
 /**
+ * Recursively restore a folder and its contents from Trash
+ */
+function restore_folder_recursive($db, $folder_id) {
+    // Restore files in this folder
+    $db->prepare("UPDATE files SET deleted_at = NULL WHERE folder_id = ? AND deleted_at IS NOT NULL")->execute([$folder_id]);
+    
+    // Restore current folder
+    $db->prepare("UPDATE folders SET deleted_at = NULL WHERE id = ?")->execute([$folder_id]);
+    
+    // Recursively restore subfolders
+    $stmt = $db->prepare("SELECT id FROM folders WHERE parent_id = ? AND deleted_at IS NOT NULL");
+    $stmt->execute([$folder_id]);
+    $children = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    foreach ($children as $child_id) {
+        restore_folder_recursive($db, $child_id);
+    }
+}
+
+/**
  * Permanently delete items from Trash older than 30 days
  */
 function cleanup_garbage_collector($db, $upload_dir) {

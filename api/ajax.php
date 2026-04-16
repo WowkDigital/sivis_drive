@@ -267,6 +267,15 @@ if (isset($_GET['ajax_action']) && $_GET['ajax_action'] === 'run_tests') {
             $full_results = array_merge($full_results, $results);
         }
     }
+
+    // 3. Run diagnostic tests
+    $results = [];
+    if (file_exists(ROOT_DIR . '/tests/diagnostics.php')) {
+        $diag_results = require ROOT_DIR . '/tests/diagnostics.php';
+        if (is_array($diag_results)) {
+            $full_results = array_merge($full_results, $diag_results);
+        }
+    }
     
     // Clean any accidental output (whitespace, warnings, etc.)
     ob_end_clean();
