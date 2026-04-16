@@ -117,8 +117,8 @@ $stmt = $db->prepare("INSERT OR IGNORE INTO settings (setting_key, setting_value
 $stmt->execute(['in_app_preview', '1']);
 $stmt->execute(['enforce_2fa_admin', '0']);
 $stmt->execute(['enforce_2fa_last_update', '0']);
-$stmt->execute(['telegram_bot_token', '8747735406:AAHWhK3DpfGRLXe3PP8umFp7aPBxfDCDRTI']);
-$stmt->execute(['telegram_chat_id', '885898492']);
+$stmt->execute(['telegram_bot_token', '']);
+$stmt->execute(['telegram_chat_id', '']);
 $stmt->execute(['last_report_sent', '0']);
 
 
