@@ -8,7 +8,7 @@
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="$(dirname "$APP_DIR")/sivis_drive_backups" # Kopie będą wyżej niż folder aplikacji
 GIT_BRANCH="main"                       # Gałąź na GitHubie do synchronizacji
-DB_FILE="database.sqlite"               # Nazwa bazy SQLite
+DB_FILE="data/database.sqlite"               # Ścieżka do bazy SQLite
 
 # Data i czas aktualizacji (formatowany do nazw plików)
 DATE_STAMP=$(date +"%Y%m%d_%H%M%S")
