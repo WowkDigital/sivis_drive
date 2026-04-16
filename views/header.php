@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sivis Drive</title>
     <meta name="csrf-token" content="<?= generate_csrf_token() ?>">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/js/tailwind.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -21,7 +21,7 @@
             }
         }
     </script>
-    <script src="https://unpkg.com/lucide@0.418.0/dist/umd/lucide.min.js"></script>
+    <script src="assets/js/lucide.min.js"></script>
     <script src="assets/js/modals.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-200 min-h-screen">

@@ -7,7 +7,7 @@ require_once 'core/admin_logic.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Administratora - Sivis Drive</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/js/tailwind.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -23,7 +23,7 @@ require_once 'core/admin_logic.php';
             }
         }
     </script>
-    <script src="https://unpkg.com/lucide@0.418.0/dist/umd/lucide.min.js"></script>
+    <script src="assets/js/lucide.min.js"></script>
     <script src="assets/js/modals.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-200 min-h-screen">
