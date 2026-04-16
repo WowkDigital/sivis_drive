@@ -10,6 +10,13 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
     session_start();
 }
+
+// 0. Tryb konserwacji (Maintenance Mode)
+if (file_exists(dirname(__DIR__) . '/.maintenance')) {
+    http_response_code(503);
+    header('Retry-After: 300'); // Suggest 5 mins
+    die("<h3>Sivis Drive: Przerwa techniczna</h3><p>Trwa aktualizacja systemu. Prosimy o cierpliwość, operacja zajmie krótką chwilę.</p>");
+}
 if (!defined('ROOT_DIR')) define('ROOT_DIR', dirname(__DIR__));
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/functions.php';

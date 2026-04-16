@@ -23,6 +23,16 @@ NC='\033[0m'
 echo -e "${YELLOW}Rozpoczęto proces aktualizacji produkcji: ${DATE_STAMP}${NC}"
 
 # ==============================================================================
+# -1. Potwierdzenie (Safety First)
+# ==============================================================================
+echo -e "${RED}UWAGA:${NC} Skrypt zresetuje pliki na serwerze do wersji z GitHub (${GIT_BRANCH})."
+read -p "Czy na pewno chcesz kontynuować? (t/n): " confirm
+if [[ $confirm != [tTyY] ]]; then
+    echo -e "${YELLOW}Aktualizacja przerwana przez użytkownika.${NC}"
+    exit 0
+fi
+
+# ==============================================================================
 # 0. Sprawdzanie wymagań
 # ==============================================================================
 
@@ -65,27 +75,31 @@ else
 fi
 
 # ==============================================================================
-# 3. Aktualizacja systemu (Synchronizacja Repozytorium GitHub)
+# 3. Aktualizacja systemu
 # ==============================================================================
+
+# Włącz tryb konserwacji
+touch "$APP_DIR/.maintenance"
+echo -e "${YELLOW}[INFO] Serwer przełączony w tryb konserwacji.${NC}"
 
 echo -e "Pobieranie aktualizacji z repozytorium Git (gałąź: ${GIT_BRANCH}) ..."
 
 # Usunięcie niedokonczonych zmian z serwera, reset do głownego brancha
 git fetch origin
 git reset --hard "origin/${GIT_BRANCH}"
-
-# Zaktualizuj pliki dla danego brancha
 git pull origin "$GIT_BRANCH"
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}[OK] Synchronizacja repozytorium powiodła się.${NC}"
-    echo -e "${YELLOW}Co się zmieniło w tej aktualizacji:${NC}"
-    git log -1 --pretty=format:"%C(blue)%h%C(reset) - %C(green)%s%C(reset) (%cr) <%an>"
-    echo -e "\n"
 else
-    echo -e "${RED}[BŁĄD KRYTYCZNY] Wystąpił błąd synchronizacji Git! Opcjonalnie wczytaj kopię ${BACKUP_FILE}${NC}"
+    echo -e "${RED}[BŁĄD KRYTYCZNY] Wystąpił błąd synchronizacji Git! Wyłączam tryb konserwacji.${NC}"
+    rm "$APP_DIR/.maintenance"
     exit 1
 fi
+
+# Wyłącz tryb konserwacji
+rm -f "$APP_DIR/.maintenance"
+echo -e "${GREEN}[OK] Tryb konserwacji wyłączony.${NC}"
 
 # ==============================================================================
 # 4. Nadanie uprawnień systemowych (Opcjonalnie: Chown / Chmod na produkcję)
